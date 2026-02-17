@@ -1,0 +1,628 @@
+/* ===== Reset & Base ===== */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  overflow: hidden;
+  height: 100vh;
+  background: #0d0d1a;
+  font-family: "Press Start 2P", monospace;
+  font-size: 7px;
+  user-select: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* ===== Monitor Frame ===== */
+#monitor {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+#monitor-bezel {
+  background: linear-gradient(180deg, #d0c8b8, #a89880);
+  padding: 18px 16px 22px;
+  border-radius: 12px 12px 6px 6px;
+  box-shadow:
+    0 0 0 2px #6a6050,
+    0 4px 20px rgba(0, 0, 0, 0.6),
+    inset 0 1px 0 rgba(255, 255, 255, 0.3);
+}
+
+#monitor-stand {
+  width: 100px;
+  height: 14px;
+  background: linear-gradient(180deg, #a89880, #8a7860);
+  border-radius: 0 0 6px 6px;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3);
+}
+
+/* ===== Theme Variables (Default: Vaporwave) ===== */
+#screen {
+  --desktop-bg: linear-gradient(135deg, #1a0a3e, #0d2f4f 50%, #0a3a4a);
+  --bar-bg: linear-gradient(180deg, #2a1a4a, #1a0a3a);
+  --bar-border: #ff71ce;
+  --accent: #b967ff;
+  --accent2: #ff71ce;
+  --accent3: #00fff0;
+  --surface: #2a1a4a;
+  --surface2: #1a1035;
+  --body-bg: #12082a;
+  --body-deep: #0a0520;
+  --title-bg: linear-gradient(90deg, #ff71ce, #b967ff);
+  --title-inactive: linear-gradient(90deg, #4a4a6a, #3a3a5a);
+  --text: #c0c0e0;
+  --text-dim: #3a3a5a;
+  --text-bright: #fff;
+  --shadow: rgba(185, 103, 255, 0.3);
+  --today-bg: #ff71ce;
+  --item-bg: linear-gradient(180deg, #251545, #1a0a35);
+  --item-active-bg: linear-gradient(180deg, #301a55, #200a45);
+  --item-border: #4a3a6a;
+  --btn-bg: linear-gradient(180deg, #3a2060, #2a1050);
+  --btn-hover: linear-gradient(180deg, #4a3070, #3a2060);
+  --clock-bg: #100828;
+  --glow1: rgba(120, 0, 255, 0.15);
+  --glow2: rgba(0, 200, 200, 0.08);
+}
+
+/* ===== Screen ===== */
+#screen {
+  width: 440px;
+  height: 330px;
+  position: relative;
+  border: 3px solid #111;
+  border-radius: 3px;
+  overflow: hidden;
+  box-shadow:
+    inset 0 0 30px var(--glow1),
+    inset 0 0 60px var(--glow2),
+    0 0 8px rgba(0, 0, 0, 0.5);
+}
+
+/* ===== Scanlines ===== */
+#scanlines {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: repeating-linear-gradient(
+    0deg,
+    transparent,
+    transparent 1px,
+    rgba(0, 0, 0, 0.08) 1px,
+    rgba(0, 0, 0, 0.08) 2px
+  );
+  pointer-events: none;
+  z-index: 10000;
+}
+
+/* ===== Desktop ===== */
+#desktop {
+  width: 440px;
+  height: 306px;
+  background: var(--desktop-bg);
+  position: relative;
+  overflow: hidden;
+}
+
+/* ===== Taskbar ===== */
+#taskbar {
+  width: 440px;
+  height: 24px;
+  background: var(--bar-bg);
+  border-top: 1px solid var(--bar-border);
+  display: flex;
+  align-items: center;
+  padding: 0 3px;
+  gap: 2px;
+  z-index: 9999;
+}
+
+#start-button {
+  height: 18px;
+  padding: 0 6px;
+  font-family: "Press Start 2P", monospace;
+  font-size: 6px;
+  color: var(--accent3);
+  background: var(--btn-bg);
+  border: 1px solid var(--accent);
+  cursor: pointer;
+  flex-shrink: 0;
+  line-height: 18px;
+}
+
+#start-button:hover {
+  background: var(--btn-hover);
+  color: var(--accent2);
+}
+
+#start-button:active,
+#start-button.open {
+  border-color: var(--accent2);
+}
+
+#taskbar-items {
+  display: flex;
+  flex: 1;
+  gap: 2px;
+  overflow: hidden;
+}
+
+.taskbar-item {
+  height: 18px;
+  min-width: 50px;
+  max-width: 80px;
+  padding: 0 4px;
+  font-family: "Press Start 2P", monospace;
+  font-size: 5px;
+  color: var(--text);
+  background: var(--item-bg);
+  border: 1px solid var(--item-border);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  line-height: 18px;
+}
+
+.taskbar-item:hover {
+  border-color: var(--accent);
+  color: var(--accent2);
+}
+
+.taskbar-item.active {
+  border-color: var(--accent3);
+  color: var(--accent3);
+  background: var(--item-active-bg);
+}
+
+#taskbar-clock {
+  height: 18px;
+  padding: 0 6px;
+  border: 1px solid var(--item-border);
+  background: var(--clock-bg);
+  color: var(--accent3);
+  display: flex;
+  align-items: center;
+  font-family: "Press Start 2P", monospace;
+  font-size: 6px;
+  flex-shrink: 0;
+  line-height: 18px;
+}
+
+/* ===== Start Menu ===== */
+#start-menu {
+  position: absolute;
+  bottom: 25px;
+  left: 3px;
+  z-index: 9998;
+  background: var(--bar-bg);
+  border: 1px solid var(--accent);
+  box-shadow: 2px 2px 0 rgba(0, 0, 0, 0.4);
+  min-width: 90px;
+}
+
+#start-menu.hidden {
+  display: none;
+}
+
+.start-menu-header {
+  padding: 3px 6px;
+  font-family: "Press Start 2P", monospace;
+  font-size: 5px;
+  color: var(--text-dim);
+  border-bottom: 1px solid var(--item-border);
+}
+
+.start-menu-sep {
+  height: 1px;
+  background: var(--item-border);
+}
+
+.start-menu-item {
+  display: block;
+  width: 100%;
+  padding: 4px 6px;
+  font-family: "Press Start 2P", monospace;
+  font-size: 6px;
+  color: var(--text);
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  text-align: left;
+}
+
+.start-menu-item:hover {
+  background: var(--surface);
+  color: var(--accent2);
+}
+
+.start-menu-item.active {
+  color: var(--accent3);
+}
+
+/* ===== Window ===== */
+.window {
+  position: absolute;
+  background-color: var(--surface2);
+  border: 2px solid var(--accent);
+  box-shadow:
+    0 0 6px var(--shadow),
+    1px 1px 0 #000;
+  display: flex;
+  flex-direction: column;
+  min-width: 80px;
+  image-rendering: pixelated;
+}
+
+.window.minimized {
+  display: none;
+}
+
+/* ===== Title Bar ===== */
+.title-bar {
+  background: var(--title-bg);
+  color: var(--text-bright);
+  padding: 0 3px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  cursor: grab;
+  height: 14px;
+  flex-shrink: 0;
+}
+
+.title-bar.inactive {
+  background: var(--title-inactive);
+}
+
+.title-bar-text {
+  font-family: "Press Start 2P", monospace;
+  font-size: 6px;
+  pointer-events: none;
+  text-shadow: 1px 1px 0 rgba(0, 0, 0, 0.5);
+}
+
+.title-bar-controls {
+  display: flex;
+  gap: 1px;
+}
+
+.title-bar-controls button {
+  width: 10px;
+  height: 10px;
+  font-size: 7px;
+  line-height: 1;
+  padding: 0;
+  background: var(--surface);
+  border: 1px solid var(--accent);
+  color: var(--accent2);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: "Press Start 2P", monospace;
+}
+
+.title-bar-controls button:hover {
+  background: var(--accent2);
+  color: var(--text-bright);
+}
+
+/* ===== Window Body ===== */
+.window-body {
+  padding: 4px;
+  border-top: 1px solid var(--shadow);
+  background-color: var(--body-bg);
+}
+
+/* ===== Clock Widget ===== */
+#clock-body {
+  text-align: center;
+  padding: 6px 4px;
+  background: linear-gradient(180deg, var(--body-deep), var(--body-bg));
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+}
+
+#analog-clock {
+  display: block;
+  width: 72px;
+  height: 72px;
+  image-rendering: pixelated;
+  image-rendering: crisp-edges;
+}
+
+#digital-clock {
+  text-align: center;
+}
+
+.clock-time {
+  font-family: "Press Start 2P", monospace;
+  font-size: 8px;
+  color: var(--accent2);
+  letter-spacing: 1px;
+  text-shadow: 0 0 8px var(--shadow);
+}
+
+.clock-date {
+  font-family: "Press Start 2P", monospace;
+  font-size: 5px;
+  color: var(--accent3);
+  margin-top: 3px;
+}
+
+/* ===== Calendar Widget ===== */
+#calendar-body {
+  padding: 4px;
+  background: var(--body-bg);
+}
+
+.calendar-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 3px;
+}
+
+.calendar-header button {
+  width: 14px;
+  height: 12px;
+  font-size: 6px;
+  background: var(--surface);
+  border: 1px solid var(--accent);
+  color: var(--accent2);
+  cursor: pointer;
+  font-family: "Press Start 2P", monospace;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+}
+
+.calendar-header button:hover {
+  background: var(--accent);
+  color: var(--text-bright);
+}
+
+.calendar-title {
+  font-family: "Press Start 2P", monospace;
+  font-weight: normal;
+  font-size: 6px;
+  color: var(--accent3);
+}
+
+.calendar-table {
+  width: 100%;
+  border-collapse: collapse;
+  table-layout: fixed;
+}
+
+.calendar-table th {
+  background: var(--surface);
+  border: 1px solid var(--item-border);
+  padding: 2px 0;
+  font-size: 5px;
+  font-weight: normal;
+  text-align: center;
+  color: var(--accent);
+}
+
+.calendar-table td {
+  border: 1px solid var(--surface);
+  padding: 2px 0;
+  text-align: center;
+  font-size: 6px;
+  cursor: default;
+  height: 16px;
+  color: var(--text);
+}
+
+.calendar-table td.today {
+  background: var(--today-bg);
+  color: var(--text-bright);
+  text-shadow: 0 0 4px rgba(255, 255, 255, 0.5);
+}
+
+.calendar-table td.other-month {
+  color: var(--text-dim);
+}
+
+.calendar-table td:hover:not(.other-month) {
+  background: var(--shadow);
+}
+
+.calendar-table td.today:hover {
+  background: var(--today-bg);
+  filter: brightness(1.2);
+}
+
+/* ===== Aquarium Widget ===== */
+#aquarium-body {
+  padding: 0;
+  background: #000;
+  line-height: 0;
+}
+
+#aquarium-canvas {
+  display: block;
+  width: 100%;
+  image-rendering: pixelated;
+  image-rendering: crisp-edges;
+}
+
+/* ===== Desktop Widget (non-window draggable) ===== */
+.widget {
+  position: absolute;
+  cursor: grab;
+  z-index: 5;
+}
+
+.widget.minimized {
+  display: none;
+}
+
+/* ===== Hourglass Widget ===== */
+#hourglass-widget {
+  display: block;
+  width: 64px;
+  height: 64px;
+  image-rendering: pixelated;
+  image-rendering: crisp-edges;
+  filter: drop-shadow(0 0 4px var(--shadow));
+  pointer-events: none;
+}
+
+/* ===== David Widget ===== */
+#david-widget {
+  display: block;
+  width: 80px;
+  height: 104px;
+  image-rendering: pixelated;
+  image-rendering: crisp-edges;
+  filter: drop-shadow(0 0 4px var(--shadow));
+  pointer-events: none;
+}
+
+/* ========================================
+   THEME: 和風 (Japanese)
+   ======================================== */
+#screen.theme-japanese {
+  --desktop-bg: linear-gradient(135deg, #0a0a20, #101828 50%, #0a1020);
+  --bar-bg: linear-gradient(180deg, #1a1028, #0a0818);
+  --bar-border: #c8372d;
+  --accent: #8a2020;
+  --accent2: #c8372d;
+  --accent3: #c8a84e;
+  --surface: #1a1028;
+  --surface2: #10081e;
+  --body-bg: #0c0814;
+  --body-deep: #060510;
+  --title-bg: linear-gradient(90deg, #c8372d, #8a2020);
+  --title-inactive: linear-gradient(90deg, #3a3040, #2a2030);
+  --text: #e0d8c8;
+  --text-dim: #3a3030;
+  --text-bright: #fff8f0;
+  --shadow: rgba(200, 55, 45, 0.2);
+  --today-bg: #c8372d;
+  --item-bg: linear-gradient(180deg, #180c20, #100818);
+  --item-active-bg: linear-gradient(180deg, #201020, #180818);
+  --item-border: #3a2830;
+  --btn-bg: linear-gradient(180deg, #2a1828, #1a1020);
+  --btn-hover: linear-gradient(180deg, #3a2838, #2a1828);
+  --clock-bg: #0a0810;
+  --glow1: rgba(200, 55, 45, 0.1);
+  --glow2: rgba(200, 168, 78, 0.05);
+}
+
+/* ========================================
+   THEME: 木目 (Wood)
+   ======================================== */
+#screen.theme-wood {
+  --desktop-bg: linear-gradient(135deg, #1a1208, #201810 50%, #181008);
+  --bar-bg: linear-gradient(180deg, #3a2818, #2a1a10);
+  --bar-border: #c8a050;
+  --accent: #906828;
+  --accent2: #c8a050;
+  --accent3: #e0d0a0;
+  --surface: #352818;
+  --surface2: #2a2015;
+  --body-bg: #1a1408;
+  --body-deep: #141008;
+  --title-bg: linear-gradient(90deg, #b08030, #705020);
+  --title-inactive: linear-gradient(90deg, #4a4030, #3a3020);
+  --text: #e0d8c0;
+  --text-dim: #4a4030;
+  --text-bright: #fff8e0;
+  --shadow: rgba(160, 120, 48, 0.2);
+  --today-bg: #c8a050;
+  --item-bg: linear-gradient(180deg, #302218, #201810);
+  --item-active-bg: linear-gradient(180deg, #3a2a18, #2a1a10);
+  --item-border: #4a3828;
+  --btn-bg: linear-gradient(180deg, #403020, #302010);
+  --btn-hover: linear-gradient(180deg, #504030, #403020);
+  --clock-bg: #181008;
+  --glow1: rgba(160, 120, 48, 0.08);
+  --glow2: rgba(100, 80, 30, 0.05);
+}
+
+/* ========================================
+   THEME: Classic Mac
+   ======================================== */
+#screen.theme-mac {
+  --desktop-bg: #5583a4;
+  --bar-bg: linear-gradient(180deg, #e0e0e0, #c8c8c8);
+  --bar-border: #999;
+  --accent: #888;
+  --accent2: #333;
+  --accent3: #000;
+  --surface: #c0c0c0;
+  --surface2: #d0d0d0;
+  --body-bg: #fff;
+  --body-deep: #f0f0f0;
+  --title-bg: repeating-linear-gradient(
+    0deg,
+    #000 0px, #000 1px,
+    #fff 1px, #fff 3px
+  );
+  --title-inactive: #c0c0c0;
+  --text: #000;
+  --text-dim: #999;
+  --text-bright: #fff;
+  --shadow: rgba(0, 0, 0, 0.12);
+  --today-bg: #000;
+  --item-bg: linear-gradient(180deg, #d8d8d8, #c8c8c8);
+  --item-active-bg: linear-gradient(180deg, #e8e8e8, #d8d8d8);
+  --item-border: #999;
+  --btn-bg: linear-gradient(180deg, #e8e8e8, #d0d0d0);
+  --btn-hover: linear-gradient(180deg, #f0f0f0, #e0e0e0);
+  --clock-bg: #fff;
+  --glow1: rgba(0, 0, 0, 0);
+  --glow2: rgba(0, 0, 0, 0);
+}
+
+#screen.theme-mac .window {
+  border-width: 1px;
+  box-shadow: 1px 1px 0 #000;
+}
+
+#screen.theme-mac .title-bar {
+  border-bottom: 1px solid #000;
+}
+
+#screen.theme-mac .title-bar-text {
+  background: #fff;
+  padding: 0 3px;
+  color: #000;
+  text-shadow: none;
+}
+
+#screen.theme-mac .title-bar-controls button {
+  background: #fff;
+  border-color: #000;
+  color: #000;
+}
+
+#screen.theme-mac .title-bar-controls button:hover {
+  background: #000;
+  color: #fff;
+}
+
+#screen.theme-mac .clock-time {
+  text-shadow: none;
+}
+
+#screen.theme-mac .calendar-table td.today {
+  text-shadow: none;
+}
