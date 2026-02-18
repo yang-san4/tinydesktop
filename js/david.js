@@ -31,6 +31,7 @@
     if (scr.classList.contains('theme-japanese')) return 'japanese';
     if (scr.classList.contains('theme-wood')) return 'wood';
     if (scr.classList.contains('theme-mac')) return 'mac';
+    if (scr.classList.contains('theme-osx')) return 'osx';
     return 'vapor';
   }
 
@@ -348,21 +349,23 @@
 
   function drawBearEyes(mx, my) {
     mx += GAZE_BIAS_X; my += GAZE_BIAS_Y;
-    var lx = 13, rx = 24, ey = 12;
-    rect(lx,ey,3,2,B_EYE_C); rect(rx,ey,3,2,B_EYE_C);
-    var lcx=lx+1.5, lcy=ey+1, rcx=rx+1.5, rcy=ey+1;
+    var lx = 12, rx = 23, ey = 11;
+    // Bigger eyes: 5w x 4h
+    rect(lx,ey,5,4,B_EYE_C); rect(rx,ey,5,4,B_EYE_C);
+    var lcx=lx+2.5, lcy=ey+2, rcx=rx+2.5, rcy=ey+2;
     var la=Math.atan2(my-lcy,mx-lcx), ra=Math.atan2(my-rcy,mx-rcx);
     var ld=Math.min(1,Math.hypot(mx-lcx,my-lcy)/20);
     var rd=Math.min(1,Math.hypot(mx-rcx,my-rcy)/20);
-    var lpx=Math.round(lcx+Math.cos(la)*ld*0.5);
-    var lpy=Math.round(lcy+Math.sin(la)*ld*0.3);
-    var rpx=Math.round(rcx+Math.cos(ra)*rd*0.5);
-    var rpy=Math.round(rcy+Math.sin(ra)*rd*0.3);
-    px(lpx,lpy,B_EYE_H);
+    var lpx=Math.round(lcx+Math.cos(la)*ld*1.5);
+    var lpy=Math.round(lcy+Math.sin(la)*ld*1.0);
+    var rpx=Math.round(rcx+Math.cos(ra)*rd*1.5);
+    var rpy=Math.round(rcy+Math.sin(ra)*rd*1.0);
+    // 2px highlight for visibility
+    px(lpx,lpy,B_EYE_H); px(lpx+1,lpy,B_EYE_H);
     if (isWinking) {
-      rect(rx,ey,3,2,B_FUR); hline(rx,ey+1,3,B_FD);
+      rect(rx,ey,5,4,B_FUR); hline(rx,ey+2,5,B_FD);
     } else {
-      px(rpx,rpy,B_EYE_H);
+      px(rpx,rpy,B_EYE_H); px(rpx+1,rpy,B_EYE_H);
     }
   }
 

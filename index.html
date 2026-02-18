@@ -12,8 +12,55 @@
 <body>
   <div id="monitor">
     <div id="monitor-bezel">
-      <div id="screen">
+      <div id="screen" class="theme-mac">
+        <!-- Boot Screen -->
+        <div id="boot-screen">
+          <div class="boot-output"></div>
+        </div>
+
         <div id="desktop">
+          <canvas id="desktop-wallpaper" width="110" height="77"></canvas>
+
+          <!-- Desktop Icons -->
+          <div id="desktop-icons">
+            <div class="desktop-icon" data-target="window-clock" style="left: 4px; top: 4px;">
+              <div class="di-img di-clock"></div>
+              <div class="di-label">Clock</div>
+            </div>
+            <div class="desktop-icon" data-target="window-calendar" style="left: 4px; top: 42px;">
+              <div class="di-img di-cal"></div>
+              <div class="di-label">Calendar</div>
+            </div>
+            <div class="desktop-icon" data-target="window-terminal" style="left: 4px; top: 80px;">
+              <div class="di-img di-term"></div>
+              <div class="di-label">Terminal</div>
+            </div>
+            <div class="desktop-icon" data-target="window-aquarium" style="left: 4px; top: 118px;">
+              <div class="di-img di-aqua"></div>
+              <div class="di-label">Aquarium</div>
+            </div>
+            <div class="desktop-icon" data-target="widget-hourglass" style="left: 4px; top: 156px;">
+              <div class="di-img di-timer"></div>
+              <div class="di-label">Timer</div>
+            </div>
+            <div class="desktop-icon" data-target="widget-david" style="left: 4px; top: 194px;">
+              <div class="di-img di-david"></div>
+              <div class="di-label">David</div>
+            </div>
+            <div class="desktop-icon" data-target="window-minesweeper" style="left: 4px; top: 232px;">
+              <div class="di-img di-mine"></div>
+              <div class="di-label">Mines</div>
+            </div>
+            <div class="desktop-icon" data-target="window-maze" style="left: 4px; top: 270px;">
+              <div class="di-img di-maze"></div>
+              <div class="di-label">3D Maze</div>
+            </div>
+            <div class="desktop-icon" data-target="window-piano" style="right: 4px; top: 4px;">
+              <div class="di-img di-piano"></div>
+              <div class="di-label">Piano</div>
+            </div>
+          </div>
+
           <!-- Clock Window -->
           <div class="window" id="window-clock" style="left: 6px; top: 6px; width: 130px;">
             <div class="title-bar" data-window="window-clock">
@@ -43,12 +90,33 @@
 
           <!-- Hourglass Widget -->
           <div class="widget" id="widget-hourglass" data-title="Timer" style="left: 350px; top: 100px;">
+            <button class="widget-close">&times;</button>
             <canvas id="hourglass-widget" width="32" height="32"></canvas>
           </div>
 
           <!-- David Widget -->
           <div class="widget" id="widget-david" data-title="David" style="left: 346px; top: 192px;">
+            <button class="widget-close">&times;</button>
             <canvas id="david-widget" width="40" height="52"></canvas>
+          </div>
+
+          <!-- Terminal Window -->
+          <div class="window" id="window-terminal" style="left: 170px; top: 130px; width: 230px; height: 160px;">
+            <div class="title-bar" data-window="window-terminal">
+              <span class="title-bar-text">Terminal</span>
+              <div class="title-bar-controls">
+                <button class="btn-minimize" data-window="window-terminal">_</button>
+                <button class="btn-close" data-window="window-terminal">&times;</button>
+              </div>
+            </div>
+            <div class="window-body" id="terminal-body" tabindex="0">
+              <div id="terminal-output"></div>
+              <div id="terminal-input-line">
+                <span id="terminal-prompt"></span>
+                <span id="terminal-input"></span>
+                <span id="terminal-cursor">_</span>
+              </div>
+            </div>
           </div>
 
           <!-- Aquarium Window -->
@@ -64,17 +132,106 @@
               <canvas id="aquarium-canvas" width="100" height="60"></canvas>
             </div>
           </div>
+
+          <!-- Minesweeper Window (starts closed) -->
+          <div class="window closed" id="window-minesweeper" style="left: 140px; top: 40px; width: 120px;">
+            <div class="title-bar" data-window="window-minesweeper">
+              <span class="title-bar-text">Mines</span>
+              <div class="title-bar-controls">
+                <button class="btn-minimize" data-window="window-minesweeper">_</button>
+                <button class="btn-close" data-window="window-minesweeper">&times;</button>
+              </div>
+            </div>
+            <div class="window-body" id="minesweeper-body">
+              <canvas id="minesweeper-canvas" width="81" height="95"></canvas>
+            </div>
+          </div>
+
+          <!-- 3D Maze Window (starts closed) -->
+          <div class="window closed" id="window-maze" style="left: 100px; top: 30px; width: 210px;">
+            <div class="title-bar" data-window="window-maze">
+              <span class="title-bar-text">3D Maze</span>
+              <div class="title-bar-controls">
+                <button class="btn-minimize" data-window="window-maze">_</button>
+                <button class="btn-close" data-window="window-maze">&times;</button>
+              </div>
+            </div>
+            <div class="window-body" id="maze-body">
+              <canvas id="maze-canvas" width="120" height="90"></canvas>
+            </div>
+          </div>
+
+          <!-- Piano Window (starts closed) -->
+          <div class="window closed" id="window-piano" style="left: 120px; top: 80px; width: 190px;">
+            <div class="title-bar" data-window="window-piano">
+              <span class="title-bar-text">Piano</span>
+              <div class="title-bar-controls">
+                <button class="btn-minimize" data-window="window-piano">_</button>
+                <button class="btn-close" data-window="window-piano">&times;</button>
+              </div>
+            </div>
+            <div class="window-body" id="piano-body">
+              <div id="piano-keys"></div>
+            </div>
+          </div>
+
+          <!-- Desktop Pet -->
+          <canvas id="pet-canvas"></canvas>
+
+          <!-- About Window (starts closed) -->
+          <div class="window closed" id="window-about" style="left: 100px; top: 60px; width: 200px;">
+            <div class="title-bar" data-window="window-about">
+              <span class="title-bar-text">About</span>
+              <div class="title-bar-controls">
+                <button class="btn-close" data-window="window-about">&times;</button>
+              </div>
+            </div>
+            <div class="window-body" id="about-body">
+              <div id="about-logo">
+                <div id="about-logo-diamond"></div>
+                <div id="about-logo-letter">T</div>
+              </div>
+              <div id="about-info">
+                <div class="about-name">TinyOS</div>
+                <div class="about-ver">Version 1.0.0</div>
+                <div class="about-sep"></div>
+                <div class="about-row"><span class="about-key">Build</span><span class="about-val">2026.02</span></div>
+                <div class="about-row"><span class="about-key">Arch</span><span class="about-val">CSS/JS</span></div>
+                <div class="about-row"><span class="about-key">Display</span><span class="about-val">440 x 330</span></div>
+                <div class="about-row"><span class="about-key">Memory</span><span class="about-val">640 KB</span></div>
+                <div class="about-row"><span class="about-key">Apps</span><span class="about-val">8 installed</span></div>
+                <div class="about-row"><span class="about-key">Uptime</span><span class="about-val" id="about-uptime">0:00</span></div>
+              </div>
+            </div>
+          </div>
         </div>
 
         <!-- Start Menu -->
         <div id="start-menu" class="hidden">
-          <div class="start-menu-header">Theme</div>
-          <button class="start-menu-item active" data-theme="">Vapor</button>
-          <button class="start-menu-item" data-theme="japanese">和風</button>
-          <button class="start-menu-item" data-theme="wood">木目</button>
-          <button class="start-menu-item" data-theme="mac">Classic</button>
+          <div class="start-menu-header">Apps</div>
+          <button class="start-menu-item" data-open="window-clock"><span class="tb-icon tb-clock"></span>Clock</button>
+          <button class="start-menu-item" data-open="window-calendar"><span class="tb-icon tb-calendar"></span>Calendar</button>
+          <button class="start-menu-item" data-open="window-terminal"><span class="tb-icon tb-terminal"></span>Terminal</button>
+          <button class="start-menu-item" data-open="window-aquarium"><span class="tb-icon tb-aquarium"></span>Aquarium</button>
+          <button class="start-menu-item" data-open="widget-hourglass"><span class="tb-icon tb-hourglass"></span>Timer</button>
+          <button class="start-menu-item" data-open="widget-david"><span class="tb-icon tb-david"></span>David</button>
+          <button class="start-menu-item" data-open="window-minesweeper"><span class="tb-icon tb-minesweeper"></span>Mines</button>
+          <button class="start-menu-item" data-open="window-maze"><span class="tb-icon tb-maze"></span>3D Maze</button>
+          <button class="start-menu-item" data-open="window-piano"><span class="tb-icon tb-piano"></span>Piano</button>
+          <div class="start-menu-sep"></div>
+          <div class="start-menu-sub">
+            <button class="start-menu-item start-menu-parent">Theme <span class="sub-arrow">▸</span></button>
+            <div class="start-menu-submenu">
+              <button class="start-menu-item" data-theme="">Vapor</button>
+              <button class="start-menu-item" data-theme="japanese">Wafuu</button>
+              <button class="start-menu-item" data-theme="wood">Mokume</button>
+              <button class="start-menu-item active" data-theme="mac">Classic</button>
+              <button class="start-menu-item" data-theme="osx">Aqua</button>
+            </div>
+          </div>
           <div class="start-menu-sep"></div>
           <button class="start-menu-item" id="show-all-btn">Show All</button>
+          <button class="start-menu-item" data-open="window-about"><span class="tb-icon tb-about"></span>About PC</button>
         </div>
 
         <!-- Taskbar -->
@@ -84,6 +241,28 @@
           <div id="taskbar-clock"></div>
         </div>
 
+        <!-- Context Menu -->
+        <div id="context-menu" class="hidden">
+          <button class="ctx-item" data-action="show-all">Show All</button>
+          <button class="ctx-item" data-action="hide-all">Hide All</button>
+          <div class="ctx-sep"></div>
+          <div class="ctx-sub">
+            <button class="ctx-item ctx-parent">Theme <span class="sub-arrow">&#9656;</span></button>
+            <div class="ctx-submenu">
+              <button class="ctx-item" data-ctx-theme="">Vapor</button>
+              <button class="ctx-item" data-ctx-theme="japanese">Wafuu</button>
+              <button class="ctx-item" data-ctx-theme="wood">Mokume</button>
+              <button class="ctx-item" data-ctx-theme="mac">Classic</button>
+              <button class="ctx-item" data-ctx-theme="osx">Aqua</button>
+            </div>
+          </div>
+          <div class="ctx-sep"></div>
+          <button class="ctx-item" data-action="about">About PC</button>
+        </div>
+
+        <!-- Notification Container -->
+        <div id="notify-container"></div>
+
         <!-- Scanlines overlay -->
         <div id="scanlines"></div>
       </div>
@@ -91,11 +270,20 @@
     <div id="monitor-stand"></div>
   </div>
 
+  <script src="js/boot.js"></script>
   <script src="js/main.js"></script>
   <script src="js/clock.js"></script>
   <script src="js/calendar.js"></script>
   <script src="js/aquarium.js"></script>
   <script src="js/david.js"></script>
   <script src="js/hourglass.js"></script>
+  <script src="js/terminal.js"></script>
+  <script src="js/minesweeper.js"></script>
+  <script src="js/maze.js"></script>
+  <script src="js/wallpaper.js"></script>
+  <script src="js/piano.js"></script>
+  <script src="js/contextmenu.js"></script>
+  <script src="js/notify.js"></script>
+  <script src="js/pet.js"></script>
 </body>
 </html>

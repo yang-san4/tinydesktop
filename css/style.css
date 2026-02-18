@@ -8,7 +8,22 @@
 body {
   overflow: hidden;
   height: 100vh;
-  background: #0d0d1a;
+  background:
+    /* vignette */
+    radial-gradient(ellipse 70% 60% at 50% 50%, transparent 50%, rgba(0, 0, 0, 0.5)),
+    /* monitor glow on surface below */
+    radial-gradient(ellipse 30% 15% at 50% 62%, rgba(40, 40, 50, 0.3), transparent),
+    /* ambient light around monitor */
+    radial-gradient(ellipse 40% 35% at 50% 46%, #1a1a24, transparent),
+    /* wall + surface */
+    linear-gradient(180deg,
+      #06060a 0%,
+      #0e0e14 30%,
+      #141418 48%,
+      #18181e 52%,
+      #1c1c24 58%,
+      #161620 75%,
+      #0c0c12 100%);
   font-family: "Press Start 2P", monospace;
   font-size: 7px;
   user-select: none;
@@ -22,6 +37,8 @@ body {
   display: flex;
   flex-direction: column;
   align-items: center;
+  position: relative;
+  z-index: 1;
 }
 
 #monitor-bezel {
@@ -31,6 +48,9 @@ body {
   box-shadow:
     0 0 0 2px #6a6050,
     0 4px 20px rgba(0, 0, 0, 0.6),
+    0 0 80px rgba(80, 80, 100, 0.25),
+    0 0 160px rgba(60, 60, 80, 0.12),
+    0 20px 80px rgba(30, 30, 50, 0.2),
     inset 0 1px 0 rgba(255, 255, 255, 0.3);
 }
 
@@ -39,7 +59,9 @@ body {
   height: 14px;
   background: linear-gradient(180deg, #a89880, #8a7860);
   border-radius: 0 0 6px 6px;
-  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3);
+  box-shadow:
+    0 2px 6px rgba(0, 0, 0, 0.3),
+    0 10px 40px rgba(0, 0, 0, 0.4);
 }
 
 /* ===== Theme Variables (Default: Vaporwave) ===== */
@@ -112,6 +134,189 @@ body {
   overflow: hidden;
 }
 
+/* ===== Desktop Icons ===== */
+#desktop-icons {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 1;
+  pointer-events: none;
+}
+
+.desktop-icon {
+  position: absolute;
+  width: 36px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  cursor: default;
+  padding: 2px;
+  border: 1px solid transparent;
+  border-radius: 2px;
+  pointer-events: auto;
+}
+
+.desktop-icon.selected {
+  background: rgba(255, 255, 255, 0.1);
+  border-color: var(--accent);
+}
+
+.di-label {
+  font-family: "Press Start 2P", monospace;
+  font-size: 4px;
+  color: var(--text);
+  text-align: center;
+  text-shadow: 1px 1px 0 rgba(0, 0, 0, 0.8);
+  word-break: break-all;
+  line-height: 1.3;
+}
+
+.di-img {
+  width: 16px;
+  height: 14px;
+  border: 1px solid var(--accent);
+  background: var(--surface2);
+  position: relative;
+  image-rendering: pixelated;
+}
+
+/* Clock icon: rounded border, center dot */
+.di-clock {
+  border-radius: 50%;
+  width: 14px;
+  height: 14px;
+}
+
+.di-clock::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 2px;
+  height: 2px;
+  background: var(--accent2);
+  transform: translate(-50%, -50%);
+  box-shadow: 2px -3px 0 0 var(--accent3), 0 -3px 0 0 var(--accent3);
+}
+
+/* Calendar icon: top color bar + grid lines */
+.di-cal {
+  border-color: var(--accent);
+}
+
+.di-cal::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 3px;
+  background: var(--accent2);
+}
+
+.di-cal::after {
+  content: '';
+  position: absolute;
+  bottom: 1px;
+  left: 2px;
+  right: 2px;
+  height: 7px;
+  background:
+    linear-gradient(var(--text-dim) 0px, var(--text-dim) 1px, transparent 1px) 0 0 / 100% 3px,
+    linear-gradient(90deg, var(--text-dim) 0px, var(--text-dim) 1px, transparent 1px) 0 0 / 4px 100%;
+}
+
+/* Terminal icon: dark bg, >_ prompt */
+.di-term {
+  background: var(--body-deep);
+  border-color: var(--accent);
+}
+
+.di-term::after {
+  content: '>_';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  font-family: "Press Start 2P", monospace;
+  font-size: 4px;
+  color: var(--accent3);
+  line-height: 1;
+}
+
+/* Aquarium icon: blue gradient, fish dot */
+.di-aqua {
+  background: linear-gradient(180deg, #0a2a5a, #0a4a6a);
+  border-color: var(--accent);
+}
+
+.di-aqua::after {
+  content: '';
+  position: absolute;
+  top: 5px;
+  left: 4px;
+  width: 4px;
+  height: 2px;
+  background: #ff9040;
+  border-radius: 50%;
+  box-shadow: 5px 3px 0 0 #40e0d0;
+}
+
+/* Timer icon: accent3 border, hourglass shape */
+.di-timer {
+  border-color: var(--accent3);
+}
+
+.di-timer::after {
+  content: '';
+  position: absolute;
+  top: 2px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 6px;
+  height: 8px;
+  border-top: 2px solid var(--accent3);
+  border-bottom: 2px solid var(--accent3);
+  background: transparent;
+  clip-path: polygon(0 0, 100% 0, 60% 50%, 100% 100%, 0 100%, 40% 50%);
+  background: var(--accent3);
+  opacity: 0.5;
+}
+
+/* David icon: accent border, pillar silhouette */
+.di-david {
+  border-color: var(--accent);
+}
+
+.di-david::after {
+  content: '';
+  position: absolute;
+  top: 2px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 4px;
+  height: 10px;
+  background: var(--accent2);
+  opacity: 0.6;
+  border-radius: 1px 1px 0 0;
+  box-shadow: 0 -1px 0 0 var(--accent2);
+}
+
+#desktop-wallpaper {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 440px;
+  height: 308px;
+  image-rendering: pixelated;
+  image-rendering: crisp-edges;
+  pointer-events: none;
+  z-index: 0;
+}
+
 /* ===== Taskbar ===== */
 #taskbar {
   width: 440px;
@@ -159,7 +364,7 @@ body {
   height: 18px;
   min-width: 50px;
   max-width: 80px;
-  padding: 0 4px;
+  padding: 0 3px;
   font-family: "Press Start 2P", monospace;
   font-size: 5px;
   color: var(--text);
@@ -168,10 +373,77 @@ body {
   cursor: pointer;
   display: flex;
   align-items: center;
+  gap: 0;
   overflow: hidden;
   white-space: nowrap;
   text-overflow: ellipsis;
   line-height: 18px;
+}
+
+/* ===== Taskbar Icons ===== */
+.tb-icon {
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  margin-right: 2px;
+  flex-shrink: 0;
+  border: 1px solid var(--accent);
+  background: var(--surface2);
+  image-rendering: pixelated;
+  position: relative;
+}
+
+.tb-clock {
+  border-radius: 50%;
+  border-color: var(--accent);
+}
+
+.tb-calendar {
+  border-color: var(--accent);
+  background: linear-gradient(180deg, var(--accent2) 30%, var(--surface2) 30%);
+}
+
+.tb-terminal {
+  background: var(--body-deep);
+  border-color: var(--accent);
+}
+
+.tb-aquarium {
+  background: linear-gradient(180deg, #0a2a5a, #0a4a6a);
+  border-color: var(--accent);
+}
+
+.tb-hourglass {
+  border-color: var(--accent3);
+  background: var(--surface2);
+}
+
+.tb-david {
+  border-color: var(--accent);
+  background: var(--accent2);
+  opacity: 0.7;
+}
+
+.tb-minesweeper {
+  background: #c0c0c0;
+  border-color: #808080;
+}
+
+.tb-maze {
+  background:
+    linear-gradient(var(--text-dim) 0px, var(--text-dim) 1px, transparent 1px) 0 0 / 100% 3px,
+    linear-gradient(90deg, var(--text-dim) 0px, var(--text-dim) 1px, transparent 1px) 0 0 / 3px 100%,
+    var(--body-deep);
+  border-color: var(--accent);
+}
+
+.tb-about {
+  border-color: var(--accent2);
+  background: linear-gradient(135deg, var(--accent3), var(--accent));
+}
+
+#screen.theme-mac .tb-aquarium {
+  background: linear-gradient(180deg, #4a7a9a, #5a8aaa);
 }
 
 .taskbar-item:hover {
@@ -228,8 +500,45 @@ body {
   background: var(--item-border);
 }
 
-.start-menu-item {
+/* Submenu */
+.start-menu-sub {
+  position: relative;
+}
+
+.start-menu-parent {
+  justify-content: space-between;
+}
+
+.sub-arrow {
+  font-size: 5px;
+  opacity: 0.6;
+}
+
+.start-menu-submenu {
+  display: none;
+  position: absolute;
+  left: 100%;
+  top: -1px;
+  background: var(--bar-bg);
+  border: 1px solid var(--accent);
+  box-shadow: 2px 2px 0 rgba(0, 0, 0, 0.4);
+  min-width: 70px;
+  z-index: 1;
+}
+
+.start-menu-sub:hover > .start-menu-submenu {
   display: block;
+}
+
+.start-menu-sub:hover > .start-menu-parent {
+  background: var(--surface);
+  color: var(--accent2);
+}
+
+.start-menu-item {
+  display: flex;
+  align-items: center;
+  gap: 4px;
   width: 100%;
   padding: 4px 6px;
   font-family: "Press Start 2P", monospace;
@@ -261,11 +570,33 @@ body {
   display: flex;
   flex-direction: column;
   min-width: 80px;
+  overflow: hidden;
   image-rendering: pixelated;
 }
 
-.window.minimized {
+.window.minimized,
+.window.closed {
   display: none;
+}
+
+/* ===== Resize Grip (visual only) ===== */
+.window::after {
+  content: '';
+  position: absolute;
+  right: 1px;
+  bottom: 1px;
+  width: 6px;
+  height: 6px;
+  background:
+    linear-gradient(135deg,
+      transparent 50%,
+      var(--accent) 50%, var(--accent) 60%,
+      transparent 60%, transparent 75%,
+      var(--accent) 75%, var(--accent) 85%,
+      transparent 85%);
+  opacity: 0.5;
+  pointer-events: none;
+  z-index: 2;
 }
 
 /* ===== Title Bar ===== */
@@ -448,6 +779,89 @@ body {
   filter: brightness(1.2);
 }
 
+/* ===== About Window ===== */
+#about-body {
+  padding: 8px;
+  background: var(--body-bg);
+  display: flex;
+  gap: 8px;
+  align-items: flex-start;
+}
+
+#about-logo {
+  width: 40px;
+  height: 40px;
+  flex-shrink: 0;
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+#about-logo-diamond {
+  width: 26px;
+  height: 26px;
+  background: linear-gradient(135deg, var(--accent3), var(--accent2) 50%, var(--accent));
+  transform: rotate(45deg);
+  border: 1px solid var(--accent2);
+  box-shadow:
+    0 0 8px var(--shadow),
+    inset 0 0 6px rgba(255, 255, 255, 0.15);
+  position: absolute;
+}
+
+#about-logo-letter {
+  position: relative;
+  font-family: "Press Start 2P", monospace;
+  font-size: 10px;
+  color: var(--text-bright);
+  text-shadow: 0 0 6px var(--shadow), 1px 1px 0 rgba(0, 0, 0, 0.5);
+  z-index: 1;
+}
+
+#about-info {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.about-name {
+  font-family: "Press Start 2P", monospace;
+  font-size: 7px;
+  color: var(--accent2);
+  text-shadow: 0 0 6px var(--shadow);
+}
+
+.about-ver {
+  font-family: "Press Start 2P", monospace;
+  font-size: 5px;
+  color: var(--text-dim);
+  margin-bottom: 1px;
+}
+
+.about-sep {
+  height: 1px;
+  background: var(--item-border);
+  margin: 2px 0;
+}
+
+.about-row {
+  display: flex;
+  justify-content: space-between;
+  font-family: "Press Start 2P", monospace;
+  font-size: 5px;
+  line-height: 1.6;
+}
+
+.about-key {
+  color: var(--accent);
+}
+
+.about-val {
+  color: var(--text);
+}
+
 /* ===== Aquarium Widget ===== */
 #aquarium-body {
   padding: 0;
@@ -462,6 +876,54 @@ body {
   image-rendering: crisp-edges;
 }
 
+/* ===== Terminal Widget ===== */
+#terminal-body {
+  padding: 3px;
+  background: var(--body-deep);
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  cursor: text;
+  outline: none;
+}
+
+#terminal-output {
+  color: var(--accent3);
+  font-family: "Press Start 2P", monospace;
+  font-size: 5px;
+  line-height: 1.8;
+  word-break: break-all;
+  white-space: pre-wrap;
+}
+
+#terminal-input-line {
+  display: flex;
+  align-items: center;
+  font-family: "Press Start 2P", monospace;
+  font-size: 5px;
+  line-height: 1.8;
+}
+
+#terminal-prompt {
+  color: var(--accent2);
+  flex-shrink: 0;
+}
+
+#terminal-input {
+  color: var(--accent3);
+  white-space: pre;
+}
+
+#terminal-cursor {
+  color: var(--accent3);
+  animation: terminal-blink 500ms step-end infinite;
+}
+
+@keyframes terminal-blink {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0; }
+}
+
 /* ===== Desktop Widget (non-window draggable) ===== */
 .widget {
   position: absolute;
@@ -469,8 +931,43 @@ body {
   z-index: 5;
 }
 
-.widget.minimized {
+.widget.minimized,
+.widget.closed {
   display: none;
+}
+
+/* Widget close button - appears on hover */
+.widget-close {
+  position: absolute;
+  top: -4px;
+  right: -4px;
+  width: 10px;
+  height: 10px;
+  font-size: 7px;
+  line-height: 1;
+  padding: 0;
+  background: var(--surface);
+  border: 1px solid var(--accent);
+  color: var(--accent2);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: "Press Start 2P", monospace;
+  z-index: 1;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.15s;
+}
+
+.widget:hover .widget-close {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.widget-close:hover {
+  background: var(--accent2);
+  color: var(--text-bright);
 }
 
 /* ===== Hourglass Widget ===== */
@@ -496,10 +993,10 @@ body {
 }
 
 /* ========================================
-   THEME: 和風 (Japanese)
+   THEME: Wafuu (Japanese)
    ======================================== */
 #screen.theme-japanese {
-  --desktop-bg: linear-gradient(135deg, #0a0a20, #101828 50%, #0a1020);
+  --desktop-bg: linear-gradient(135deg, #141830, #1a2848 50%, #182840);
   --bar-bg: linear-gradient(180deg, #1a1028, #0a0818);
   --bar-border: #c8372d;
   --accent: #8a2020;
@@ -527,10 +1024,10 @@ body {
 }
 
 /* ========================================
-   THEME: 木目 (Wood)
+   THEME: Mokume (Wood)
    ======================================== */
 #screen.theme-wood {
-  --desktop-bg: linear-gradient(135deg, #1a1208, #201810 50%, #181008);
+  --desktop-bg: linear-gradient(135deg, #3a6830, #4a7838 50%, #2a5828);
   --bar-bg: linear-gradient(180deg, #3a2818, #2a1a10);
   --bar-border: #c8a050;
   --accent: #906828;
@@ -625,4 +1122,480 @@ body {
 
 #screen.theme-mac .calendar-table td.today {
   text-shadow: none;
+}
+
+#screen.theme-mac .desktop-icon.selected {
+  background: rgba(0, 0, 0, 0.12);
+}
+
+#screen.theme-mac .di-label {
+  text-shadow: 1px 1px 0 rgba(255, 255, 255, 0.6);
+}
+
+#screen.theme-mac .di-aqua {
+  background: linear-gradient(180deg, #4a7a9a, #5a8aaa);
+}
+
+/* ========================================
+   THEME: OS X (Aqua)
+   ======================================== */
+#screen.theme-osx {
+  --desktop-bg: linear-gradient(180deg, #3a6ea5, #6aa4d0 30%, #8ec4e8 60%, #5a94c0);
+  --bar-bg: linear-gradient(180deg, #e8eef4, #c8d4e0);
+  --bar-border: #8098b0;
+  --accent: #3478f6;
+  --accent2: #1a5ac7;
+  --accent3: #5ab4f0;
+  --surface: #d0d8e4;
+  --surface2: #dce4ee;
+  --body-bg: #fff;
+  --body-deep: #f0f4f8;
+  --title-bg: linear-gradient(180deg, #9cc0e8, #5a98d0, #4880b8);
+  --title-inactive: linear-gradient(180deg, #d0d4d8, #b8bcc0);
+  --text: #333;
+  --text-dim: #a0a8b4;
+  --text-bright: #fff;
+  --shadow: rgba(52, 120, 246, 0.15);
+  --today-bg: #3478f6;
+  --item-bg: linear-gradient(180deg, #dce4ee, #c8d4e0);
+  --item-active-bg: linear-gradient(180deg, #e8eef6, #d4dce8);
+  --item-border: #a0b0c0;
+  --btn-bg: linear-gradient(180deg, #e8f0f8, #c4d4e4);
+  --btn-hover: linear-gradient(180deg, #f0f6fc, #d0dcea);
+  --clock-bg: #fff;
+  --glow1: rgba(52, 120, 246, 0.06);
+  --glow2: rgba(90, 180, 240, 0.04);
+}
+
+#screen.theme-osx .window {
+  border-width: 1px;
+  border-color: #6888a8;
+  border-radius: 4px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+}
+
+#screen.theme-osx .title-bar {
+  border-bottom: 1px solid #4878a0;
+  border-radius: 3px 3px 0 0;
+}
+
+#screen.theme-osx .title-bar-text {
+  color: #fff;
+  text-shadow: 0 -1px 0 rgba(0, 0, 0, 0.4);
+}
+
+#screen.theme-osx .title-bar.inactive .title-bar-text {
+  color: #888;
+  text-shadow: none;
+}
+
+#screen.theme-osx .title-bar-controls .btn-close {
+  background: linear-gradient(180deg, #f5736e, #d94540);
+  border: 1px solid #b03030;
+  color: #6a0000;
+  border-radius: 50%;
+}
+
+#screen.theme-osx .title-bar-controls .btn-minimize {
+  background: linear-gradient(180deg, #f6c953, #dfa824);
+  border: 1px solid #b08818;
+  color: #6a5000;
+  border-radius: 50%;
+}
+
+#screen.theme-osx .title-bar-controls .btn-close:hover {
+  background: linear-gradient(180deg, #ff8a86, #e85550);
+  color: #400000;
+}
+
+#screen.theme-osx .title-bar-controls .btn-minimize:hover {
+  background: linear-gradient(180deg, #ffe070, #e8b830);
+  color: #4a3800;
+}
+
+#screen.theme-osx .title-bar.inactive .title-bar-controls button {
+  background: #c8c8c8;
+  border-color: #aaa;
+  color: #aaa;
+}
+
+#screen.theme-osx .window-body {
+  border-top: 1px solid #b0c4d8;
+}
+
+#screen.theme-osx .clock-time {
+  text-shadow: none;
+}
+
+#screen.theme-osx .calendar-table td.today {
+  text-shadow: none;
+}
+
+#screen.theme-osx .desktop-icon.selected {
+  background: rgba(52, 120, 246, 0.25);
+  border-color: #3478f6;
+}
+
+#screen.theme-osx .di-label {
+  color: #fff;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.7);
+}
+
+#screen.theme-osx .di-aqua {
+  background: linear-gradient(180deg, #2868a0, #3878b8);
+}
+
+#screen.theme-osx .tb-aquarium {
+  background: linear-gradient(180deg, #2868a0, #3878b8);
+}
+
+#screen.theme-osx .window::after {
+  background:
+    linear-gradient(135deg,
+      transparent 50%,
+      #8098b0 50%, #8098b0 60%,
+      transparent 60%, transparent 75%,
+      #8098b0 75%, #8098b0 85%,
+      transparent 85%);
+}
+
+/* ===== 3D Maze Icon ===== */
+.di-maze {
+  background:
+    linear-gradient(var(--text-dim) 0px, var(--text-dim) 1px, transparent 1px) 0 0 / 100% 4px,
+    linear-gradient(90deg, var(--text-dim) 0px, var(--text-dim) 1px, transparent 1px) 0 0 / 4px 100%,
+    var(--body-deep);
+  border-color: var(--accent);
+}
+
+.di-maze::after {
+  content: '3D';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  font-family: "Press Start 2P", monospace;
+  font-size: 4px;
+  color: var(--accent3);
+  line-height: 1;
+}
+
+/* ===== 3D Maze Window ===== */
+#maze-body {
+  padding: 0;
+  background: #000;
+  line-height: 0;
+}
+
+#maze-canvas {
+  display: block;
+  width: 100%;
+  image-rendering: pixelated;
+  image-rendering: crisp-edges;
+}
+
+/* ===== Minesweeper Icon ===== */
+.di-mine {
+  background:
+    linear-gradient(var(--text-dim) 0px, var(--text-dim) 1px, transparent 1px) 0 0 / 100% 5px,
+    linear-gradient(90deg, var(--text-dim) 0px, var(--text-dim) 1px, transparent 1px) 0 0 / 5px 100%,
+    var(--surface2);
+  border-color: var(--accent);
+}
+
+.di-mine::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 4px;
+  height: 4px;
+  background: var(--accent2);
+  border-radius: 50%;
+  transform: translate(-50%, -50%);
+}
+
+/* ===== Minesweeper Window ===== */
+#minesweeper-body {
+  padding: 0;
+  background: #c0c0c0;
+  line-height: 0;
+}
+
+#minesweeper-canvas {
+  display: block;
+  width: 100%;
+  image-rendering: pixelated;
+  image-rendering: crisp-edges;
+}
+
+/* ===== Boot Screen ===== */
+#boot-screen {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 440px;
+  height: 330px;
+  background: #0a0a0a;
+  z-index: 9500;
+  padding: 12px;
+  overflow: hidden;
+  font-family: "Press Start 2P", monospace;
+  font-size: 5px;
+  color: #a0a0a0;
+  line-height: 2;
+  transition: opacity 0.5s ease-out;
+}
+
+#boot-screen.boot-fade {
+  opacity: 0;
+  pointer-events: none;
+}
+
+.boot-output div {
+  white-space: pre;
+}
+
+.boot-progress {
+  width: 200px;
+  height: 8px;
+  border: 1px solid #606060;
+  margin: 4px 0;
+  background: #0a0a0a;
+}
+
+.boot-progress-fill {
+  height: 100%;
+  width: 0%;
+  background: #a0a0a0;
+  transition: width 0.08s linear;
+}
+
+/* ===== Piano Icon ===== */
+.di-piano {
+  background: var(--body-deep);
+  border-color: var(--accent);
+}
+
+.di-piano::after {
+  content: '';
+  position: absolute;
+  bottom: 1px;
+  left: 1px;
+  right: 1px;
+  height: 8px;
+  background:
+    repeating-linear-gradient(
+      90deg,
+      #fff 0px, #fff 3px,
+      #000 3px, #000 4px
+    );
+}
+
+/* ===== Piano Window ===== */
+#piano-body {
+  padding: 4px;
+  background: var(--body-deep);
+}
+
+#piano-keys {
+  display: flex;
+  position: relative;
+  height: 40px;
+  gap: 0;
+}
+
+.piano-key {
+  cursor: pointer;
+  border: 1px solid #444;
+}
+
+.piano-white {
+  width: 100%;
+  height: 40px;
+  background: linear-gradient(180deg, #f8f8f8, #e0e0e0);
+  flex: 1;
+  z-index: 0;
+}
+
+.piano-white:hover {
+  background: linear-gradient(180deg, #e8e8e8, #d0d0d0);
+}
+
+.piano-white.pressed {
+  background: linear-gradient(180deg, #c8c8d0, #b0b0c0);
+}
+
+.piano-black {
+  width: 10px;
+  height: 24px;
+  background: linear-gradient(180deg, #333, #111);
+  margin-left: -5px;
+  margin-right: -5px;
+  z-index: 1;
+  flex-shrink: 0;
+}
+
+.piano-black:hover {
+  background: linear-gradient(180deg, #444, #222);
+}
+
+.piano-black.pressed {
+  background: linear-gradient(180deg, #555, #333);
+}
+
+.tb-piano {
+  background:
+    repeating-linear-gradient(
+      90deg,
+      #fff 0px, #fff 2px,
+      #000 2px, #000 3px
+    );
+  border-color: var(--accent);
+}
+
+/* ===== Context Menu ===== */
+#context-menu {
+  position: absolute;
+  z-index: 9600;
+  background: var(--bar-bg);
+  border: 1px solid var(--accent);
+  box-shadow: 2px 2px 0 rgba(0, 0, 0, 0.4);
+  min-width: 90px;
+}
+
+#context-menu.hidden {
+  display: none;
+}
+
+.ctx-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  padding: 4px 6px;
+  font-family: "Press Start 2P", monospace;
+  font-size: 5px;
+  color: var(--text);
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  text-align: left;
+}
+
+.ctx-item:hover {
+  background: var(--surface);
+  color: var(--accent2);
+}
+
+.ctx-sep {
+  height: 1px;
+  background: var(--item-border);
+}
+
+.ctx-sub {
+  position: relative;
+}
+
+.ctx-parent {
+  justify-content: space-between;
+}
+
+.ctx-submenu {
+  display: none;
+  position: absolute;
+  left: 100%;
+  top: -1px;
+  background: var(--bar-bg);
+  border: 1px solid var(--accent);
+  box-shadow: 2px 2px 0 rgba(0, 0, 0, 0.4);
+  min-width: 70px;
+  z-index: 1;
+}
+
+.ctx-sub:hover > .ctx-submenu {
+  display: block;
+}
+
+.ctx-sub:hover > .ctx-parent {
+  background: var(--surface);
+  color: var(--accent2);
+}
+
+/* ===== Notifications ===== */
+#notify-container {
+  position: absolute;
+  bottom: 28px;
+  right: 4px;
+  z-index: 9300;
+  display: flex;
+  flex-direction: column-reverse;
+  gap: 3px;
+  pointer-events: none;
+}
+
+.notify-toast {
+  background: var(--bar-bg);
+  border: 1px solid var(--accent);
+  box-shadow: 2px 2px 0 rgba(0, 0, 0, 0.3);
+  padding: 4px 6px;
+  width: 120px;
+  pointer-events: auto;
+  opacity: 0;
+  transform: translateX(130px);
+  transition: transform 0.3s ease-out, opacity 0.3s ease-out;
+  position: relative;
+}
+
+.notify-toast.notify-show {
+  opacity: 1;
+  transform: translateX(0);
+}
+
+.notify-toast.notify-hide {
+  opacity: 0;
+  transform: translateX(130px);
+}
+
+.notify-title {
+  font-family: "Press Start 2P", monospace;
+  font-size: 5px;
+  color: var(--accent2);
+  margin-bottom: 2px;
+}
+
+.notify-body {
+  font-family: "Press Start 2P", monospace;
+  font-size: 4px;
+  color: var(--text);
+  line-height: 1.6;
+}
+
+.notify-close {
+  position: absolute;
+  top: 1px;
+  right: 2px;
+  background: none;
+  border: none;
+  color: var(--text-dim);
+  font-size: 7px;
+  cursor: pointer;
+  padding: 0;
+  line-height: 1;
+  font-family: "Press Start 2P", monospace;
+}
+
+.notify-close:hover {
+  color: var(--accent2);
+}
+
+/* ===== Desktop Pet ===== */
+#pet-canvas {
+  position: absolute;
+  width: 48px;
+  height: 42px;
+  image-rendering: pixelated;
+  image-rendering: crisp-edges;
+  pointer-events: none;
+  z-index: 8;
 }

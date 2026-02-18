@@ -111,4 +111,8 @@
   function update() { updateDigital(); drawAnalog(); }
   setInterval(update, 1000);
   update();
+
+  // Redraw immediately on theme change
+  new MutationObserver(function () { drawAnalog(); })
+    .observe(document.getElementById('screen'), { attributes: true, attributeFilter: ['class'] });
 })();
