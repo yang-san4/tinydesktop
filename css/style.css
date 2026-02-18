@@ -1589,6 +1589,133 @@ body {
   color: var(--accent2);
 }
 
+/* ===== Browser Icon ===== */
+.di-browser {
+  background: var(--body-deep);
+  border-color: var(--accent);
+  border-radius: 50%;
+  width: 14px;
+  height: 14px;
+}
+
+.di-browser::before {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 8px;
+  height: 8px;
+  border: 1px solid var(--accent3);
+  border-radius: 50%;
+  transform: translate(-50%, -50%);
+}
+
+.di-browser::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 10px;
+  height: 0;
+  border-top: 1px solid var(--accent3);
+  transform: translate(-50%, -50%);
+  box-shadow: 0 -3px 0 0 var(--accent3), 0 3px 0 0 var(--accent3);
+}
+
+.tb-browser {
+  border-color: var(--accent);
+  background: var(--body-deep);
+  border-radius: 50%;
+}
+
+/* ===== Browser Window ===== */
+#browser-body {
+  padding: 0;
+  background: var(--body-bg);
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
+}
+
+#browser-toolbar {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  padding: 3px;
+  background: var(--surface);
+  border-bottom: 1px solid var(--item-border);
+  flex-shrink: 0;
+}
+
+.browser-nav {
+  width: 14px;
+  height: 14px;
+  font-size: 6px;
+  line-height: 1;
+  padding: 0;
+  background: var(--btn-bg);
+  border: 1px solid var(--item-border);
+  color: var(--text);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.browser-nav:hover:not(:disabled) {
+  background: var(--btn-hover);
+  color: var(--accent2);
+}
+
+.browser-nav:disabled {
+  opacity: 0.3;
+  cursor: default;
+}
+
+#browser-url {
+  flex: 1;
+  height: 14px;
+  font-family: "Press Start 2P", monospace;
+  font-size: 4px;
+  padding: 0 4px;
+  border: 1px solid var(--item-border);
+  background: var(--body-bg);
+  color: var(--text);
+  outline: none;
+  min-width: 0;
+}
+
+#browser-url:focus {
+  border-color: var(--accent);
+}
+
+#browser-loading {
+  height: 2px;
+  background: var(--accent);
+  width: 0%;
+  display: none;
+  transition: width 0.06s linear;
+  flex-shrink: 0;
+}
+
+#browser-content {
+  flex: 1;
+  overflow-y: auto;
+  overflow-x: hidden;
+  font-family: "Press Start 2P", monospace;
+  font-size: 5px;
+  color: var(--text);
+  background: var(--body-deep);
+  line-height: 1.6;
+}
+
+#browser-content input[type="text"] {
+  font-family: "Press Start 2P", monospace;
+}
+
 /* ===== Desktop Pet ===== */
 #pet-canvas {
   position: absolute;

@@ -59,6 +59,10 @@
               <div class="di-img di-piano"></div>
               <div class="di-label">Piano</div>
             </div>
+            <div class="desktop-icon" data-target="window-browser" style="right: 4px; top: 42px;">
+              <div class="di-img di-browser"></div>
+              <div class="di-label">TinyWeb</div>
+            </div>
           </div>
 
           <!-- Clock Window -->
@@ -175,6 +179,27 @@
             </div>
           </div>
 
+          <!-- Browser Window (starts closed) -->
+          <div class="window closed" id="window-browser" style="left: 60px; top: 20px; width: 280px; height: 220px;">
+            <div class="title-bar" data-window="window-browser">
+              <span class="title-bar-text">TinyWeb</span>
+              <div class="title-bar-controls">
+                <button class="btn-minimize" data-window="window-browser">_</button>
+                <button class="btn-close" data-window="window-browser">&times;</button>
+              </div>
+            </div>
+            <div class="window-body" id="browser-body">
+              <div id="browser-toolbar">
+                <button id="browser-back" class="browser-nav" disabled>&#9664;</button>
+                <button id="browser-forward" class="browser-nav" disabled>&#9654;</button>
+                <input id="browser-url" type="text" value="tiny://home" spellcheck="false">
+                <button id="browser-go" class="browser-nav">&#10132;</button>
+              </div>
+              <div id="browser-loading"></div>
+              <div id="browser-content"></div>
+            </div>
+          </div>
+
           <!-- Desktop Pet -->
           <canvas id="pet-canvas"></canvas>
 
@@ -199,7 +224,7 @@
                 <div class="about-row"><span class="about-key">Arch</span><span class="about-val">CSS/JS</span></div>
                 <div class="about-row"><span class="about-key">Display</span><span class="about-val">440 x 330</span></div>
                 <div class="about-row"><span class="about-key">Memory</span><span class="about-val">640 KB</span></div>
-                <div class="about-row"><span class="about-key">Apps</span><span class="about-val">8 installed</span></div>
+                <div class="about-row"><span class="about-key">Apps</span><span class="about-val">9 installed</span></div>
                 <div class="about-row"><span class="about-key">Uptime</span><span class="about-val" id="about-uptime">0:00</span></div>
               </div>
             </div>
@@ -218,6 +243,7 @@
           <button class="start-menu-item" data-open="window-minesweeper"><span class="tb-icon tb-minesweeper"></span>Mines</button>
           <button class="start-menu-item" data-open="window-maze"><span class="tb-icon tb-maze"></span>3D Maze</button>
           <button class="start-menu-item" data-open="window-piano"><span class="tb-icon tb-piano"></span>Piano</button>
+          <button class="start-menu-item" data-open="window-browser"><span class="tb-icon tb-browser"></span>TinyWeb</button>
           <div class="start-menu-sep"></div>
           <div class="start-menu-sub">
             <button class="start-menu-item start-menu-parent">Theme <span class="sub-arrow">▸</span></button>
@@ -282,6 +308,7 @@
   <script src="js/maze.js"></script>
   <script src="js/wallpaper.js"></script>
   <script src="js/piano.js"></script>
+  <script src="js/browser.js"></script>
   <script src="js/contextmenu.js"></script>
   <script src="js/notify.js"></script>
   <script src="js/pet.js"></script>

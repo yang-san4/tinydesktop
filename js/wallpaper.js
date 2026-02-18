@@ -365,6 +365,140 @@
   }
 
   // ==================================================
+  //  VAPOR - Synthwave sunset, palm trees, retro grid
+  // ==================================================
+  function drawVapor() {
+    srand(808);
+
+    // Sky gradient (warm sunset → purple)
+    for (var y = 0; y < H; y++) {
+      var t = y / H;
+      var r, g, b;
+      if (t < 0.3) {
+        // Top: deep purple
+        r = Math.floor(30 + t * 80);
+        g = Math.floor(10 + t * 30);
+        b = Math.floor(60 + t * 100);
+      } else if (t < 0.5) {
+        // Mid: warm pink-orange
+        var mt = (t - 0.3) / 0.2;
+        r = Math.floor(54 + mt * 180);
+        g = Math.floor(19 + mt * 60);
+        b = Math.floor(90 - mt * 30);
+      } else {
+        // Below horizon: dark
+        var bt = (t - 0.5) / 0.5;
+        r = Math.floor(234 - bt * 210);
+        g = Math.floor(79 - bt * 65);
+        b = Math.floor(60 - bt * 40);
+      }
+      hline(0, y, W, 'rgb(' + r + ',' + g + ',' + b + ')');
+    }
+
+    // Sun (large, striped)
+    var sunCY = Math.floor(H * 0.42);
+    var sunR = 14;
+    for (var sy = -sunR; sy <= 0; sy++) {
+      var hw = Math.round(Math.sqrt(sunR * sunR - sy * sy));
+      // Horizontal stripe gaps for retro sun effect
+      var stripe = (sy % 3 === 0 && sy < -2);
+      if (!stripe) {
+        var st = (sy + sunR) / sunR;
+        var sr = Math.floor(255 - st * 30);
+        var sg = Math.floor(180 - st * 120);
+        var sb = Math.floor(60 + st * 60);
+        ctx.fillStyle = 'rgb(' + sr + ',' + sg + ',' + sb + ')';
+        ctx.fillRect(55 - hw, sunCY + sy, hw * 2 + 1, 1);
+      }
+    }
+    // Sun glow
+    ctx.fillStyle = 'rgba(255, 160, 80, 0.1)';
+    fillCircle(55, sunCY - 2, sunR + 4, 'rgba(255, 160, 80, 0.08)');
+
+    // Horizon line
+    hline(0, Math.floor(H * 0.5), W, '#ff6090');
+
+    // Retro grid (perspective, below horizon)
+    var horizonY = Math.floor(H * 0.5);
+    // Horizontal grid lines (converge toward horizon)
+    for (var gi = 1; gi <= 10; gi++) {
+      var gy = horizonY + Math.floor(gi * gi * 0.28);
+      if (gy >= H) break;
+      var alpha = 0.15 + gi * 0.04;
+      ctx.fillStyle = 'rgba(180, 80, 255,' + Math.min(alpha, 0.6) + ')';
+      ctx.fillRect(0, gy, W, 1);
+    }
+    // Vertical grid lines (converge to center)
+    var cx = Math.floor(W / 2);
+    for (var vi = -6; vi <= 6; vi++) {
+      for (var gy = horizonY + 1; gy < H; gy++) {
+        var depth = (gy - horizonY) / (H - horizonY);
+        var spread = vi * 12 * depth;
+        var gx = cx + Math.floor(spread);
+        if (gx >= 0 && gx < W) {
+          ctx.fillStyle = 'rgba(180, 80, 255,' + (0.1 + depth * 0.3) + ')';
+          ctx.fillRect(gx, gy, 1, 1);
+        }
+      }
+    }
+
+    // Palm tree 1 (left)
+    drawPalm(15, horizonY + 2, 28, '#1a0830');
+    // Palm tree 2 (right, taller)
+    drawPalm(88, horizonY + 4, 32, '#120625');
+    // Palm tree 3 (far left, small)
+    drawPalm(2, horizonY + 1, 18, '#200a38');
+
+    // Stars (upper sky only)
+    for (var i = 0; i < 20; i++) {
+      var sx = Math.floor(rand() * W);
+      var sy = Math.floor(rand() * (H * 0.3));
+      px(sx, sy, '#c0a0e0');
+    }
+  }
+
+  function drawPalm(baseX, baseY, height, color) {
+    // Trunk (curved)
+    for (var ty = 0; ty < height; ty++) {
+      var curve = Math.floor(Math.sin(ty * 0.08) * 3);
+      var tx = baseX + curve;
+      var tTop = baseY - height + ty;
+      if (tTop < 0) continue;
+      ctx.fillStyle = color;
+      ctx.fillRect(tx, tTop, 2, 1);
+    }
+    // Fronds
+    var topX = baseX + Math.floor(Math.sin(height * 0.08) * 3);
+    var topY = baseY - height;
+    var frondColor = color;
+    // Right fronds
+    for (var f = 0; f < 10; f++) {
+      var fx = topX + 2 + f;
+      var fy = topY + Math.floor(f * f * 0.08) - 1;
+      if (fx >= 0 && fx < 110 && fy >= 0) { ctx.fillStyle = frondColor; ctx.fillRect(fx, fy, 1, 1); }
+      if (fx >= 0 && fx < 110 && fy + 1 >= 0) { ctx.fillRect(fx, fy + 1, 1, 1); }
+    }
+    // Left fronds
+    for (var f = 0; f < 10; f++) {
+      var fx = topX - f;
+      var fy = topY + Math.floor(f * f * 0.08) - 1;
+      if (fx >= 0 && fx < 110 && fy >= 0) { ctx.fillStyle = frondColor; ctx.fillRect(fx, fy, 1, 1); }
+      if (fx >= 0 && fx < 110 && fy + 1 >= 0) { ctx.fillRect(fx, fy + 1, 1, 1); }
+    }
+    // Drooping fronds (longer)
+    for (var f = 0; f < 14; f++) {
+      var fx = topX + 2 + f;
+      var fy = topY + 1 + Math.floor(f * 0.6);
+      if (fx >= 0 && fx < 110 && fy >= 0) { ctx.fillStyle = frondColor; ctx.fillRect(fx, fy, 1, 1); }
+    }
+    for (var f = 0; f < 14; f++) {
+      var fx = topX - f;
+      var fy = topY + 1 + Math.floor(f * 0.6);
+      if (fx >= 0 && fx < 110 && fy >= 0) { ctx.fillStyle = frondColor; ctx.fillRect(fx, fy, 1, 1); }
+    }
+  }
+
+  // ==================================================
   //  Draw
   // ==================================================
   function getTheme() {
@@ -372,7 +506,8 @@
     if (scr.classList.contains('theme-japanese')) return 'japanese';
     if (scr.classList.contains('theme-wood')) return 'wood';
     if (scr.classList.contains('theme-osx')) return 'osx';
-    return '';
+    if (scr.classList.contains('theme-mac')) return 'mac';
+    return 'vapor';
   }
 
   function draw() {
@@ -384,8 +519,10 @@
       drawWood();
     } else if (theme === 'osx') {
       drawOSX();
+    } else if (theme === 'vapor') {
+      drawVapor();
     }
-    // Vapor and Mac: no wallpaper (gradient only via CSS)
+    // Mac: no wallpaper (solid color via CSS)
   }
 
   draw();
