@@ -2064,45 +2064,43 @@
     renderHUD(pal, dt);
   }
 
-  // ===== 27. Mobile Touch Controls =====
+  // ===== 27. Mobile Touch Controls (Twin-Stick) =====
   if (isMobileFps) {
     // Bypass pointer lock — touch input drives everything directly
     pointerLocked = true;
 
     var fpsBody = document.getElementById('fps-body');
 
-    // --- Controller panel below the canvas ---
-    var ctrl = document.createElement('div');
-    ctrl.style.cssText = 'display:flex;align-items:center;justify-content:space-between;' +
-      'background:#080810;border-top:1px solid rgba(0,255,160,0.2);padding:6px 8px;';
-
-    // Virtual joystick (left)
+    // --- Shared stick config ---
     var STICK_SIZE = 64;
     var KNOB_SIZE = 22;
     var STICK_MAX = STICK_SIZE / 2 - 2;
-    var STICK_DEAD = 10;
+    var STICK_DEAD = 8;
 
-    var stickZone = document.createElement('div');
-    stickZone.style.cssText = 'width:' + STICK_SIZE + 'px;height:' + STICK_SIZE + 'px;' +
-      'border:1px solid rgba(0,255,160,0.25);border-radius:50%;position:relative;flex-shrink:0;' +
-      'background:rgba(0,255,160,0.03);touch-action:none;';
+    function makeStick(borderColor, knobBg, knobBorder) {
+      var zone = document.createElement('div');
+      zone.style.cssText = 'width:' + STICK_SIZE + 'px;height:' + STICK_SIZE + 'px;' +
+        'border:1px solid ' + borderColor + ';border-radius:50%;position:relative;flex-shrink:0;' +
+        'background:rgba(0,0,0,0.3);touch-action:none;';
+      var knob = document.createElement('div');
+      knob.style.cssText = 'width:' + KNOB_SIZE + 'px;height:' + KNOB_SIZE + 'px;' +
+        'background:' + knobBg + ';border:1px solid ' + knobBorder + ';border-radius:50%;' +
+        'position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);pointer-events:none;';
+      zone.appendChild(knob);
+      return { zone: zone, knob: knob };
+    }
 
-    var stickKnob = document.createElement('div');
-    stickKnob.style.cssText = 'width:' + KNOB_SIZE + 'px;height:' + KNOB_SIZE + 'px;' +
-      'background:rgba(0,255,160,0.25);border:1px solid rgba(0,255,160,0.4);border-radius:50%;' +
-      'position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);pointer-events:none;';
-    stickZone.appendChild(stickKnob);
-    ctrl.appendChild(stickZone);
+    // Left stick (move) — green
+    var L = makeStick('rgba(0,255,160,0.25)', 'rgba(0,255,160,0.25)', 'rgba(0,255,160,0.4)');
+    // Right stick (look) — cyan
+    var R = makeStick('rgba(0,220,255,0.25)', 'rgba(0,220,255,0.25)', 'rgba(0,220,255,0.4)');
 
-    // Action buttons (right)
-    var btnGroup = document.createElement('div');
-    btnGroup.style.cssText = 'display:flex;gap:4px;flex-shrink:0;';
-
+    // Action buttons
     function makeBtn(text, bg, color, border) {
       var b = document.createElement('div');
       b.textContent = text;
       b.style.cssText = 'font-family:"Press Start 2P",monospace;font-size:5px;' +
-        'padding:10px 8px;touch-action:none;-webkit-user-select:none;user-select:none;' +
+        'padding:8px 6px;touch-action:none;-webkit-user-select:none;user-select:none;' +
         'border:1px solid ' + border + ';border-radius:2px;background:' + bg + ';color:' + color + ';';
       return b;
     }
@@ -2110,62 +2108,114 @@
     var fireBtn = makeBtn('FIRE', 'rgba(255,60,60,0.2)', '#ff3c3c', 'rgba(255,60,60,0.4)');
     var jumpBtn = makeBtn('JUMP', 'rgba(0,255,160,0.15)', '#00ffa0', 'rgba(0,255,160,0.3)');
     var dashBtn = makeBtn('DASH', 'rgba(0,220,255,0.15)', '#00dcff', 'rgba(0,220,255,0.3)');
-    btnGroup.appendChild(fireBtn);
-    btnGroup.appendChild(jumpBtn);
-    btnGroup.appendChild(dashBtn);
-    ctrl.appendChild(btnGroup);
 
+    // Layout: [L-Stick] [Buttons] [R-Stick]
+    var ctrl = document.createElement('div');
+    ctrl.style.cssText = 'display:flex;align-items:center;justify-content:space-between;' +
+      'background:#080810;border-top:1px solid rgba(0,255,160,0.15);padding:6px 8px;';
+
+    var btnGroup = document.createElement('div');
+    btnGroup.style.cssText = 'display:flex;flex-direction:column;gap:3px;align-items:center;';
+    btnGroup.appendChild(fireBtn);
+    var btnRow = document.createElement('div');
+    btnRow.style.cssText = 'display:flex;gap:3px;';
+    btnRow.appendChild(dashBtn);
+    btnRow.appendChild(jumpBtn);
+    btnGroup.appendChild(btnRow);
+
+    ctrl.appendChild(L.zone);
+    ctrl.appendChild(btnGroup);
+    ctrl.appendChild(R.zone);
     fpsBody.appendChild(ctrl);
 
-    // --- Joystick touch ---
-    var stickTouch = null;
-    var stickCX = 0, stickCY = 0;
+    // Prevent canvas touch from reaching main.js
+    canvas.style.touchAction = 'none';
+    canvas.addEventListener('touchstart', function (e) { e.preventDefault(); e.stopPropagation(); }, { passive: false });
+    canvas.addEventListener('touchmove', function (e) { e.preventDefault(); e.stopPropagation(); }, { passive: false });
+    canvas.addEventListener('touchend', function (e) { e.preventDefault(); e.stopPropagation(); }, { passive: false });
 
-    function updateStick(cx, cy) {
-      var dx = cx - stickCX;
-      var dy = cy - stickCY;
-      var dist = Math.sqrt(dx * dx + dy * dy);
-      if (dist > STICK_MAX) { dx = dx / dist * STICK_MAX; dy = dy / dist * STICK_MAX; }
-      stickKnob.style.transform = 'translate(calc(-50% + ' + dx + 'px),calc(-50% + ' + dy + 'px))';
-      keys['KeyW'] = dy < -STICK_DEAD;
-      keys['KeyS'] = dy > STICK_DEAD;
-      keys['KeyA'] = dx < -STICK_DEAD;
-      keys['KeyD'] = dx > STICK_DEAD;
-    }
+    // --- Generic stick touch logic ---
+    function stickHandler(stick, onUpdate, onEnd) {
+      var touchId = null;
+      var cx = 0, cy = 0;
 
-    function endStick() {
-      stickTouch = null;
-      keys['KeyW'] = keys['KeyS'] = keys['KeyA'] = keys['KeyD'] = false;
-      stickKnob.style.transform = 'translate(-50%,-50%)';
-    }
+      function update(tx, ty) {
+        var dx = tx - cx;
+        var dy = ty - cy;
+        var dist = Math.sqrt(dx * dx + dy * dy);
+        if (dist > STICK_MAX) { dx = dx / dist * STICK_MAX; dy = dy / dist * STICK_MAX; }
+        stick.knob.style.transform = 'translate(calc(-50% + ' + dx + 'px),calc(-50% + ' + dy + 'px))';
+        // Normalize to -1..1
+        var nx = dx / STICK_MAX;
+        var ny = dy / STICK_MAX;
+        onUpdate(nx, ny);
+      }
 
-    stickZone.addEventListener('touchstart', function (e) {
-      e.preventDefault(); e.stopPropagation();
-      if (stickTouch !== null) return;
-      var t = e.changedTouches[0];
-      var rect = stickZone.getBoundingClientRect();
-      stickCX = rect.left + rect.width / 2;
-      stickCY = rect.top + rect.height / 2;
-      stickTouch = t.identifier;
-      updateStick(t.clientX, t.clientY);
-    }, { passive: false });
+      function end() {
+        touchId = null;
+        stick.knob.style.transform = 'translate(-50%,-50%)';
+        onEnd();
+      }
 
-    stickZone.addEventListener('touchmove', function (e) {
-      e.preventDefault(); e.stopPropagation();
-      for (var i = 0; i < e.changedTouches.length; i++) {
-        if (e.changedTouches[i].identifier === stickTouch) {
-          updateStick(e.changedTouches[i].clientX, e.changedTouches[i].clientY);
+      stick.zone.addEventListener('touchstart', function (e) {
+        e.preventDefault(); e.stopPropagation();
+        if (touchId !== null) return;
+        var t = e.changedTouches[0];
+        var rect = stick.zone.getBoundingClientRect();
+        cx = rect.left + rect.width / 2;
+        cy = rect.top + rect.height / 2;
+        touchId = t.identifier;
+        update(t.clientX, t.clientY);
+      }, { passive: false });
+
+      stick.zone.addEventListener('touchmove', function (e) {
+        e.preventDefault(); e.stopPropagation();
+        for (var i = 0; i < e.changedTouches.length; i++) {
+          if (e.changedTouches[i].identifier === touchId) {
+            update(e.changedTouches[i].clientX, e.changedTouches[i].clientY);
+          }
         }
-      }
-    }, { passive: false });
+      }, { passive: false });
 
-    stickZone.addEventListener('touchend', function (e) {
-      e.preventDefault(); e.stopPropagation();
-      for (var i = 0; i < e.changedTouches.length; i++) {
-        if (e.changedTouches[i].identifier === stickTouch) endStick();
+      stick.zone.addEventListener('touchend', function (e) {
+        e.preventDefault(); e.stopPropagation();
+        for (var i = 0; i < e.changedTouches.length; i++) {
+          if (e.changedTouches[i].identifier === touchId) end();
+        }
+      }, { passive: false });
+
+      stick.zone.addEventListener('touchcancel', function (e) { e.stopPropagation(); end(); });
+    }
+
+    // Left stick → WASD movement
+    stickHandler(L, function (nx, ny) {
+      keys['KeyW'] = ny < -(STICK_DEAD / STICK_MAX);
+      keys['KeyS'] = ny > (STICK_DEAD / STICK_MAX);
+      keys['KeyA'] = nx < -(STICK_DEAD / STICK_MAX);
+      keys['KeyD'] = nx > (STICK_DEAD / STICK_MAX);
+    }, function () {
+      keys['KeyW'] = keys['KeyS'] = keys['KeyA'] = keys['KeyD'] = false;
+    });
+
+    // Right stick → camera look (analog: hold direction = continuous rotation)
+    var rStickNX = 0, rStickNY = 0;
+
+    stickHandler(R, function (nx, ny) {
+      rStickNX = nx;
+      rStickNY = ny;
+    }, function () {
+      rStickNX = 0;
+      rStickNY = 0;
+    });
+
+    // Feed right stick into mouseDX/DY every frame (30fps to match game loop)
+    var LOOK_SPEED = 4.5;
+    setInterval(function () {
+      if (rStickNX !== 0 || rStickNY !== 0) {
+        mouseDX += rStickNX * LOOK_SPEED;
+        mouseDY += rStickNY * LOOK_SPEED;
       }
-    }, { passive: false });
-    stickZone.addEventListener('touchcancel', function (e) { e.stopPropagation(); endStick(); });
+    }, 1000 / FPS_RATE);
 
     // --- Button touch ---
     function btnTouch(btn, action) {
@@ -2186,44 +2236,6 @@
     });
     btnTouch(dashBtn, function (down) {
       if (down) { keys['KeyE'] = true; setTimeout(function () { keys['KeyE'] = false; }, 100); }
-    });
-
-    // --- Canvas: touch to look ---
-    var lookTouch = null;
-    var lookLastX = 0, lookLastY = 0;
-    canvas.style.touchAction = 'none';
-
-    canvas.addEventListener('touchstart', function (e) {
-      e.preventDefault(); e.stopPropagation();
-      if (lookTouch !== null) return;
-      var t = e.changedTouches[0];
-      lookTouch = t.identifier;
-      lookLastX = t.clientX;
-      lookLastY = t.clientY;
-    }, { passive: false });
-
-    canvas.addEventListener('touchmove', function (e) {
-      e.preventDefault(); e.stopPropagation();
-      for (var i = 0; i < e.changedTouches.length; i++) {
-        var t = e.changedTouches[i];
-        if (t.identifier === lookTouch) {
-          mouseDX += (t.clientX - lookLastX) * 1.5;
-          mouseDY += (t.clientY - lookLastY) * 1.5;
-          lookLastX = t.clientX;
-          lookLastY = t.clientY;
-        }
-      }
-    }, { passive: false });
-
-    canvas.addEventListener('touchend', function (e) {
-      e.preventDefault(); e.stopPropagation();
-      for (var i = 0; i < e.changedTouches.length; i++) {
-        if (e.changedTouches[i].identifier === lookTouch) lookTouch = null;
-      }
-    }, { passive: false });
-
-    canvas.addEventListener('touchcancel', function (e) {
-      e.stopPropagation(); lookTouch = null;
     });
   }
 
