@@ -2105,6 +2105,7 @@
       return b;
     }
 
+    var fireBtn = makeBtn('FIRE', 'rgba(255,60,60,0.2)', '#ff3c3c', 'rgba(255,60,60,0.4)');
     var jumpBtn = makeBtn('JUMP', 'rgba(0,255,160,0.15)', '#00ffa0', 'rgba(0,255,160,0.3)');
     var dashBtn = makeBtn('DASH', 'rgba(0,220,255,0.15)', '#00dcff', 'rgba(0,220,255,0.3)');
 
@@ -2115,8 +2116,12 @@
 
     var btnGroup = document.createElement('div');
     btnGroup.style.cssText = 'display:flex;flex-direction:column;gap:3px;align-items:center;';
-    btnGroup.appendChild(jumpBtn);
-    btnGroup.appendChild(dashBtn);
+    btnGroup.appendChild(fireBtn);
+    var btnRow = document.createElement('div');
+    btnRow.style.cssText = 'display:flex;gap:3px;';
+    btnRow.appendChild(dashBtn);
+    btnRow.appendChild(jumpBtn);
+    btnGroup.appendChild(btnRow);
 
     ctrl.appendChild(L.zone);
     ctrl.appendChild(btnGroup);
@@ -2206,10 +2211,6 @@
     }, function () {
       rStickNX = 0;
       rStickNY = 0;
-    }, function () {
-      // Tap → single shot
-      mouseDown = true;
-      setTimeout(function () { mouseDown = false; }, 80);
     });
 
     // Feed right stick into mouseDX/DY every frame (30fps to match game loop)
@@ -2234,6 +2235,7 @@
       });
     }
 
+    btnTouch(fireBtn, function (down) { mouseDown = down; });
     btnTouch(jumpBtn, function (down) {
       if (down) { keys['Space'] = true; setTimeout(function () { keys['Space'] = false; }, 100); }
     });
