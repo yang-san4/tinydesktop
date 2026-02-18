@@ -2066,125 +2066,164 @@
 
   // ===== 27. Mobile Touch Controls =====
   if (isMobileFps) {
-    // Bypass pointer lock — feed touch input directly
+    // Bypass pointer lock — touch input drives everything directly
     pointerLocked = true;
 
     var fpsBody = document.getElementById('fps-body');
-    fpsBody.style.position = 'relative';
 
-    // Create JUMP & DASH buttons
-    var btnCSS = 'position:absolute;z-index:2;font-family:"Press Start 2P",monospace;font-size:5px;' +
-      'background:rgba(0,255,160,0.2);border:1px solid rgba(0,255,160,0.4);color:#00ffa0;' +
-      'padding:6px 8px;touch-action:none;-webkit-user-select:none;user-select:none;';
+    // --- Controller panel below the canvas ---
+    var ctrl = document.createElement('div');
+    ctrl.style.cssText = 'display:flex;align-items:center;justify-content:space-between;' +
+      'background:#080810;border-top:1px solid rgba(0,255,160,0.2);padding:6px 8px;';
 
-    var jumpBtn = document.createElement('div');
-    jumpBtn.textContent = 'JUMP';
-    jumpBtn.style.cssText = btnCSS + 'bottom:2px;right:2px;';
-    fpsBody.appendChild(jumpBtn);
+    // Virtual joystick (left)
+    var STICK_SIZE = 64;
+    var KNOB_SIZE = 22;
+    var STICK_MAX = STICK_SIZE / 2 - 2;
+    var STICK_DEAD = 10;
 
-    var dashBtn = document.createElement('div');
-    dashBtn.textContent = 'DASH';
-    dashBtn.style.cssText = btnCSS + 'bottom:2px;right:50px;';
-    fpsBody.appendChild(dashBtn);
+    var stickZone = document.createElement('div');
+    stickZone.style.cssText = 'width:' + STICK_SIZE + 'px;height:' + STICK_SIZE + 'px;' +
+      'border:1px solid rgba(0,255,160,0.25);border-radius:50%;position:relative;flex-shrink:0;' +
+      'background:rgba(0,255,160,0.03);touch-action:none;';
 
-    jumpBtn.addEventListener('touchstart', function (e) {
+    var stickKnob = document.createElement('div');
+    stickKnob.style.cssText = 'width:' + KNOB_SIZE + 'px;height:' + KNOB_SIZE + 'px;' +
+      'background:rgba(0,255,160,0.25);border:1px solid rgba(0,255,160,0.4);border-radius:50%;' +
+      'position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);pointer-events:none;';
+    stickZone.appendChild(stickKnob);
+    ctrl.appendChild(stickZone);
+
+    // Action buttons (right)
+    var btnGroup = document.createElement('div');
+    btnGroup.style.cssText = 'display:flex;gap:4px;flex-shrink:0;';
+
+    function makeBtn(text, bg, color, border) {
+      var b = document.createElement('div');
+      b.textContent = text;
+      b.style.cssText = 'font-family:"Press Start 2P",monospace;font-size:5px;' +
+        'padding:10px 8px;touch-action:none;-webkit-user-select:none;user-select:none;' +
+        'border:1px solid ' + border + ';border-radius:2px;background:' + bg + ';color:' + color + ';';
+      return b;
+    }
+
+    var fireBtn = makeBtn('FIRE', 'rgba(255,60,60,0.2)', '#ff3c3c', 'rgba(255,60,60,0.4)');
+    var jumpBtn = makeBtn('JUMP', 'rgba(0,255,160,0.15)', '#00ffa0', 'rgba(0,255,160,0.3)');
+    var dashBtn = makeBtn('DASH', 'rgba(0,220,255,0.15)', '#00dcff', 'rgba(0,220,255,0.3)');
+    btnGroup.appendChild(fireBtn);
+    btnGroup.appendChild(jumpBtn);
+    btnGroup.appendChild(dashBtn);
+    ctrl.appendChild(btnGroup);
+
+    fpsBody.appendChild(ctrl);
+
+    // --- Joystick touch ---
+    var stickTouch = null;
+    var stickCX = 0, stickCY = 0;
+
+    function updateStick(cx, cy) {
+      var dx = cx - stickCX;
+      var dy = cy - stickCY;
+      var dist = Math.sqrt(dx * dx + dy * dy);
+      if (dist > STICK_MAX) { dx = dx / dist * STICK_MAX; dy = dy / dist * STICK_MAX; }
+      stickKnob.style.transform = 'translate(calc(-50% + ' + dx + 'px),calc(-50% + ' + dy + 'px))';
+      keys['KeyW'] = dy < -STICK_DEAD;
+      keys['KeyS'] = dy > STICK_DEAD;
+      keys['KeyA'] = dx < -STICK_DEAD;
+      keys['KeyD'] = dx > STICK_DEAD;
+    }
+
+    function endStick() {
+      stickTouch = null;
+      keys['KeyW'] = keys['KeyS'] = keys['KeyA'] = keys['KeyD'] = false;
+      stickKnob.style.transform = 'translate(-50%,-50%)';
+    }
+
+    stickZone.addEventListener('touchstart', function (e) {
       e.preventDefault(); e.stopPropagation();
-      keys['Space'] = true;
-      setTimeout(function () { keys['Space'] = false; }, 100);
+      if (stickTouch !== null) return;
+      var t = e.changedTouches[0];
+      var rect = stickZone.getBoundingClientRect();
+      stickCX = rect.left + rect.width / 2;
+      stickCY = rect.top + rect.height / 2;
+      stickTouch = t.identifier;
+      updateStick(t.clientX, t.clientY);
     }, { passive: false });
-    jumpBtn.addEventListener('touchend', function (e) { e.preventDefault(); e.stopPropagation(); }, { passive: false });
 
-    dashBtn.addEventListener('touchstart', function (e) {
+    stickZone.addEventListener('touchmove', function (e) {
       e.preventDefault(); e.stopPropagation();
-      keys['KeyE'] = true;
-      setTimeout(function () { keys['KeyE'] = false; }, 100);
-    }, { passive: false });
-    dashBtn.addEventListener('touchend', function (e) { e.preventDefault(); e.stopPropagation(); }, { passive: false });
-
-    // Touch state
-    var fpsTouchMove = null;  // left half: virtual joystick
-    var fpsTouchLook = null;  // right half: look + tap-to-shoot
-
-    canvas.style.touchAction = 'none';
-
-    canvas.addEventListener('touchstart', function (e) {
-      e.preventDefault(); e.stopPropagation();
-      var rect = canvas.getBoundingClientRect();
-      var midX = rect.left + rect.width / 2;
-
       for (var i = 0; i < e.changedTouches.length; i++) {
-        var t = e.changedTouches[i];
-        if (t.clientX < midX && !fpsTouchMove) {
-          fpsTouchMove = { id: t.identifier, startX: t.clientX, startY: t.clientY };
-        } else if (t.clientX >= midX && !fpsTouchLook) {
-          fpsTouchLook = {
-            id: t.identifier,
-            lastX: t.clientX, lastY: t.clientY,
-            startX: t.clientX, startY: t.clientY,
-            moved: false
-          };
+        if (e.changedTouches[i].identifier === stickTouch) {
+          updateStick(e.changedTouches[i].clientX, e.changedTouches[i].clientY);
         }
       }
     }, { passive: false });
 
+    stickZone.addEventListener('touchend', function (e) {
+      e.preventDefault(); e.stopPropagation();
+      for (var i = 0; i < e.changedTouches.length; i++) {
+        if (e.changedTouches[i].identifier === stickTouch) endStick();
+      }
+    }, { passive: false });
+    stickZone.addEventListener('touchcancel', function (e) { e.stopPropagation(); endStick(); });
+
+    // --- Button touch ---
+    function btnTouch(btn, action) {
+      btn.addEventListener('touchstart', function (e) {
+        e.preventDefault(); e.stopPropagation(); action(true);
+      }, { passive: false });
+      btn.addEventListener('touchend', function (e) {
+        e.preventDefault(); e.stopPropagation(); action(false);
+      }, { passive: false });
+      btn.addEventListener('touchcancel', function (e) {
+        e.stopPropagation(); action(false);
+      });
+    }
+
+    btnTouch(fireBtn, function (down) { mouseDown = down; });
+    btnTouch(jumpBtn, function (down) {
+      if (down) { keys['Space'] = true; setTimeout(function () { keys['Space'] = false; }, 100); }
+    });
+    btnTouch(dashBtn, function (down) {
+      if (down) { keys['KeyE'] = true; setTimeout(function () { keys['KeyE'] = false; }, 100); }
+    });
+
+    // --- Canvas: touch to look ---
+    var lookTouch = null;
+    var lookLastX = 0, lookLastY = 0;
+    canvas.style.touchAction = 'none';
+
+    canvas.addEventListener('touchstart', function (e) {
+      e.preventDefault(); e.stopPropagation();
+      if (lookTouch !== null) return;
+      var t = e.changedTouches[0];
+      lookTouch = t.identifier;
+      lookLastX = t.clientX;
+      lookLastY = t.clientY;
+    }, { passive: false });
+
     canvas.addEventListener('touchmove', function (e) {
       e.preventDefault(); e.stopPropagation();
-
       for (var i = 0; i < e.changedTouches.length; i++) {
         var t = e.changedTouches[i];
-
-        // Left: virtual joystick → WASD
-        if (fpsTouchMove && t.identifier === fpsTouchMove.id) {
-          var dx = t.clientX - fpsTouchMove.startX;
-          var dy = t.clientY - fpsTouchMove.startY;
-          var dead = 12;
-          keys['KeyW'] = dy < -dead;
-          keys['KeyS'] = dy > dead;
-          keys['KeyA'] = dx < -dead;
-          keys['KeyD'] = dx > dead;
-        }
-
-        // Right: look (camera rotation)
-        if (fpsTouchLook && t.identifier === fpsTouchLook.id) {
-          mouseDX += (t.clientX - fpsTouchLook.lastX) * 1.5;
-          mouseDY += (t.clientY - fpsTouchLook.lastY) * 1.5;
-          fpsTouchLook.lastX = t.clientX;
-          fpsTouchLook.lastY = t.clientY;
-          if (Math.abs(t.clientX - fpsTouchLook.startX) > 8 ||
-              Math.abs(t.clientY - fpsTouchLook.startY) > 8) {
-            fpsTouchLook.moved = true;
-          }
+        if (t.identifier === lookTouch) {
+          mouseDX += (t.clientX - lookLastX) * 1.5;
+          mouseDY += (t.clientY - lookLastY) * 1.5;
+          lookLastX = t.clientX;
+          lookLastY = t.clientY;
         }
       }
     }, { passive: false });
 
     canvas.addEventListener('touchend', function (e) {
       e.preventDefault(); e.stopPropagation();
-
       for (var i = 0; i < e.changedTouches.length; i++) {
-        var t = e.changedTouches[i];
-
-        if (fpsTouchMove && t.identifier === fpsTouchMove.id) {
-          keys['KeyW'] = keys['KeyS'] = keys['KeyA'] = keys['KeyD'] = false;
-          fpsTouchMove = null;
-        }
-
-        if (fpsTouchLook && t.identifier === fpsTouchLook.id) {
-          // Quick tap without movement → shoot
-          if (!fpsTouchLook.moved) {
-            mouseDown = true;
-            setTimeout(function () { mouseDown = false; }, 80);
-          }
-          fpsTouchLook = null;
-        }
+        if (e.changedTouches[i].identifier === lookTouch) lookTouch = null;
       }
     }, { passive: false });
 
     canvas.addEventListener('touchcancel', function (e) {
-      e.stopPropagation();
-      keys['KeyW'] = keys['KeyS'] = keys['KeyA'] = keys['KeyD'] = false;
-      fpsTouchMove = null;
-      fpsTouchLook = null;
+      e.stopPropagation(); lookTouch = null;
     });
   }
 
