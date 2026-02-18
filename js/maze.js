@@ -538,6 +538,115 @@
     renderHUD(p, dt);
   }
 
+  // ----- Mobile Touch Controls (Twin-Stick) -----
+  var isMobileMaze = (('ontouchstart' in window) || navigator.maxTouchPoints > 0) &&
+                     (window.innerWidth <= 600 || matchMedia('(hover: none) and (pointer: coarse)').matches);
+
+  if (isMobileMaze) {
+    var mazeBody = document.getElementById('maze-body');
+
+    var STICK_SIZE = 64;
+    var KNOB_SIZE = 22;
+    var STICK_MAX = STICK_SIZE / 2 - 2;
+    var STICK_DEAD = 8;
+
+    function makeStick(borderColor, knobBg, knobBorder) {
+      var zone = document.createElement('div');
+      zone.style.cssText = 'width:' + STICK_SIZE + 'px;height:' + STICK_SIZE + 'px;' +
+        'border:1px solid ' + borderColor + ';border-radius:50%;position:relative;flex-shrink:0;' +
+        'background:rgba(0,0,0,0.3);touch-action:none;';
+      var knob = document.createElement('div');
+      knob.style.cssText = 'width:' + KNOB_SIZE + 'px;height:' + KNOB_SIZE + 'px;' +
+        'background:' + knobBg + ';border:1px solid ' + knobBorder + ';border-radius:50%;' +
+        'position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);pointer-events:none;';
+      zone.appendChild(knob);
+      return { zone: zone, knob: knob };
+    }
+
+    var mL = makeStick('rgba(0,255,160,0.25)', 'rgba(0,255,160,0.25)', 'rgba(0,255,160,0.4)');
+    var mR = makeStick('rgba(0,220,255,0.25)', 'rgba(0,220,255,0.25)', 'rgba(0,220,255,0.4)');
+
+    var ctrl = document.createElement('div');
+    ctrl.style.cssText = 'display:flex;align-items:center;justify-content:space-between;' +
+      'background:#080810;border-top:1px solid rgba(0,255,160,0.15);padding:6px 8px;';
+    ctrl.appendChild(mL.zone);
+    ctrl.appendChild(mR.zone);
+    mazeBody.appendChild(ctrl);
+
+    // Prevent canvas touch from reaching main.js
+    canvas.style.touchAction = 'none';
+    canvas.addEventListener('touchstart', function (e) { e.preventDefault(); e.stopPropagation(); }, { passive: false });
+    canvas.addEventListener('touchmove', function (e) { e.preventDefault(); e.stopPropagation(); }, { passive: false });
+    canvas.addEventListener('touchend', function (e) { e.preventDefault(); e.stopPropagation(); }, { passive: false });
+
+    function mazeStickHandler(stick, onUpdate, onEnd) {
+      var touchId = null;
+      var cx = 0, cy = 0;
+
+      function update(tx, ty) {
+        var dx = tx - cx;
+        var dy = ty - cy;
+        var dist = Math.sqrt(dx * dx + dy * dy);
+        if (dist > STICK_MAX) { dx = dx / dist * STICK_MAX; dy = dy / dist * STICK_MAX; }
+        stick.knob.style.transform = 'translate(calc(-50% + ' + dx + 'px),calc(-50% + ' + dy + 'px))';
+        onUpdate(dx / STICK_MAX, dy / STICK_MAX);
+      }
+
+      function end() {
+        touchId = null;
+        stick.knob.style.transform = 'translate(-50%,-50%)';
+        onEnd();
+      }
+
+      stick.zone.addEventListener('touchstart', function (e) {
+        e.preventDefault(); e.stopPropagation();
+        if (touchId !== null) return;
+        var t = e.changedTouches[0];
+        var rect = stick.zone.getBoundingClientRect();
+        cx = rect.left + rect.width / 2;
+        cy = rect.top + rect.height / 2;
+        touchId = t.identifier;
+        update(t.clientX, t.clientY);
+      }, { passive: false });
+
+      stick.zone.addEventListener('touchmove', function (e) {
+        e.preventDefault(); e.stopPropagation();
+        for (var i = 0; i < e.changedTouches.length; i++) {
+          if (e.changedTouches[i].identifier === touchId) {
+            update(e.changedTouches[i].clientX, e.changedTouches[i].clientY);
+          }
+        }
+      }, { passive: false });
+
+      stick.zone.addEventListener('touchend', function (e) {
+        e.preventDefault(); e.stopPropagation();
+        for (var i = 0; i < e.changedTouches.length; i++) {
+          if (e.changedTouches[i].identifier === touchId) end();
+        }
+      }, { passive: false });
+
+      stick.zone.addEventListener('touchcancel', function (e) { e.stopPropagation(); end(); });
+    }
+
+    var deadNorm = STICK_DEAD / STICK_MAX;
+
+    // Left stick: up/down = forward/back
+    mazeStickHandler(mL, function (nx, ny) {
+      keys['w'] = ny < -deadNorm;
+      keys['s'] = ny > deadNorm;
+    }, function () {
+      keys['w'] = keys['s'] = false;
+    });
+
+    // Right stick: left/right = turn
+    mazeStickHandler(mR, function (nx, ny) {
+      keys['a'] = nx < -deadNorm;
+      keys['d'] = nx > deadNorm;
+    }, function () {
+      keys['a'] = keys['d'] = false;
+    });
+  }
+
   // ----- Init -----
   generateMaze();
   resetPlayer();

@@ -1401,15 +1401,20 @@
     // Crosshair (cyberpunk style)
     var cx = (W / 2) | 0;
     var cy = (H / 2 + player.pitch) | 0;
+    // Dark outline for contrast
+    ctx.fillStyle = 'rgba(0,0,0,0.6)';
+    ctx.fillRect(cx - 6, cy - 1, 5, 3);
+    ctx.fillRect(cx + 2, cy - 1, 5, 3);
+    ctx.fillRect(cx - 1, cy - 6, 3, 5);
+    ctx.fillRect(cx - 1, cy + 2, 3, 5);
+    // Bright arms
     ctx.fillStyle = pal.crosshair;
-    ctx.fillRect(cx - 3, cy, 2, 1);
-    ctx.fillRect(cx + 2, cy, 2, 1);
-    ctx.fillRect(cx, cy - 3, 1, 2);
-    ctx.fillRect(cx, cy + 2, 1, 2);
+    ctx.fillRect(cx - 5, cy, 4, 1);
+    ctx.fillRect(cx + 2, cy, 4, 1);
+    ctx.fillRect(cx, cy - 5, 1, 4);
+    ctx.fillRect(cx, cy + 2, 1, 4);
     // Center dot
-    ctx.globalAlpha = 0.5;
     ctx.fillRect(cx, cy, 1, 1);
-    ctx.globalAlpha = 1;
 
     // Hit flash (red border)
     if (player.hitFlash > 0) {
