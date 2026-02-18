@@ -7,6 +7,10 @@
   var desktop = document.getElementById('desktop');
   var screen = document.getElementById('screen');
 
+  // Remember right-click position for actions like New Folder
+  var ctxClickX = 0;
+  var ctxClickY = 0;
+
   // Show context menu on right-click on desktop
   desktop.addEventListener('contextmenu', function (e) {
     // Only on empty desktop area
@@ -16,8 +20,11 @@
     e.preventDefault();
 
     var desktopRect = desktop.getBoundingClientRect();
-    var x = e.clientX - desktopRect.left;
-    var y = e.clientY - desktopRect.top;
+    ctxClickX = e.clientX - desktopRect.left;
+    ctxClickY = e.clientY - desktopRect.top;
+
+    var x = ctxClickX;
+    var y = ctxClickY;
 
     // Keep menu within bounds
     var mw = 100, mh = 120;
@@ -42,6 +49,14 @@
   });
 
   // ----- Menu actions -----
+
+  // New Folder
+  menu.querySelector('[data-action="new-folder"]').addEventListener('click', function () {
+    if (window._tinyFolder) {
+      window._tinyFolder.createFolder(ctxClickX, ctxClickY);
+    }
+    menu.classList.add('hidden');
+  });
 
   // Show All
   menu.querySelector('[data-action="show-all"]').addEventListener('click', function () {

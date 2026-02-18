@@ -1716,6 +1716,148 @@ body {
   font-family: "Press Start 2P", monospace;
 }
 
+/* ===== Folder Icon ===== */
+.di-folder {
+  background: var(--surface2);
+  border-color: var(--accent);
+  position: relative;
+}
+
+.di-folder::before {
+  content: '';
+  position: absolute;
+  top: -3px;
+  left: 0;
+  width: 7px;
+  height: 3px;
+  background: var(--accent);
+  border-radius: 1px 2px 0 0;
+}
+
+.di-folder::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  border-top: 2px solid var(--accent);
+}
+
+/* Hide icons that are inside a folder */
+.desktop-icon.in-folder {
+  display: none;
+}
+
+/* Highlight folder when dragging over it */
+.desktop-folder.folder-hover {
+  border-color: var(--accent3);
+  background: rgba(255, 255, 255, 0.08);
+  box-shadow: 0 0 6px var(--accent3);
+}
+
+.desktop-folder.folder-hover .di-folder {
+  border-color: var(--accent3);
+  box-shadow: 0 0 4px var(--accent3);
+}
+
+/* Highlight open folder window when dragging icon over it */
+.window.folder-window-hover {
+  border-color: var(--accent3);
+  box-shadow: 0 0 8px var(--accent3), 1px 1px 0 #000;
+}
+
+/* Folder window grid layout */
+.folder-body {
+  min-height: 60px;
+}
+
+.folder-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  padding: 4px;
+  min-height: 50px;
+  align-content: flex-start;
+}
+
+/* Items inside folder window */
+.folder-item {
+  width: 36px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  cursor: default;
+  padding: 2px;
+  border: 1px solid transparent;
+  border-radius: 2px;
+}
+
+.folder-item:hover {
+  background: rgba(255, 255, 255, 0.08);
+  border-color: var(--accent);
+}
+
+/* Empty folder message */
+.folder-empty {
+  width: 100%;
+  text-align: center;
+  padding: 16px 4px;
+  font-family: "Press Start 2P", monospace;
+  font-size: 5px;
+  color: var(--text-dim);
+}
+
+/* Drag ghost */
+.folder-drag-ghost {
+  pointer-events: none;
+  opacity: 0.7;
+}
+
+/* Taskbar icon for folder windows */
+.tb-folder-window {
+  border-color: var(--accent);
+  background: var(--surface2);
+}
+
+/* ===== GEKKO FPS Icon ===== */
+.di-fps {
+  background: #0a1018;
+  border-color: #00ffa0;
+}
+
+.di-fps::after {
+  content: '+';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  font-family: "Press Start 2P", monospace;
+  font-size: 7px;
+  color: #00ffa0;
+  line-height: 1;
+}
+
+.tb-fps {
+  background: #0a1018;
+  border-color: #00ffa0;
+}
+
+/* ===== FPS Arena Window ===== */
+#fps-body {
+  padding: 0;
+  background: #000;
+  line-height: 0;
+}
+
+#fps-canvas {
+  display: block;
+  width: 100%;
+  image-rendering: pixelated;
+  image-rendering: crisp-edges;
+}
+
 /* ===== Desktop Pet ===== */
 #pet-canvas {
   position: absolute;

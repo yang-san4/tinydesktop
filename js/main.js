@@ -114,6 +114,12 @@
     if (Math.abs(e.clientX - dragState.startX) > 2 ||
         Math.abs(e.clientY - dragState.startY) > 2) {
       dragState.moved = true;
+      // Move dragged desktop icon to #desktop so it renders above windows
+      if (dragState.el.classList.contains('desktop-icon') && !dragState.el._dragLifted) {
+        dragState.el._dragLifted = true;
+        dragState.el.style.zIndex = '10001';
+        document.getElementById('desktop').appendChild(dragState.el);
+      }
     }
 
     const desktop = document.getElementById('desktop');
@@ -130,6 +136,35 @@
     // Clear right/bottom positioning if set
     dragState.el.style.right = 'auto';
     dragState.el.style.bottom = 'auto';
+
+    // Folder hover highlight during icon drag
+    if (dragState.el.classList.contains('desktop-icon') &&
+        !dragState.el.classList.contains('desktop-folder') &&
+        dragState.moved) {
+      var dragRect = dragState.el.getBoundingClientRect();
+      // Highlight folder icons
+      document.querySelectorAll('.desktop-folder').forEach(function (f) {
+        var fRect = f.getBoundingClientRect();
+        var overlap = !(dragRect.right < fRect.left || dragRect.left > fRect.right ||
+                        dragRect.bottom < fRect.top || dragRect.top > fRect.bottom);
+        if (overlap) {
+          f.classList.add('folder-hover');
+        } else {
+          f.classList.remove('folder-hover');
+        }
+      });
+      // Highlight open folder windows
+      document.querySelectorAll('.window[id^="folder-window-"]:not(.closed):not(.minimized)').forEach(function (w) {
+        var wRect = w.getBoundingClientRect();
+        var overlap = !(dragRect.right < wRect.left || dragRect.left > wRect.right ||
+                        dragRect.bottom < wRect.top || dragRect.top > wRect.bottom);
+        if (overlap) {
+          w.classList.add('folder-window-hover');
+        } else {
+          w.classList.remove('folder-window-hover');
+        }
+      });
+    }
   }
 
   function onMouseUp() {
@@ -139,6 +174,56 @@
       return;
     }
     if (dragState) {
+      // Detect folder drop target before returning icon to #desktop-icons
+      var folderDropTarget = null;
+      if (dragState.moved &&
+          dragState.el.classList.contains('desktop-icon') &&
+          !dragState.el.classList.contains('desktop-folder') &&
+          window._tinyFolder) {
+        var dragRect = dragState.el.getBoundingClientRect();
+        // Check folder icons
+        document.querySelectorAll('.desktop-folder').forEach(function (f) {
+          if (folderDropTarget) return;
+          var fRect = f.getBoundingClientRect();
+          var overlap = !(dragRect.right < fRect.left || dragRect.left > fRect.right ||
+                          dragRect.bottom < fRect.top || dragRect.top > fRect.bottom);
+          if (overlap) folderDropTarget = { type: 'icon', folderId: f.dataset.folderId };
+        });
+        // Check open folder windows
+        if (!folderDropTarget) {
+          document.querySelectorAll('.window[id^="folder-window-"]:not(.closed):not(.minimized)').forEach(function (w) {
+            if (folderDropTarget) return;
+            var wRect = w.getBoundingClientRect();
+            var overlap = !(dragRect.right < wRect.left || dragRect.left > wRect.right ||
+                            dragRect.bottom < wRect.top || dragRect.top > wRect.bottom);
+            if (overlap) {
+              var fId = window._tinyFolder.folderIdFromWindow(w);
+              if (fId) folderDropTarget = { type: 'window', folderId: fId };
+            }
+          });
+        }
+      }
+
+      // Clear all folder hover highlights
+      document.querySelectorAll('.desktop-folder.folder-hover').forEach(function (f) {
+        f.classList.remove('folder-hover');
+      });
+      document.querySelectorAll('.folder-window-hover').forEach(function (w) {
+        w.classList.remove('folder-window-hover');
+      });
+
+      // Return icon to #desktop-icons first (so addToFolder can find it)
+      if (dragState.el._dragLifted) {
+        dragState.el.style.zIndex = '';
+        document.getElementById('desktop-icons').appendChild(dragState.el);
+        delete dragState.el._dragLifted;
+      }
+
+      // Now perform the folder add
+      if (folderDropTarget && window._tinyFolder) {
+        window._tinyFolder.addToFolder(folderDropTarget.folderId, dragState.el);
+      }
+
       if (dragState.moved) {
         window._tinyDesktopDragged = true;
         setTimeout(function () { window._tinyDesktopDragged = false; }, 0);
@@ -355,6 +440,9 @@
   document.addEventListener('tinydesktop-update', function () {
     updateTaskbarItems();
   });
+
+  // ----- Public API -----
+  window._tinyDesktop = { bringToFront: bringToFront };
 
   // ----- Init -----
   updateTaskbarItems();

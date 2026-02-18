@@ -55,18 +55,22 @@
               <div class="di-img di-maze"></div>
               <div class="di-label">3D Maze</div>
             </div>
-            <div class="desktop-icon" data-target="window-piano" style="right: 4px; top: 4px;">
+            <div class="desktop-icon" data-target="window-piano" style="left: 42px; top: 4px;">
               <div class="di-img di-piano"></div>
               <div class="di-label">Piano</div>
             </div>
-            <div class="desktop-icon" data-target="window-browser" style="right: 4px; top: 42px;">
+            <div class="desktop-icon" data-target="window-browser" style="left: 42px; top: 42px;">
               <div class="di-img di-browser"></div>
               <div class="di-label">TinyWeb</div>
+            </div>
+            <div class="desktop-icon" data-target="window-fps" style="left: 42px; top: 80px;">
+              <div class="di-img di-fps"></div>
+              <div class="di-label">GEKKO</div>
             </div>
           </div>
 
           <!-- Clock Window -->
-          <div class="window" id="window-clock" style="left: 6px; top: 6px; width: 130px;">
+          <div class="window closed" id="window-clock" style="left: 6px; top: 6px; width: 130px;">
             <div class="title-bar" data-window="window-clock">
               <span class="title-bar-text">Clock</span>
               <div class="title-bar-controls">
@@ -81,7 +85,7 @@
           </div>
 
           <!-- Calendar Window -->
-          <div class="window" id="window-calendar" style="left: 148px; top: 6px; width: 180px;">
+          <div class="window closed" id="window-calendar" style="left: 148px; top: 6px; width: 180px;">
             <div class="title-bar" data-window="window-calendar">
               <span class="title-bar-text">Calendar</span>
               <div class="title-bar-controls">
@@ -105,7 +109,7 @@
           </div>
 
           <!-- Terminal Window -->
-          <div class="window" id="window-terminal" style="left: 170px; top: 130px; width: 230px; height: 160px;">
+          <div class="window closed" id="window-terminal" style="left: 170px; top: 130px; width: 230px; height: 160px;">
             <div class="title-bar" data-window="window-terminal">
               <span class="title-bar-text">Terminal</span>
               <div class="title-bar-controls">
@@ -124,7 +128,7 @@
           </div>
 
           <!-- Aquarium Window -->
-          <div class="window" id="window-aquarium" style="left: 6px; top: 150px; width: 160px;">
+          <div class="window closed" id="window-aquarium" style="left: 6px; top: 150px; width: 160px;">
             <div class="title-bar" data-window="window-aquarium">
               <span class="title-bar-text">Aquarium</span>
               <div class="title-bar-controls">
@@ -179,6 +183,20 @@
             </div>
           </div>
 
+          <!-- FPS Arena Window (starts closed) -->
+          <div class="window closed" id="window-fps" style="left: 44px; top: 10px; width: 352px;">
+            <div class="title-bar" data-window="window-fps">
+              <span class="title-bar-text">GEKKO</span>
+              <div class="title-bar-controls">
+                <button class="btn-minimize" data-window="window-fps">_</button>
+                <button class="btn-close" data-window="window-fps">&times;</button>
+              </div>
+            </div>
+            <div class="window-body" id="fps-body">
+              <canvas id="fps-canvas" width="160" height="120"></canvas>
+            </div>
+          </div>
+
           <!-- Browser Window (starts closed) -->
           <div class="window closed" id="window-browser" style="left: 60px; top: 20px; width: 280px; height: 220px;">
             <div class="title-bar" data-window="window-browser">
@@ -224,7 +242,7 @@
                 <div class="about-row"><span class="about-key">Arch</span><span class="about-val">CSS/JS</span></div>
                 <div class="about-row"><span class="about-key">Display</span><span class="about-val">440 x 330</span></div>
                 <div class="about-row"><span class="about-key">Memory</span><span class="about-val">640 KB</span></div>
-                <div class="about-row"><span class="about-key">Apps</span><span class="about-val">9 installed</span></div>
+                <div class="about-row"><span class="about-key">Apps</span><span class="about-val">10 installed</span></div>
                 <div class="about-row"><span class="about-key">Uptime</span><span class="about-val" id="about-uptime">0:00</span></div>
               </div>
             </div>
@@ -244,6 +262,7 @@
           <button class="start-menu-item" data-open="window-maze"><span class="tb-icon tb-maze"></span>3D Maze</button>
           <button class="start-menu-item" data-open="window-piano"><span class="tb-icon tb-piano"></span>Piano</button>
           <button class="start-menu-item" data-open="window-browser"><span class="tb-icon tb-browser"></span>TinyWeb</button>
+          <button class="start-menu-item" data-open="window-fps"><span class="tb-icon tb-fps"></span>GEKKO</button>
           <div class="start-menu-sep"></div>
           <div class="start-menu-sub">
             <button class="start-menu-item start-menu-parent">Theme <span class="sub-arrow">▸</span></button>
@@ -269,6 +288,8 @@
 
         <!-- Context Menu -->
         <div id="context-menu" class="hidden">
+          <button class="ctx-item" data-action="new-folder">New Folder</button>
+          <div class="ctx-sep"></div>
           <button class="ctx-item" data-action="show-all">Show All</button>
           <button class="ctx-item" data-action="hide-all">Hide All</button>
           <div class="ctx-sep"></div>
@@ -297,6 +318,7 @@
   </div>
 
   <script src="js/boot.js"></script>
+  <script src="js/folder.js"></script>
   <script src="js/main.js"></script>
   <script src="js/clock.js"></script>
   <script src="js/calendar.js"></script>
@@ -306,6 +328,7 @@
   <script src="js/terminal.js"></script>
   <script src="js/minesweeper.js"></script>
   <script src="js/maze.js"></script>
+  <script src="js/fps.js"></script>
   <script src="js/wallpaper.js"></script>
   <script src="js/piano.js"></script>
   <script src="js/browser.js"></script>
