@@ -2213,7 +2213,7 @@
     });
 
     // Feed right stick into mouseDX/DY every frame (30fps to match game loop)
-    var LOOK_SPEED = 72;
+    var LOOK_SPEED = 36;
     setInterval(function () {
       if (rStickNX !== 0 || rStickNY !== 0) {
         mouseDX += rStickNX * LOOK_SPEED;
