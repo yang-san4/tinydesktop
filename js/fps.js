@@ -2100,7 +2100,7 @@
       var b = document.createElement('div');
       b.textContent = text;
       b.style.cssText = 'font-family:"Press Start 2P",monospace;font-size:5px;' +
-        'padding:8px 6px;touch-action:none;-webkit-user-select:none;user-select:none;' +
+        'padding:14px 12px;touch-action:none;-webkit-user-select:none;user-select:none;' +
         'border:1px solid ' + border + ';border-radius:2px;background:' + bg + ';color:' + color + ';';
       return b;
     }
@@ -2209,7 +2209,7 @@
     });
 
     // Feed right stick into mouseDX/DY every frame (30fps to match game loop)
-    var LOOK_SPEED = 4.5;
+    var LOOK_SPEED = 18;
     setInterval(function () {
       if (rStickNX !== 0 || rStickNY !== 0) {
         mouseDX += rStickNX * LOOK_SPEED;
