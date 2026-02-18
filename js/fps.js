@@ -236,6 +236,9 @@
   var mouseDown = false;
   var pointerLocked = false;
 
+  var isMobileFps = (('ontouchstart' in window) || navigator.maxTouchPoints > 0) &&
+                    (window.innerWidth <= 600 || matchMedia('(hover: none) and (pointer: coarse)').matches);
+
   var MOUSE_SENS_X = 0.003;
   var MOUSE_SENS_Y = 0.15;
 
@@ -259,6 +262,7 @@
   });
 
   document.addEventListener('pointerlockchange', function () {
+    if (isMobileFps) return; // mobile bypasses pointer lock
     pointerLocked = document.pointerLockElement === canvas;
     if (!pointerLocked) {
       mouseDown = false;
@@ -1434,8 +1438,8 @@
       ctx.restore();
     }
 
-    // ESC hint when locked
-    if (pointerLocked && gameState === 'playing') {
+    // ESC hint when locked (hide on mobile)
+    if (pointerLocked && gameState === 'playing' && !isMobileFps) {
       ctx.fillStyle = pal.hud;
       ctx.font = '4px "Press Start 2P"';
       ctx.textAlign = 'right';
@@ -2060,7 +2064,131 @@
     renderHUD(pal, dt);
   }
 
-  // ===== 27. Init =====
+  // ===== 27. Mobile Touch Controls =====
+  if (isMobileFps) {
+    // Bypass pointer lock — feed touch input directly
+    pointerLocked = true;
+
+    var fpsBody = document.getElementById('fps-body');
+    fpsBody.style.position = 'relative';
+
+    // Create JUMP & DASH buttons
+    var btnCSS = 'position:absolute;z-index:2;font-family:"Press Start 2P",monospace;font-size:5px;' +
+      'background:rgba(0,255,160,0.2);border:1px solid rgba(0,255,160,0.4);color:#00ffa0;' +
+      'padding:6px 8px;touch-action:none;-webkit-user-select:none;user-select:none;';
+
+    var jumpBtn = document.createElement('div');
+    jumpBtn.textContent = 'JUMP';
+    jumpBtn.style.cssText = btnCSS + 'bottom:2px;right:2px;';
+    fpsBody.appendChild(jumpBtn);
+
+    var dashBtn = document.createElement('div');
+    dashBtn.textContent = 'DASH';
+    dashBtn.style.cssText = btnCSS + 'bottom:2px;right:50px;';
+    fpsBody.appendChild(dashBtn);
+
+    jumpBtn.addEventListener('touchstart', function (e) {
+      e.preventDefault(); e.stopPropagation();
+      keys['Space'] = true;
+      setTimeout(function () { keys['Space'] = false; }, 100);
+    }, { passive: false });
+    jumpBtn.addEventListener('touchend', function (e) { e.preventDefault(); e.stopPropagation(); }, { passive: false });
+
+    dashBtn.addEventListener('touchstart', function (e) {
+      e.preventDefault(); e.stopPropagation();
+      keys['KeyE'] = true;
+      setTimeout(function () { keys['KeyE'] = false; }, 100);
+    }, { passive: false });
+    dashBtn.addEventListener('touchend', function (e) { e.preventDefault(); e.stopPropagation(); }, { passive: false });
+
+    // Touch state
+    var fpsTouchMove = null;  // left half: virtual joystick
+    var fpsTouchLook = null;  // right half: look + tap-to-shoot
+
+    canvas.style.touchAction = 'none';
+
+    canvas.addEventListener('touchstart', function (e) {
+      e.preventDefault(); e.stopPropagation();
+      var rect = canvas.getBoundingClientRect();
+      var midX = rect.left + rect.width / 2;
+
+      for (var i = 0; i < e.changedTouches.length; i++) {
+        var t = e.changedTouches[i];
+        if (t.clientX < midX && !fpsTouchMove) {
+          fpsTouchMove = { id: t.identifier, startX: t.clientX, startY: t.clientY };
+        } else if (t.clientX >= midX && !fpsTouchLook) {
+          fpsTouchLook = {
+            id: t.identifier,
+            lastX: t.clientX, lastY: t.clientY,
+            startX: t.clientX, startY: t.clientY,
+            moved: false
+          };
+        }
+      }
+    }, { passive: false });
+
+    canvas.addEventListener('touchmove', function (e) {
+      e.preventDefault(); e.stopPropagation();
+
+      for (var i = 0; i < e.changedTouches.length; i++) {
+        var t = e.changedTouches[i];
+
+        // Left: virtual joystick → WASD
+        if (fpsTouchMove && t.identifier === fpsTouchMove.id) {
+          var dx = t.clientX - fpsTouchMove.startX;
+          var dy = t.clientY - fpsTouchMove.startY;
+          var dead = 12;
+          keys['KeyW'] = dy < -dead;
+          keys['KeyS'] = dy > dead;
+          keys['KeyA'] = dx < -dead;
+          keys['KeyD'] = dx > dead;
+        }
+
+        // Right: look (camera rotation)
+        if (fpsTouchLook && t.identifier === fpsTouchLook.id) {
+          mouseDX += (t.clientX - fpsTouchLook.lastX) * 1.5;
+          mouseDY += (t.clientY - fpsTouchLook.lastY) * 1.5;
+          fpsTouchLook.lastX = t.clientX;
+          fpsTouchLook.lastY = t.clientY;
+          if (Math.abs(t.clientX - fpsTouchLook.startX) > 8 ||
+              Math.abs(t.clientY - fpsTouchLook.startY) > 8) {
+            fpsTouchLook.moved = true;
+          }
+        }
+      }
+    }, { passive: false });
+
+    canvas.addEventListener('touchend', function (e) {
+      e.preventDefault(); e.stopPropagation();
+
+      for (var i = 0; i < e.changedTouches.length; i++) {
+        var t = e.changedTouches[i];
+
+        if (fpsTouchMove && t.identifier === fpsTouchMove.id) {
+          keys['KeyW'] = keys['KeyS'] = keys['KeyA'] = keys['KeyD'] = false;
+          fpsTouchMove = null;
+        }
+
+        if (fpsTouchLook && t.identifier === fpsTouchLook.id) {
+          // Quick tap without movement → shoot
+          if (!fpsTouchLook.moved) {
+            mouseDown = true;
+            setTimeout(function () { mouseDown = false; }, 80);
+          }
+          fpsTouchLook = null;
+        }
+      }
+    }, { passive: false });
+
+    canvas.addEventListener('touchcancel', function (e) {
+      e.stopPropagation();
+      keys['KeyW'] = keys['KeyS'] = keys['KeyA'] = keys['KeyD'] = false;
+      fpsTouchMove = null;
+      fpsTouchLook = null;
+    });
+  }
+
+  // ===== 28. Init =====
   generateArena();
   spawnEnemies();
   requestAnimationFrame(loop);

@@ -12,12 +12,10 @@
   canvas.height = PH;
 
   var desktop = document.getElementById('desktop');
-  var DESK_W = 440;
-  var DESK_H = 306;
 
   // State
   var x = 200;
-  var y = DESK_H - 34; // walk along bottom, above taskbar
+  var y = 0; // updated dynamically each frame
   var dir = 1; // 1 = right, -1 = left
   var state = 'walk'; // walk, sit, sleep, lick
   var stateTimer = 0;
@@ -219,15 +217,22 @@
       frameTimer = 0;
     }
 
+    // Use live desktop dimensions
+    var dw = desktop.offsetWidth;
+    var dh = desktop.offsetHeight;
+
     // Movement
     if (state === 'walk') {
       x += dir * WALK_SPEED * (dt / 16.67);
 
       // Bounce at edges
       var margin = 40;
-      if (x > DESK_W - margin) { x = DESK_W - margin; dir = -1; }
+      if (x > dw - margin) { x = dw - margin; dir = -1; }
       if (x < margin) { x = margin; dir = 1; }
     }
+
+    // Stay just above taskbar
+    y = dh - 34;
 
     // Position canvas
     canvas.style.left = Math.round(x - PW * 1.5) + 'px';
