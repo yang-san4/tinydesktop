@@ -28,8 +28,10 @@
 
     // Keep menu within bounds
     var mw = 100, mh = 120;
-    if (x + mw > 440) x = 440 - mw;
-    if (y + mh > 306) y = 306 - mh;
+    var dw = desktop.offsetWidth;
+    var dh = desktop.offsetHeight;
+    if (x + mw > dw) x = dw - mw;
+    if (y + mh > dh) y = dh - mh;
 
     menu.style.left = x + 'px';
     menu.style.top = y + 'px';

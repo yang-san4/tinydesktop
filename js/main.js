@@ -444,65 +444,18 @@
   // ----- Public API -----
   window._tinyDesktop = { bringToFront: bringToFront };
 
-  // ===== Mobile: Scale Fit + Touch Events =====
+  // ===== Mobile: Touch Events =====
+  // CSS handles full-screen layout via media query.
+  // Touch events just forward to mouse events — no coordinate conversion needed.
   var isMobile = (('ontouchstart' in window) || navigator.maxTouchPoints > 0) &&
                  (window.innerWidth <= 600 || matchMedia('(hover: none) and (pointer: coarse)').matches);
 
-  var currentScale = 1;
-
-  function applyScale() {
-    var screen = document.getElementById('screen');
-    var sw = window.innerWidth / 440;
-    var sh = window.innerHeight / 330;
-    currentScale = Math.min(sw, sh);
-    screen.style.transformOrigin = 'top left';
-    screen.style.transform = 'scale(' + currentScale + ')';
-    // Prevent body scrollbar from scaled overflow
-    var monitor = document.getElementById('monitor');
-    monitor.style.width = (440 * currentScale) + 'px';
-    monitor.style.height = (330 * currentScale) + 'px';
-    monitor.style.overflow = 'hidden';
-  }
-
-  if (isMobile) {
-    applyScale();
-    window.addEventListener('resize', applyScale);
-  }
-
-  // Convert touch coordinates to internal 440x330 space
-  function touchToInternal(touch) {
-    var screen = document.getElementById('screen');
-    var rect = screen.getBoundingClientRect();
-    return {
-      clientX: (touch.clientX - rect.left) / currentScale,
-      clientY: (touch.clientY - rect.top) / currentScale
-    };
-  }
-
-  // Simulate a mouse event from touch coordinates
-  function dispatchMouseEvent(type, internalCoords, target, origEvent) {
-    var screen = document.getElementById('screen');
-    var rect = screen.getBoundingClientRect();
-    // Convert internal coords back to clientX/clientY that match the screen's BoundingClientRect
-    var clientX = internalCoords.clientX * currentScale + rect.left;
-    var clientY = internalCoords.clientY * currentScale + rect.top;
-    var evt = new MouseEvent(type, {
-      bubbles: true,
-      cancelable: true,
-      clientX: clientX,
-      clientY: clientY,
-      button: 0
-    });
-    target.dispatchEvent(evt);
-  }
-
-  // ----- Touch state -----
   var touchDragActive = false;
   var lastTapTime = 0;
   var lastTapTarget = null;
   var longPressTimer = null;
   var touchStartTarget = null;
-  var touchStartInternal = null;
+  var touchStartPos = null;
   var touchMoved = false;
 
   function clearLongPress() {
@@ -512,88 +465,74 @@
     }
   }
 
-  if (isMobile) {
-    var screen = document.getElementById('screen');
+  function fireMouse(type, cx, cy, target) {
+    target.dispatchEvent(new MouseEvent(type, {
+      bubbles: true, cancelable: true,
+      clientX: cx, clientY: cy, button: 0
+    }));
+  }
 
-    screen.addEventListener('touchstart', function (e) {
+  if (isMobile) {
+    var screenEl = document.getElementById('screen');
+
+    screenEl.addEventListener('touchstart', function (e) {
       if (e.touches.length !== 1) return;
-      var touch = e.touches[0];
-      var coords = touchToInternal(touch);
-      touchStartTarget = document.elementFromPoint(touch.clientX, touch.clientY);
-      touchStartInternal = coords;
+      var t = e.touches[0];
+      touchStartTarget = document.elementFromPoint(t.clientX, t.clientY);
+      touchStartPos = { x: t.clientX, y: t.clientY };
       touchMoved = false;
       touchDragActive = false;
 
-      // Start long press timer for context menu
+      // Long press → context menu
       clearLongPress();
       longPressTimer = setTimeout(function () {
         longPressTimer = null;
         if (!touchMoved && touchStartTarget) {
-          // Fire contextmenu event at the internal coordinates
-          var screen = document.getElementById('screen');
-          var rect = screen.getBoundingClientRect();
-          var clientX = coords.clientX * currentScale + rect.left;
-          var clientY = coords.clientY * currentScale + rect.top;
-          var ctxEvt = new MouseEvent('contextmenu', {
-            bubbles: true,
-            cancelable: true,
-            clientX: clientX,
-            clientY: clientY
-          });
-          touchStartTarget.dispatchEvent(ctxEvt);
+          touchStartTarget.dispatchEvent(new MouseEvent('contextmenu', {
+            bubbles: true, cancelable: true,
+            clientX: touchStartPos.x, clientY: touchStartPos.y
+          }));
           touchDragActive = false;
           touchStartTarget = null;
         }
       }, 500);
 
-      // Dispatch mousedown
-      dispatchMouseEvent('mousedown', coords, touchStartTarget, e);
+      fireMouse('mousedown', t.clientX, t.clientY, touchStartTarget);
       touchDragActive = true;
     }, { passive: false });
 
-    screen.addEventListener('touchmove', function (e) {
+    screenEl.addEventListener('touchmove', function (e) {
       if (e.touches.length !== 1) return;
-      e.preventDefault(); // Prevent scrolling
+      e.preventDefault();
+      var t = e.touches[0];
 
-      var touch = e.touches[0];
-      var coords = touchToInternal(touch);
-
-      // If moved more than a few pixels, cancel long press
-      if (touchStartInternal &&
-          (Math.abs(coords.clientX - touchStartInternal.clientX) > 4 ||
-           Math.abs(coords.clientY - touchStartInternal.clientY) > 4)) {
+      if (touchStartPos &&
+          (Math.abs(t.clientX - touchStartPos.x) > 4 ||
+           Math.abs(t.clientY - touchStartPos.y) > 4)) {
         touchMoved = true;
         clearLongPress();
       }
 
       if (touchDragActive) {
-        var target = touchStartTarget || document.elementFromPoint(touch.clientX, touch.clientY);
-        dispatchMouseEvent('mousemove', coords, target, e);
+        var target = touchStartTarget || document.elementFromPoint(t.clientX, t.clientY);
+        fireMouse('mousemove', t.clientX, t.clientY, target);
       }
     }, { passive: false });
 
-    screen.addEventListener('touchend', function (e) {
+    screenEl.addEventListener('touchend', function (e) {
       clearLongPress();
       if (!touchDragActive) return;
       touchDragActive = false;
 
-      var coords = touchStartInternal;
-      if (e.changedTouches.length > 0) {
-        coords = touchToInternal(e.changedTouches[0]);
-      }
+      var t = e.changedTouches[0];
+      var target = touchStartTarget || document.elementFromPoint(t.clientX, t.clientY);
+      fireMouse('mouseup', t.clientX, t.clientY, target);
 
-      var target = touchStartTarget || document.elementFromPoint(
-        e.changedTouches[0] ? e.changedTouches[0].clientX : 0,
-        e.changedTouches[0] ? e.changedTouches[0].clientY : 0
-      );
-
-      dispatchMouseEvent('mouseup', coords, target, e);
-
-      // Double-tap detection (only if not a drag)
+      // Double-tap detection
       if (!touchMoved) {
         var now = Date.now();
         if (now - lastTapTime < 300 && lastTapTarget === target) {
-          dispatchMouseEvent('dblclick', coords, target, e);
+          fireMouse('dblclick', t.clientX, t.clientY, target);
           lastTapTime = 0;
           lastTapTarget = null;
         } else {
@@ -603,14 +542,14 @@
       }
 
       touchStartTarget = null;
-      touchStartInternal = null;
+      touchStartPos = null;
     }, { passive: false });
 
-    screen.addEventListener('touchcancel', function () {
+    screenEl.addEventListener('touchcancel', function () {
       clearLongPress();
       touchDragActive = false;
       touchStartTarget = null;
-      touchStartInternal = null;
+      touchStartPos = null;
     });
   }
 
