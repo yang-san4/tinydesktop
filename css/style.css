@@ -1868,3 +1868,11 @@ body {
   pointer-events: none;
   z-index: 8;
 }
+
+/* ===== Mobile Responsive ===== */
+@media (max-width: 600px), (hover: none) and (pointer: coarse) {
+  body { background: #000; }
+  #monitor-bezel { padding: 0; background: none; border-radius: 0; box-shadow: none; }
+  #monitor-stand { display: none; }
+  #screen { border: none; border-radius: 0; box-shadow: none; }
+}
