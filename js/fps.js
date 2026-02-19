@@ -4,10 +4,190 @@
   // ===== 1. Boilerplate =====
   var canvas = document.getElementById('fps-canvas');
   var ctx = canvas.getContext('2d');
-  var W = canvas.width;   // 120
-  var H = canvas.height;  // 90
+  var W = canvas.width;   // 200
+  var H = canvas.height;  // 150
 
   ctx.imageSmoothingEnabled = false;
+
+  // ===== 1b. HTML Overlay for Sharp Text =====
+  var _fb = document.getElementById('fps-body');
+  var _cw = document.createElement('div');
+  _cw.style.cssText = 'position:relative;line-height:0;';
+  _fb.insertBefore(_cw, canvas);
+  _cw.appendChild(canvas);
+
+  var _ov = document.createElement('div');
+  _ov.style.cssText = 'position:absolute;top:0;left:0;width:100%;height:100%;pointer-events:none;overflow:hidden;z-index:10;';
+  _cw.appendChild(_ov);
+
+  var _ovCss = document.createElement('style');
+  _ovCss.textContent =
+    '@keyframes fpsPulse{0%,100%{opacity:.3}50%{opacity:1}}' +
+    '.fps-scr{position:absolute;top:0;left:0;width:100%;height:100%;display:none;' +
+    'flex-direction:column;align-items:center;justify-content:center;gap:0;' +
+    'font-family:"Press Start 2P",monospace;text-align:center;box-sizing:border-box;padding:4% 4%}' +
+    '.fps-scr.on{display:flex}' +
+    '.fps-blink{animation:fpsPulse 1.8s ease-in-out infinite}' +
+    // Key-cap style
+    '.fps-key{display:inline-block;border:1px solid rgba(0,255,160,0.45);' +
+    'padding:2px 4px;font-size:5px;border-radius:2px;margin:0 1px;' +
+    'background:rgba(0,255,160,0.06);color:#00ffa0;line-height:1;vertical-align:middle;' +
+    'font-family:"Press Start 2P",monospace}' +
+    // Stick icon (circle with inner knob)
+    '.fps-si{display:inline-block;width:14px;height:14px;border:1px solid;' +
+    'border-radius:50%;vertical-align:middle;position:relative;box-sizing:border-box}' +
+    '.fps-si::after{content:"";position:absolute;width:6px;height:6px;border-radius:50%;' +
+    'top:50%;left:50%;transform:translate(-50%,-50%);background:currentColor;opacity:.35}' +
+    // Button icon (small rounded rect)
+    '.fps-bi{display:inline-block;width:10px;height:10px;border-radius:3px;' +
+    'border:1px solid;vertical-align:middle;box-sizing:border-box}' +
+    // Control grid rows
+    '.fps-cr{display:flex;align-items:center;justify-content:center;gap:10px;margin:2px 0;flex-wrap:wrap}' +
+    '.fps-ci{display:flex;align-items:center;gap:4px;font-size:5px;color:#aaffcc;white-space:nowrap}' +
+    // Logo block
+    '.fps-logo{background:rgba(5,4,16,0.5);border-top:2px solid #00ffa0;border-bottom:2px solid #00ffa0;' +
+    'padding:12px 28px 10px;text-align:center}' +
+    '.fps-logo-t{font-size:18px;color:#00ffa0;text-shadow:0 0 8px #00ffa080,0 0 18px #00ffa040;letter-spacing:8px}' +
+    '.fps-logo-sep{width:50%;height:1px;background:linear-gradient(90deg,transparent,#00ffa060,transparent);margin:8px auto 6px}' +
+    '.fps-logo-sub{font-size:4px;color:#00dcff;letter-spacing:2px;opacity:.65}' +
+    // Gameplay HUD hint
+    '.fps-hud-hint{position:absolute;bottom:3px;right:4px;display:none;align-items:center;gap:3px;' +
+    'font-family:"Press Start 2P",monospace;font-size:4px;opacity:.3}' +
+    '.fps-hud-hint.on{display:flex}';
+  document.head.appendChild(_ovCss);
+
+  function _mkScr() { var d = document.createElement('div'); d.className = 'fps-scr'; _ov.appendChild(d); return d; }
+
+  // --- Control HTML generators ---
+  function _pcControls() {
+    return '<div class="fps-cr">' +
+      '<div class="fps-ci"><span class="fps-key">W</span><span class="fps-key">A</span><span class="fps-key">S</span><span class="fps-key">D</span> MOVE</div>' +
+      '<div class="fps-ci"><span class="fps-key" style="font-size:4px">MOUSE</span> LOOK</div>' +
+    '</div><div class="fps-cr">' +
+      '<div class="fps-ci"><span class="fps-key" style="font-size:4px">CLICK</span> FIRE</div>' +
+      '<div class="fps-ci"><span class="fps-key" style="font-size:4px">SPACE</span> JUMP</div>' +
+      '<div class="fps-ci"><span class="fps-key" style="font-size:4px">SHIFT</span> DASH</div>' +
+    '</div>';
+  }
+  function _pcControlsPause() {
+    return _pcControls() +
+    '<div class="fps-cr" style="margin-top:2px">' +
+      '<div class="fps-ci"><span class="fps-key" style="font-size:4px">ESC</span> PAUSE</div>' +
+    '</div>';
+  }
+  function _mobControls() {
+    return '<div class="fps-cr">' +
+      '<div class="fps-ci"><span class="fps-si" style="color:#00ffa0;border-color:rgba(0,255,160,0.45)"></span> MOVE</div>' +
+      '<div class="fps-ci"><span class="fps-si" style="color:#00dcff;border-color:rgba(0,220,255,0.45)"></span> LOOK</div>' +
+    '</div><div class="fps-cr">' +
+      '<div class="fps-ci"><span class="fps-bi" style="border-color:#ff3c3c;background:rgba(255,60,60,0.15)"></span> FIRE</div>' +
+      '<div class="fps-ci"><span class="fps-bi" style="border-color:#00ffa0;background:rgba(0,255,160,0.15)"></span> JUMP</div>' +
+      '<div class="fps-ci"><span class="fps-bi" style="border-color:#00dcff;background:rgba(0,220,255,0.15)"></span> DASH</div>' +
+    '</div>';
+  }
+
+  // --- Screens ---
+
+  // Title
+  var _scrTitle = _mkScr();
+  _scrTitle.innerHTML =
+    '<div class="fps-logo">' +
+      '<div class="fps-logo-t">GEKKO</div>' +
+      '<div class="fps-logo-sep"></div>' +
+      '<div class="fps-logo-sub">CYBERPUNK FROG ROBOT</div>' +
+    '</div>' +
+    '<div style="flex:1 0 14px;max-height:28px"></div>' +
+    '<div class="fps-blink" style="font-size:8px;color:#fff"></div>' +
+    '<div style="flex:1 0 10px;max-height:20px"></div>' +
+    '<div style="opacity:.6"></div>';
+  var _titlePrompt = _scrTitle.children[2];
+  var _titleCtrls = _scrTitle.children[4];
+
+  // Pause
+  var _scrPause = _mkScr();
+  _scrPause.innerHTML =
+    '<div style="font-size:14px;color:#00ffa0;text-shadow:0 0 6px #00ffa080">PAUSED</div>' +
+    '<div class="fps-blink" style="font-size:7px;color:#fff;margin:14px 0 20px"></div>' +
+    '<div style="opacity:.55"></div>';
+  var _pausePrompt = _scrPause.children[1];
+  var _pauseCtrls = _scrPause.children[2];
+
+  // Win
+  var _scrWin = _mkScr();
+  _scrWin.innerHTML =
+    '<div style="font-size:16px;color:#00ffa0;text-shadow:0 0 10px #00ffa0,0 0 20px #00ffa060">YOU WIN!</div>' +
+    '<div class="fps-blink" style="font-size:7px;color:#fff;margin-top:16px"></div>';
+  var _winPrompt = _scrWin.children[1];
+
+  // Game Over
+  var _scrDead = _mkScr();
+  _scrDead.innerHTML =
+    '<div style="font-size:14px;color:#ff3c3c;text-shadow:0 0 10px #ff3c3c80">GAME OVER</div>' +
+    '<div class="fps-blink" style="font-size:7px;color:#fff;margin-top:16px"></div>';
+  var _deadPrompt = _scrDead.children[1];
+
+  // Gameplay HUD hint (ESC: PAUSE) — independent of screen overlays
+  var _hudHint = document.createElement('div');
+  _hudHint.className = 'fps-hud-hint';
+  _hudHint.innerHTML = '<span class="fps-key" style="font-size:4px;padding:1px 3px">ESC</span><span style="color:#aaffcc">PAUSE</span>';
+  _ov.appendChild(_hudHint);
+
+  // --- Overlay state management ---
+  var _ovActive = '';
+  function updateOverlay() {
+    var isPaused = gameState === 'playing' && !pointerLocked && !isMobileFps;
+    var scr = 'none';
+    if (gameState === 'title') scr = 'title';
+    else if (isPaused) scr = 'pause';
+    else if (gameState === 'win') scr = 'win';
+    else if (gameState === 'gameover') scr = 'dead';
+
+    // ESC hint: visible during active gameplay on PC
+    var showHint = gameState === 'playing' && pointerLocked && !isMobileFps;
+    _hudHint.className = 'fps-hud-hint' + (showHint ? ' on' : '');
+
+    if (scr === _ovActive) return;
+    _ovActive = scr;
+    _scrTitle.className = 'fps-scr' + (scr === 'title' ? ' on' : '');
+    _scrPause.className = 'fps-scr' + (scr === 'pause' ? ' on' : '');
+    _scrWin.className = 'fps-scr' + (scr === 'win' ? ' on' : '');
+    _scrDead.className = 'fps-scr' + (scr === 'dead' ? ' on' : '');
+    var mob = isMobileFps;
+    if (scr === 'title') {
+      _titlePrompt.textContent = mob ? 'TAP TO START' : 'CLICK TO START';
+      _titleCtrls.innerHTML = mob ? _mobControls() : _pcControls();
+    }
+    if (scr === 'pause') {
+      _pausePrompt.textContent = 'CLICK TO RESUME';
+      _pauseCtrls.innerHTML = _pcControlsPause();
+    }
+    if (scr === 'win') { _winPrompt.textContent = ''; _winPrompt.style.display = 'none'; }
+    if (scr === 'dead') { _deadPrompt.textContent = ''; _deadPrompt.style.display = 'none'; }
+  }
+
+  function updateOverlayPrompts() {
+    if (gameState === 'win' && stateTimer <= 0 && _winPrompt.style.display === 'none') {
+      _winPrompt.textContent = isMobileFps ? 'TAP TO CONTINUE' : 'CLICK TO CONTINUE';
+      _winPrompt.style.display = '';
+    }
+    if (gameState === 'gameover' && stateTimer <= 0 && _deadPrompt.style.display === 'none') {
+      _deadPrompt.textContent = isMobileFps ? 'TAP TO CONTINUE' : 'CLICK TO CONTINUE';
+      _deadPrompt.style.display = '';
+    }
+  }
+
+  // ===== 1c. Pixel Art HUD Icons =====
+  var ICON_HEART = [[1,0],[3,0],[0,1],[1,1],[2,1],[3,1],[4,1],[1,2],[2,2],[3,2],[2,3]];
+  var ICON_SKULL = [[1,0],[2,0],[3,0],[0,1],[1,1],[2,1],[3,1],[4,1],[0,2],[2,2],[4,2],[0,3],[1,3],[2,3],[3,3],[4,3],[1,4],[3,4]];
+  var ICON_BOLT = [[1,0],[2,0],[1,1],[0,2],[1,2],[2,2],[1,3],[0,4],[1,4]];
+  var ICON_ARROW_UP = [[2,0],[1,1],[2,1],[3,1],[0,2],[1,2],[2,2],[3,2],[4,2]];
+
+  function drawIcon(icon, x, y, color) {
+    ctx.fillStyle = color;
+    for (var i = 0; i < icon.length; i++) {
+      ctx.fillRect(x + icon[i][0], y + icon[i][1], 1, 1);
+    }
+  }
 
   // ===== 2. Constants & Config =====
   var FOV = Math.PI / 3;
@@ -115,7 +295,7 @@
       }
     }
 
-    // Outer walls (tall)
+    // Outer boundary walls (tall)
     for (var i = 0; i < S; i++) {
       map[0][i] = map[E][i] = map[i][0] = map[i][E] = 1;
       mapColor[0][i] = mapColor[E][i] = mapColor[i][0] = mapColor[i][E] = 0;
@@ -133,9 +313,7 @@
       }
     }
 
-    // --- Safe spawn alcove (bottom-left corner) ---
-    // L-shaped walls at (3, E-4) to (3, E-1) and (1, E-4) to (3, E-4)
-    // This creates a pocket the player spawns in, open only toward x+
+    // Spawn alcove (L-shaped walls protecting player start at 1.5, 18.5)
     var spawnWalls = [
       [E-4, 1], [E-4, 2], [E-4, 3],  // horizontal wall
       [E-3, 3], [E-2, 3]              // vertical wall
@@ -147,46 +325,41 @@
       mapHeight[p[0]][p[1]] = 1.5;
     }
 
-    // Cover walls - outer ring (floor=0 area, d>=7)
-    var outerWalls = [
-      [2,2],[2,E-2],[E-2,2],[E-2,E-2],
-      [1,C],[E-1,C],[C,1],[C,E-1],
-      [2,7],[2,E-7],[E-2,7],[E-2,E-7],
-      [7,2],[E-7,2],[7,E-2],[E-7,E-2]
-    ];
-    for (var i = 0; i < outerWalls.length; i++) {
-      var p = outerWalls[i];
-      if (map[p[0]][p[1]]) continue; // skip if already set
-      map[p[0]][p[1]] = 1;
-      mapColor[p[0]][p[1]] = 1 + ((hash(i * 37 + 11) * 5) | 0);
-    }
+    // === Rectangular building blocks ===
+    // Format: [row1, col1, row2, col2, wallHeight, colorBase]
+    // Each building is a multi-cell rectangle placed entirely within one floor ring.
+    var buildings = [
+      // --- Outer ring (floor=0, d>=7) — sparse for open movement ---
+      [2, 2, 3, 3, 1.8, 1],       // NW corner
+      [1, 17, 2, 18, 1.6, 2],     // NE corner
+      [17, 5, 18, 6, 1.8, 3],     // SW area
+      [17, 18, 18, 19, 1.6, 1],   // SE corner
+      [1, 9, 2, 11, 2.0, 2],      // N center
+      [18, 9, 19, 11, 2.0, 3],    // S center
 
-    // Cover walls - middle ring (floor=0.4 area, d=4-6)
-    var midWalls = [
-      [5,5],[5,E-5],[E-5,5],[E-5,E-5],
-      [4,C],[E-4,C],[C,4],[C,E-4],
-      [5,8],[5,E-8],[E-5,8],[E-5,E-8],
-      [8,5],[E-8,5],[8,E-5],[E-8,E-5]
-    ];
-    for (var i = 0; i < midWalls.length; i++) {
-      var p = midWalls[i];
-      if (map[p[0]][p[1]]) continue;
-      map[p[0]][p[1]] = 1;
-      mapColor[p[0]][p[1]] = 1 + ((hash(i * 53 + 17) * 5) | 0);
-      mapHeight[p[0]][p[1]] = 1.2;
-    }
+      // --- Middle ring (floor=0.4, d=4-6) — diagonal cover only ---
+      [5, 5, 6, 6, 1.4, 1],       // NW mid
+      [5, 14, 6, 15, 1.4, 3],     // NE mid
+      [14, 5, 15, 6, 1.4, 2],     // SW mid
+      [14, 14, 15, 15, 1.4, 4],   // SE mid
 
-    // Cover walls - inner ring (floor=0.8 area, d=1-3)
-    var innerWalls = [
-      [C-3,C-3],[C-3,C+3],[C+3,C-3],[C+3,C+3],
-      [C-2,C-1],[C-2,C+1],[C+2,C-1],[C+2,C+1]
+      // --- Inner ring (floor=0.8, d=1-3) — two blocks only ---
+      [7, 7, 8, 8, 1.0, 2],       // NW inner
+      [12, 12, 13, 13, 1.0, 5]    // SE inner
     ];
-    for (var i = 0; i < innerWalls.length; i++) {
-      var p = innerWalls[i];
-      if (map[p[0]][p[1]]) continue;
-      map[p[0]][p[1]] = 1;
-      mapColor[p[0]][p[1]] = 2 + ((hash(i * 71 + 23) * 4) | 0);
-      mapHeight[p[0]][p[1]] = 1.0;
+
+    for (var bi = 0; bi < buildings.length; bi++) {
+      var b = buildings[bi];
+      var r1 = b[0], c1 = b[1], r2 = b[2], c2 = b[3];
+      var bh = b[4], bc = b[5];
+      for (var r = r1; r <= r2; r++) {
+        for (var c = c1; c <= c2; c++) {
+          if (map[r][c]) continue; // don't overwrite existing walls
+          map[r][c] = 1;
+          mapColor[r][c] = bc + ((hash(c * 37 + r * 53 + bi * 11) * 2) | 0);
+          mapHeight[r][c] = bh;
+        }
+      }
     }
 
     // Boss pillars around center
@@ -198,10 +371,10 @@
       mapHeight[p[0]][p[1]] = 1.8;
     }
 
-    // Assign neon colors to ~60% of wall cells
+    // Assign neon colors to ~60% of non-boundary wall cells
     for (var y = 0; y < S; y++) {
       for (var x = 0; x < S; x++) {
-        if (map[y][x] === 1 && mapColor[y][x] !== 7) {
+        if (map[y][x] === 1 && mapColor[y][x] !== 7 && mapColor[y][x] !== 0) {
           if (hash(x * 31 + y * 59 + 7) < 0.6) {
             mapNeon[y][x] = 1 + ((hash(x * 13 + y * 47 + 3) * 4) | 0);
           }
@@ -235,6 +408,7 @@
   var mouseDX = 0, mouseDY = 0;
   var mouseDown = false;
   var pointerLocked = false;
+  // (controlHelpTimer removed - using HTML overlay now)
 
   var isMobileFps = (('ontouchstart' in window) || navigator.maxTouchPoints > 0) &&
                     (window.innerWidth <= 600 || matchMedia('(hover: none) and (pointer: coarse)').matches);
@@ -253,10 +427,19 @@
     keys[e.code] = false;
   });
 
-  // Pointer lock for mouse look
+  // Pointer lock for mouse look / start game / return to title
   canvas.addEventListener('click', function () {
     if (!isFpsActive()) return;
-    if (!pointerLocked) {
+    if (gameState === 'title') {
+      startGame();
+      if (!isMobileFps) canvas.requestPointerLock();
+      return;
+    }
+    if ((gameState === 'win' || gameState === 'gameover') && stateTimer <= 0) {
+      goToTitle();
+      return;
+    }
+    if (!pointerLocked && gameState === 'playing') {
       canvas.requestPointerLock();
     }
   });
@@ -377,7 +560,7 @@
   }
 
   // ===== 7. Game State, Bullets, Particles =====
-  var gameState = 'playing';
+  var gameState = 'title'; // title, playing, paused, win, gameover
   var stateTimer = 0;
   var bullets = [];
   var particles = [];
@@ -459,7 +642,7 @@
       var perpDist = side === 0 ? sideDistX - deltaDistX : sideDistY - deltaDistY;
       var cellFloor = mapFloor[mapY] ? (mapFloor[mapY][mapX] || 0) : 0;
 
-      if (cellFloor !== prevFloor && map[mapY][mapX] !== 1) {
+      if (cellFloor !== prevFloor) {
         segments.push({
           type: 'step', dist: perpDist, side: side,
           fromH: prevFloor, toH: cellFloor
@@ -549,20 +732,7 @@
       }
     }
 
-    // City silhouette at horizon line
-    var silY = skyBase - 1;
-    for (var x = 0; x < W; x++) {
-      var bh = cityBuildings[x];
-      for (var dy = 0; dy < bh && silY - dy >= 0; dy++) {
-        var row = silY - dy;
-        setPx(x, row, 6, 5, 15);
-        // Scattered window lights
-        if (hash(x * 7 + dy * 13 + 101) < 0.08) {
-          var wc = hash(x * 11 + dy * 17 + 53) < 0.5 ? [180, 140, 60] : [60, 180, 220];
-          setPx(x, row, wc[0], wc[1], wc[2]);
-        }
-      }
-    }
+    // City silhouette moved to renderCitySilhouette (depth-aware, called after raycasting)
   }
 
   // ===== 11. Render: Floor Cast =====
@@ -570,13 +740,15 @@
     if (y1 >= y2) return;
     var cosA = colCos[col], sinA = colSin[col], cosCorr = colCosCorr[col];
     var hDiff = eyeZ - floorH;
-    if (hDiff < 0.001) hDiff = 0.001;
+    var isCeil = hDiff < -0.01;
+    var absH = Math.abs(hDiff);
+    if (absH < 0.001) absH = 0.001;
 
     for (var y = y1; y < y2; y++) {
-      var denom = y - horizon;
+      var denom = isCeil ? (horizon - y) : (y - horizon);
       if (denom < 1) { depthBuf[col * H + y] = 9999; continue; }
 
-      var perpDist = hDiff * H / denom;
+      var perpDist = absH * H / denom;
       if (perpDist > maxDist) perpDist = maxDist;
       if (perpDist < 0.1) perpDist = 0.1;
 
@@ -593,7 +765,8 @@
       var sh = Math.max(0.12, 1 - perpDist / 14);
       var gridMul = isGrid ? 0.4 : 1.0;
       var tileMul = tile ? 1.05 : 0.95;
-      var f = sh * gridMul * tileMul;
+      var ceilMul = isCeil ? 0.55 : 1.0;
+      var f = sh * gridMul * tileMul * ceilMul;
 
       var cr, cg, cb;
       if (floorH < 0.2) {
@@ -754,17 +927,41 @@
 
     for (var y = y1; y < y2; y++) {
       var denom = y - horizon;
-      if (denom < 1) continue;
+      if (denom < 1) {
+        // Above horizon — fill with dark roof edge color
+        var fogged = fogBlend(baseR >> 1, baseG >> 1, baseB >> 1, minDist);
+        setPx(col, y, fogged[0], fogged[1], fogged[2]);
+        depthBuf[col * H + y] = minDist;
+        continue;
+      }
 
       var perpDist = (eyeZ - roofH) * H / denom;
-      if (perpDist < minDist - 0.1 || perpDist > maxDist) continue;
+      if (perpDist < minDist - 0.1 || perpDist > maxDist) {
+        // Out of distance range — fill with base roof color
+        var fd = perpDist < minDist ? minDist : maxDist;
+        var fogged = fogBlend(baseR >> 1, baseG >> 1, baseB >> 1, fd);
+        setPx(col, y, fogged[0], fogged[1], fogged[2]);
+        depthBuf[col * H + y] = fd;
+        continue;
+      }
 
       var rayDist = perpDist / cosCorr;
       var worldX = player.x + cosA * rayDist;
       var worldY = player.y + sinA * rayDist;
       var cx = worldX | 0, cy = worldY | 0;
-      if (cx < 0 || cx >= MAP_SIZE || cy < 0 || cy >= MAP_SIZE) continue;
-      if (map[cy][cx] !== 1) continue;
+      if (cx < 0 || cx >= MAP_SIZE || cy < 0 || cy >= MAP_SIZE) {
+        var fogged = fogBlend(baseR >> 1, baseG >> 1, baseB >> 1, perpDist);
+        setPx(col, y, fogged[0], fogged[1], fogged[2]);
+        depthBuf[col * H + y] = perpDist;
+        continue;
+      }
+      if (map[cy][cx] !== 1) {
+        // Ray past building edge — fill with base roof color
+        var fogged = fogBlend(baseR >> 1, baseG >> 1, baseB >> 1, perpDist);
+        setPx(col, y, fogged[0], fogged[1], fogged[2]);
+        depthBuf[col * H + y] = perpDist;
+        continue;
+      }
 
       var fracX = worldX - cx;
       var fracY = worldY - cy;
@@ -900,7 +1097,7 @@
 
           if (eyeZ > wallTopH + 0.05) {
             var roofNear = Math.min(wallTopY, yBot);
-            var roofFarDist = d + 2.0;
+            var roofFarDist = d + 4.0;
             var roofFarY = (horizon + (eyeZ - wallTopH) * H / roofFarDist) | 0;
             roofFarY = Math.max(roofFarY, yTop);
             if (roofFarY < roofNear) {
@@ -927,6 +1124,21 @@
         if (floorTop < yBot) floorCast(col, floorTop, yBot, lastFloor, eyeZ, horizon, MAX_DEPTH);
         var skyEnd = Math.min(horizon + 1, yBot);
         if (yTop < skyEnd) depthBuf.fill(9999, col * H + yTop, col * H + skyEnd);
+      }
+    }
+
+    // City silhouette (depth-aware: only draw where no geometry was rendered)
+    var silY = Math.max(0, horizon) - 1;
+    for (var x = 0; x < W; x++) {
+      var bh = cityBuildings[x];
+      for (var dy = 0; dy < bh && silY - dy >= 0; dy++) {
+        var row = silY - dy;
+        if (depthBuf[x * H + row] < 9999) continue; // skip if geometry was drawn here
+        setPx(x, row, 6, 5, 15);
+        if (hash(x * 7 + dy * 13 + 101) < 0.08) {
+          var wc = hash(x * 11 + dy * 17 + 53) < 0.5 ? [180, 140, 60] : [60, 180, 220];
+          setPx(x, row, wc[0], wc[1], wc[2]);
+        }
       }
     }
   }
@@ -1366,12 +1578,18 @@
   }
 
   function renderHUD(pal, dt) {
-    // HP bar
-    var barW = 40, barH = 4, barX = 3, barY = 3;
+    // --- Graphical HUD (gameplay only) ---
+    if (gameState === 'playing' || gameState === 'win' || gameState === 'gameover') {
+
+    var barX = 9, barY = 3, barW = 36, barH = 4;
+
+    // Heart icon + HP bar
+    var hpR = player.hp / PLAYER_MAX_HP;
+    var hpCol = hpR > 0.5 ? '#00ffa0' : (hpR > 0.25 ? '#ffc828' : '#ff3c3c');
+    drawIcon(ICON_HEART, barX - 7, barY, hpCol);
     ctx.fillStyle = 'rgba(5,4,16,0.6)';
     ctx.fillRect(barX - 1, barY - 1, barW + 2, barH + 2);
-    var hpR = player.hp / PLAYER_MAX_HP;
-    ctx.fillStyle = hpR > 0.5 ? '#00ffa0' : (hpR > 0.25 ? '#ffc828' : '#ff3c3c');
+    ctx.fillStyle = hpCol;
     ctx.fillRect(barX, barY, (barW * hpR) | 0, barH);
     ctx.fillStyle = pal.hud;
     ctx.fillRect(barX, barY, barW, 1);
@@ -1379,41 +1597,78 @@
     ctx.fillRect(barX, barY, 1, barH);
     ctx.fillRect(barX + barW - 1, barY, 1, barH);
 
-    // Energy bar (dash cooldown)
+    // Lightning icon + Dash bar + label
     var energyY = barY + barH + 2;
+    var dashR = player.dashCD > 0 ? 1 - (player.dashCD / DASH_CD) : 1;
+    var dashCol = dashR >= 1 ? '#00dcff' : '#1a4a5a';
+    drawIcon(ICON_BOLT, barX - 6, energyY - 2, dashCol);
     ctx.fillStyle = 'rgba(5,4,16,0.6)';
     ctx.fillRect(barX - 1, energyY - 1, barW + 2, 3);
-    var dashR = player.dashCD > 0 ? 1 - (player.dashCD / DASH_CD) : 1;
-    ctx.fillStyle = dashR >= 1 ? '#00dcff' : '#1a4a5a';
+    ctx.fillStyle = dashCol;
     ctx.fillRect(barX, energyY, (barW * dashR) | 0, 1);
-
-    // Kill counter
-    ctx.fillStyle = pal.hud;
-    ctx.font = '5px "Press Start 2P"';
+    // DASH label
+    ctx.font = '4px "Press Start 2P"';
     ctx.textAlign = 'left';
-    ctx.fillText('K:' + player.kills + '/' + totalKillsNeeded, barX, energyY + 7);
+    ctx.fillStyle = dashR >= 1 ? '#00dcff' : '#1a4a5a';
+    ctx.globalAlpha = 0.6;
+    ctx.fillText('DASH', barX + barW + 3, energyY + 1);
+    ctx.globalAlpha = 1;
+
+    // Kill skulls (graphical kill counter)
+    var skullY = energyY + 5;
+    for (var k = 0; k < totalKillsNeeded; k++) {
+      var skullCol = k < player.kills ? pal.hud : 'rgba(255,255,255,0.12)';
+      drawIcon(ICON_SKULL, barX - 1 + k * 7, skullY, skullCol);
+    }
+
+    // --- Bottom-left status panel ---
+    var bpY = H - 16;
 
     // Height level
     var floorLvl = getFloor(player.x, player.y);
     var lvlName = floorLvl >= 1.0 ? 'TOP' : floorLvl >= 0.6 ? 'H2' : floorLvl >= 0.3 ? 'H1' : 'GND';
-    ctx.fillText(lvlName, barX, energyY + 14);
+    ctx.font = '4px "Press Start 2P"';
+    ctx.textAlign = 'left';
+    ctx.fillStyle = pal.hud;
+    ctx.globalAlpha = 0.5;
+    ctx.fillText(lvlName, 3, bpY);
+    // Height pips
+    var levels = [0, 0.3, 0.6, 1.0];
+    for (var lv = 0; lv < 4; lv++) {
+      ctx.fillStyle = floorLvl >= levels[lv] ? pal.hud : 'rgba(255,255,255,0.1)';
+      ctx.globalAlpha = floorLvl >= levels[lv] ? 0.7 : 0.2;
+      ctx.fillRect(22 + lv * 3, bpY - 3, 2, 2);
+    }
+    ctx.globalAlpha = 1;
+
+    // Double-jump indicator
+    if (!player.grounded) {
+      var canDJ = !player.hasDoubleJumped;
+      var djAlpha = canDJ ? 0.5 + 0.3 * Math.sin(Date.now() * 0.008) : 0.2;
+      var djCol = canDJ ? '#00ffa0' : '#1a3a2a';
+      ctx.save();
+      ctx.globalAlpha = djAlpha;
+      drawIcon(ICON_ARROW_UP, 3, bpY + 4, djCol);
+      ctx.font = '4px "Press Start 2P"';
+      ctx.textAlign = 'left';
+      ctx.fillStyle = djCol;
+      ctx.fillText('JUMP', 10, bpY + 8);
+      ctx.restore();
+    }
 
     // Crosshair (cyberpunk style)
     var cx = (W / 2) | 0;
     var cy = (H / 2 + player.pitch) | 0;
-    // Dark outline for contrast
     ctx.fillStyle = 'rgba(0,0,0,0.6)';
     ctx.fillRect(cx - 6, cy - 1, 5, 3);
     ctx.fillRect(cx + 2, cy - 1, 5, 3);
     ctx.fillRect(cx - 1, cy - 6, 3, 5);
     ctx.fillRect(cx - 1, cy + 2, 3, 5);
-    // Bright arms
     ctx.fillStyle = pal.crosshair;
     ctx.fillRect(cx - 5, cy, 4, 1);
     ctx.fillRect(cx + 2, cy, 4, 1);
     ctx.fillRect(cx, cy - 5, 1, 4);
     ctx.fillRect(cx, cy + 2, 1, 4);
-    // Center dot
     ctx.fillRect(cx, cy, 1, 1);
 
     // Hit flash (red border)
@@ -1432,50 +1687,41 @@
     // Muzzle flash timer
     if (player.muzzleFlash > 0) player.muzzleFlash -= dt;
 
-    // "Click to play" prompt
-    if (!pointerLocked && gameState === 'playing' && isFpsActive()) {
-      ctx.save();
-      ctx.globalAlpha = 0.5 + 0.3 * Math.sin(Date.now() * 0.004);
-      ctx.fillStyle = '#00ffa0';
-      ctx.font = '5px "Press Start 2P"';
-      ctx.textAlign = 'center';
-      ctx.fillText('CLICK TO PLAY', W / 2, H / 2 + 12);
-      ctx.restore();
+    } // end gameplay HUD guard
+
+    // --- Screen overlays (canvas dim only, text via HTML overlay) ---
+
+    // Paused dim
+    if (!pointerLocked && gameState === 'playing' && !isMobileFps) {
+      ctx.fillStyle = 'rgba(5,4,16,0.6)';
+      ctx.fillRect(0, 0, W, H);
     }
 
-    // ESC hint when locked (hide on mobile)
-    if (pointerLocked && gameState === 'playing' && !isMobileFps) {
-      ctx.fillStyle = pal.hud;
-      ctx.font = '4px "Press Start 2P"';
-      ctx.textAlign = 'right';
-      ctx.globalAlpha = 0.3;
-      ctx.fillText('ESC:unlock', W - MINI_SIZE - 6, MINI_Y + MINI_SIZE + 8);
-      ctx.globalAlpha = 1;
-    }
-
-    // Win / Game Over
+    // Win dim + stateTimer
     if (gameState === 'win') {
       stateTimer -= dt;
-      ctx.save();
-      ctx.globalAlpha = 0.7 + Math.sin(Date.now() * 0.01) * 0.3;
-      ctx.fillStyle = '#00ffa0';
-      ctx.font = '7px "Press Start 2P"';
-      ctx.textAlign = 'center';
-      ctx.fillText('YOU WIN!', W / 2, H / 2 - 2);
-      ctx.restore();
-      if (stateTimer <= 0) resetGame();
+      ctx.fillStyle = 'rgba(5,4,16,0.5)';
+      ctx.fillRect(0, 0, W, H);
+      if (stateTimer <= 0) stateTimer = 0;
     }
+
+    // Game Over dim + stateTimer
     if (gameState === 'gameover') {
       stateTimer -= dt;
-      ctx.save();
-      ctx.globalAlpha = 0.7 + Math.sin(Date.now() * 0.008) * 0.3;
-      ctx.fillStyle = '#ff3c3c';
-      ctx.font = '6px "Press Start 2P"';
-      ctx.textAlign = 'center';
-      ctx.fillText('GAME OVER', W / 2, H / 2 - 2);
-      ctx.restore();
-      if (stateTimer <= 0) resetGame();
+      ctx.fillStyle = 'rgba(5,4,16,0.5)';
+      ctx.fillRect(0, 0, W, H);
+      if (stateTimer <= 0) stateTimer = 0;
     }
+
+    // Title dim
+    if (gameState === 'title') {
+      ctx.fillStyle = 'rgba(5,4,16,0.85)';
+      ctx.fillRect(0, 0, W, H);
+    }
+
+    // Update HTML overlay
+    updateOverlay();
+    updateOverlayPrompts();
   }
 
   // ===== 20. Screen Effects =====
@@ -2014,7 +2260,7 @@
   }
 
   // ===== 25. Game Flow =====
-  function resetGame() {
+  function startGame() {
     gameState = 'playing'; stateTimer = 0;
     player.x = 1.5; player.y = 18.5; player.z = 0; player.vz = 0;
     player.angle = -Math.PI / 4; player.pitch = 0;
@@ -2026,8 +2272,20 @@
     player.bobPhase = 0; player.recoil = 0;
     player.shakeTimer = 0; player.shakeAmp = 0;
     bullets = []; particles = [];
+    mouseDown = false; mouseDX = 0; mouseDY = 0;
+    keys = {};
     generateArena();
     spawnEnemies();
+    if (isMobileFps) pointerLocked = true;
+  }
+
+  function goToTitle() {
+    gameState = 'title';
+    stateTimer = 0;
+    pointerLocked = false;
+    if (!isMobileFps && document.pointerLockElement === canvas) {
+      document.exitPointerLock();
+    }
   }
 
   // ===== 26. Game Loop (30fps) =====
@@ -2045,12 +2303,20 @@
     if (dt > 0.1) dt = 0.1;
     lastTime = t;
 
-    handleInput(dt);
-    if (gameState === 'playing') {
+    // Pause: PC loses pointer lock while playing
+    var isPaused = gameState === 'playing' && !pointerLocked && !isMobileFps;
+
+    // Title screen: slowly rotate camera for visual effect
+    if (gameState === 'title') {
+      player.angle += 0.15 * dt;
+    }
+
+    if (!isPaused) handleInput(dt);
+    if (gameState === 'playing' && !isPaused) {
       updateEnemies(dt);
       updateBullets(dt);
     }
-    updateParticles(dt);
+    if (!isPaused) updateParticles(dt);
 
     var pal = getHudPalette();
     ctx.clearRect(0, 0, W, H);
@@ -2063,16 +2329,17 @@
     ctx.putImageData(imgData, 0, 0);
 
     // Phase 2: Canvas API overlays
-    renderWeapon();
-    renderScreenEffects();
-    renderMinimap(pal);
+    if (gameState !== 'title') {
+      renderWeapon();
+      renderScreenEffects();
+      renderMinimap(pal);
+    }
     renderHUD(pal, dt);
   }
 
   // ===== 27. Mobile Touch Controls (Twin-Stick) =====
   if (isMobileFps) {
-    // Bypass pointer lock — touch input drives everything directly
-    pointerLocked = true;
+    // pointerLocked is set to true in startGame() for mobile
 
     var fpsBody = document.getElementById('fps-body');
 
@@ -2133,11 +2400,27 @@
     ctrl.appendChild(R.zone);
     fpsBody.appendChild(ctrl);
 
-    // Prevent canvas touch from reaching main.js
+    // Prevent canvas touch from reaching main.js + handle tap for title/win/gameover
     canvas.style.touchAction = 'none';
-    canvas.addEventListener('touchstart', function (e) { e.preventDefault(); e.stopPropagation(); }, { passive: false });
-    canvas.addEventListener('touchmove', function (e) { e.preventDefault(); e.stopPropagation(); }, { passive: false });
-    canvas.addEventListener('touchend', function (e) { e.preventDefault(); e.stopPropagation(); }, { passive: false });
+    var canvasTapId = null;
+    canvas.addEventListener('touchstart', function (e) {
+      e.preventDefault(); e.stopPropagation();
+      if (gameState === 'title' || ((gameState === 'win' || gameState === 'gameover') && stateTimer <= 0)) {
+        canvasTapId = e.changedTouches[0].identifier;
+      }
+    }, { passive: false });
+    canvas.addEventListener('touchmove', function (e) { e.preventDefault(); e.stopPropagation(); canvasTapId = null; }, { passive: false });
+    canvas.addEventListener('touchend', function (e) {
+      e.preventDefault(); e.stopPropagation();
+      for (var i = 0; i < e.changedTouches.length; i++) {
+        if (e.changedTouches[i].identifier === canvasTapId) {
+          canvasTapId = null;
+          // Dispatch click to trigger title start / return to title
+          canvas.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+          break;
+        }
+      }
+    }, { passive: false });
 
     // --- Generic stick touch logic (with optional tap callback) ---
     function stickHandler(stick, onUpdate, onEnd, onTap) {

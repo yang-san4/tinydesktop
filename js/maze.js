@@ -13,6 +13,7 @@
   var HALF_FOV = FOV / 2;
   var MAX_DEPTH = 20;
   var MOVE_SPEED = 2.5;
+  var STRAFE_SPEED = 2.0;
   var TURN_SPEED = 2.0;
   var COLLISION_MARGIN = 0.25;
   var WALL_HEIGHT_SCALE = 40;
@@ -160,35 +161,37 @@
     return maze[my][mx] === 1;
   }
 
+  // Analog turn input from mobile right stick (-1..1)
+  var analogTurn = 0;
+
   function handleInput(dt) {
     if (!isMazeActive()) return;
 
     var moved = false;
     var dx = 0, dy = 0;
 
-    // Rotation
-    if (keys['ArrowLeft'] || keys['a'] || keys['A']) {
-      player.angle -= TURN_SPEED * dt;
-      moved = true;
-    }
-    if (keys['ArrowRight'] || keys['d'] || keys['D']) {
-      player.angle += TURN_SPEED * dt;
-      moved = true;
-    }
+    // Rotation (arrow keys + analog stick)
+    if (keys['ArrowLeft']) { player.angle -= TURN_SPEED * dt; moved = true; }
+    if (keys['ArrowRight']) { player.angle += TURN_SPEED * dt; moved = true; }
+    if (analogTurn !== 0) { player.angle += analogTurn * TURN_SPEED * dt; moved = true; }
 
-    // Forward/backward
-    var moveX = Math.cos(player.angle);
-    var moveY = Math.sin(player.angle);
+    // WASD movement (forward/back + strafe)
+    var fwdX = Math.cos(player.angle);
+    var fwdY = Math.sin(player.angle);
+    var rightX = -Math.sin(player.angle);
+    var rightY = Math.cos(player.angle);
 
     if (keys['ArrowUp'] || keys['w'] || keys['W']) {
-      dx += moveX * MOVE_SPEED * dt;
-      dy += moveY * MOVE_SPEED * dt;
-      moved = true;
+      dx += fwdX * MOVE_SPEED * dt; dy += fwdY * MOVE_SPEED * dt; moved = true;
     }
     if (keys['ArrowDown'] || keys['s'] || keys['S']) {
-      dx -= moveX * MOVE_SPEED * dt;
-      dy -= moveY * MOVE_SPEED * dt;
-      moved = true;
+      dx -= fwdX * MOVE_SPEED * dt; dy -= fwdY * MOVE_SPEED * dt; moved = true;
+    }
+    if (keys['a'] || keys['A']) {
+      dx -= rightX * STRAFE_SPEED * dt; dy -= rightY * STRAFE_SPEED * dt; moved = true;
+    }
+    if (keys['d'] || keys['D']) {
+      dx += rightX * STRAFE_SPEED * dt; dy += rightY * STRAFE_SPEED * dt; moved = true;
     }
 
     // Axis-separated collision with slide
@@ -630,20 +633,21 @@
 
     var deadNorm = STICK_DEAD / STICK_MAX;
 
-    // Left stick: up/down = forward/back
+    // Left stick: WASD movement (forward/back + strafe)
     mazeStickHandler(mL, function (nx, ny) {
       keys['w'] = ny < -deadNorm;
       keys['s'] = ny > deadNorm;
-    }, function () {
-      keys['w'] = keys['s'] = false;
-    });
-
-    // Right stick: left/right = turn
-    mazeStickHandler(mR, function (nx, ny) {
       keys['a'] = nx < -deadNorm;
       keys['d'] = nx > deadNorm;
     }, function () {
-      keys['a'] = keys['d'] = false;
+      keys['w'] = keys['s'] = keys['a'] = keys['d'] = false;
+    });
+
+    // Right stick: analog turn (left/right)
+    mazeStickHandler(mR, function (nx, ny) {
+      analogTurn = Math.abs(nx) > deadNorm ? nx : 0;
+    }, function () {
+      analogTurn = 0;
     });
   }
 
