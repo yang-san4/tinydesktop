@@ -457,6 +457,30 @@ body {
   background: var(--item-active-bg);
 }
 
+#taskbar-sound {
+  height: 18px;
+  width: 20px;
+  padding: 0;
+  border: 1px solid var(--item-border);
+  background: var(--clock-bg);
+  color: var(--accent3);
+  font-size: 8px;
+  flex-shrink: 0;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  line-height: 1;
+  position: relative;
+}
+#taskbar-sound:hover {
+  border-color: var(--accent3);
+}
+#taskbar-sound.muted {
+  color: var(--text);
+  opacity: 0.5;
+}
+
 #taskbar-clock {
   height: 18px;
   padding: 0 6px;
@@ -1823,8 +1847,8 @@ body {
 
 /* ===== GEKKO FPS Icon ===== */
 .di-fps {
-  background: #0a1018;
-  border-color: #00ffa0;
+  background: #c8dce8;
+  border-color: #d4a852;
 }
 
 .di-fps::after {
@@ -1835,13 +1859,13 @@ body {
   transform: translate(-50%, -50%);
   font-family: "Press Start 2P", monospace;
   font-size: 7px;
-  color: #00ffa0;
+  color: #d4a852;
   line-height: 1;
 }
 
 .tb-fps {
-  background: #0a1018;
-  border-color: #00ffa0;
+  background: #c8dce8;
+  border-color: #d4a852;
 }
 
 /* ===== FPS Arena Window ===== */

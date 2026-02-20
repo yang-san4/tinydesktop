@@ -326,6 +326,18 @@
     });
   }
 
+  // ----- Sound toggle -----
+  window._tinyDesktopSound = true;
+  var soundBtn = document.getElementById('taskbar-sound');
+  if (soundBtn) {
+    soundBtn.addEventListener('click', function (e) {
+      e.stopPropagation();
+      window._tinyDesktopSound = !window._tinyDesktopSound;
+      soundBtn.classList.toggle('muted', !window._tinyDesktopSound);
+      soundBtn.textContent = window._tinyDesktopSound ? '\u{1F50A}' : '\u{1F507}';
+    });
+  }
+
   // ----- Taskbar clock -----
   function updateTaskbarClock() {
     const el = document.getElementById('taskbar-clock');

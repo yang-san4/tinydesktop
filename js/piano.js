@@ -36,6 +36,7 @@
   };
 
   function playNote(freq) {
+    if (!window._tinyDesktopSound) return;
     var ctx = getAudioCtx();
     var osc = ctx.createOscillator();
     var gain = ctx.createGain();
@@ -119,6 +120,7 @@
 
   // ----- Boot chime -----
   window._tinyPlayChime = function () {
+    if (!window._tinyDesktopSound) return;
     var ctx = getAudioCtx();
     var chimeNotes = [523.25, 659.25, 783.99]; // C5, E5, G5
     chimeNotes.forEach(function (freq, i) {
@@ -138,6 +140,7 @@
 
   // ----- Click sound (exposed globally) -----
   window._tinyPlayClick = function () {
+    if (!window._tinyDesktopSound) return;
     var ctx = getAudioCtx();
     var osc = ctx.createOscillator();
     var gain = ctx.createGain();
