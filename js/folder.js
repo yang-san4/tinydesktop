@@ -332,5 +332,5 @@
   };
 
   // ----- Create a default folder on startup -----
-  createFolder(42, 156);
+  createFolder(42, 194);
 })();

@@ -1919,6 +1919,44 @@ body {
   image-rendering: crisp-edges;
 }
 
+/* ===== Solitaire Icon ===== */
+.di-solitaire {
+  background: #1a6030;
+  border-color: #2a8040;
+}
+
+.di-solitaire::after {
+  content: '';
+  position: absolute;
+  top: 3px;
+  left: 3px;
+  width: 8px;
+  height: 8px;
+  background: #f0f0e8;
+  border: 1px solid #a0a0a0;
+  border-radius: 1px;
+  box-shadow: 1px 1px 0 rgba(0,0,0,0.2);
+}
+
+.tb-solitaire {
+  background: #1a6030;
+  border-color: #2a8040;
+}
+
+/* ===== Solitaire Window ===== */
+#solitaire-body {
+  padding: 0;
+  background: #1a6030;
+  line-height: 0;
+}
+
+#solitaire-canvas {
+  display: block;
+  width: 100%;
+  image-rendering: pixelated;
+  image-rendering: crisp-edges;
+}
+
 /* ===== Desktop Pet ===== */
 #pet-canvas {
   position: absolute;
