@@ -1493,6 +1493,157 @@
     ctx.fillRect(3, h - 2, 12, 1);
   }
 
+  // --- GEKKO FPS gameplay animation ---
+  function animGekko(ctx, w, h, frame) {
+    // Dark background
+    ctx.fillStyle = '#050510';
+    ctx.fillRect(0, 0, w, h);
+
+    // Cyber grid ground (bottom third)
+    var horizonY = Math.floor(h * 0.55);
+    // Sky gradient lines
+    for (var sy = 0; sy < horizonY; sy += 3) {
+      var skyAlpha = 0.03 + (sy / horizonY) * 0.06;
+      ctx.fillStyle = 'rgba(0,229,255,' + skyAlpha + ')';
+      ctx.fillRect(0, sy, w, 1);
+    }
+    // Horizontal grid lines
+    ctx.fillStyle = 'rgba(0,229,255,0.15)';
+    for (var gy = horizonY; gy < h; gy += 4) {
+      ctx.fillRect(0, gy, w, 1);
+    }
+    // Vertical grid lines (perspective)
+    var cx = w / 2;
+    for (var gi = -6; gi <= 6; gi++) {
+      var gx1 = cx + gi * 3;
+      var gx2 = cx + gi * 12;
+      ctx.fillStyle = 'rgba(0,229,255,0.1)';
+      for (var py = horizonY; py < h; py++) {
+        var t = (py - horizonY) / (h - horizonY);
+        var px = Math.floor(gx1 + (gx2 - gx1) * t);
+        if (px >= 0 && px < w) ctx.fillRect(px, py, 1, 1);
+      }
+    }
+
+    // Enemy spawn logic (based on frame)
+    var wave = Math.floor(frame / 180) + 1;
+    var enemyCount = 2 + (wave % 3);
+    for (var ei = 0; ei < enemyCount; ei++) {
+      var seed = (ei * 137 + wave * 31) % 100;
+      var ex = 8 + (seed * 7 + Math.floor(frame * 0.3 + ei * 40)) % (w - 20);
+      var ey = horizonY - 14 - (seed % 8);
+      var alive = !((frame + ei * 23) % 120 < 15);
+      if (alive) {
+        // Enemy body (magenta polygon-ish shape)
+        ctx.fillStyle = '#ff0060';
+        ctx.fillRect(ex, ey, 6, 8);
+        ctx.fillRect(ex - 1, ey + 2, 8, 4);
+        ctx.fillRect(ex + 1, ey - 1, 4, 1);
+        // Enemy eyes
+        ctx.fillStyle = '#fff';
+        ctx.fillRect(ex + 1, ey + 2, 2, 2);
+        ctx.fillRect(ex + 4, ey + 2, 2, 2);
+        ctx.fillStyle = '#ff0060';
+        ctx.fillRect(ex + 2, ey + 3, 1, 1);
+        ctx.fillRect(ex + 5, ey + 3, 1, 1);
+      } else {
+        // Explosion effect
+        ctx.fillStyle = '#ff6040';
+        ctx.fillRect(ex - 1, ey + 1, 2, 2);
+        ctx.fillRect(ex + 4, ey - 1, 2, 2);
+        ctx.fillRect(ex + 1, ey + 5, 3, 2);
+        ctx.fillStyle = '#ffff40';
+        ctx.fillRect(ex + 2, ey + 2, 2, 2);
+      }
+    }
+
+    // Crosshair (center)
+    var chx = Math.floor(w / 2);
+    var chy = Math.floor(h / 2) - 3;
+    ctx.fillStyle = '#00e5ff';
+    ctx.fillRect(chx - 5, chy, 4, 1);
+    ctx.fillRect(chx + 2, chy, 4, 1);
+    ctx.fillRect(chx, chy - 5, 1, 4);
+    ctx.fillRect(chx, chy + 2, 1, 4);
+    // Center dot
+    ctx.fillStyle = '#ff0060';
+    ctx.fillRect(chx, chy, 1, 1);
+
+    // Muzzle flash (every ~40 frames)
+    if (frame % 40 < 4) {
+      ctx.fillStyle = '#ffff80';
+      ctx.fillRect(chx - 1, h - 14, 3, 4);
+      ctx.fillStyle = '#ff8020';
+      ctx.fillRect(chx - 2, h - 12, 5, 2);
+      ctx.fillStyle = '#fff';
+      ctx.fillRect(chx, h - 13, 1, 2);
+    }
+
+    // Weapon silhouette (bottom center)
+    ctx.fillStyle = '#1a1a30';
+    ctx.fillRect(chx - 6, h - 10, 13, 10);
+    ctx.fillStyle = '#252540';
+    ctx.fillRect(chx - 5, h - 10, 11, 8);
+    ctx.fillRect(chx - 3, h - 12, 7, 3);
+    ctx.fillStyle = '#00e5ff';
+    ctx.fillRect(chx - 2, h - 11, 5, 1);
+
+    // HUD: Health bar (bottom left)
+    ctx.fillStyle = 'rgba(0,0,0,0.5)';
+    ctx.fillRect(1, h - 6, 24, 5);
+    ctx.fillStyle = '#333';
+    ctx.fillRect(2, h - 5, 22, 3);
+    var hp = 14 + Math.floor(Math.sin(frame * 0.01) * 6);
+    ctx.fillStyle = hp > 10 ? '#00e5ff' : '#ff0060';
+    ctx.fillRect(2, h - 5, hp, 3);
+
+    // HUD: Ammo (bottom right)
+    ctx.fillStyle = 'rgba(0,0,0,0.5)';
+    ctx.fillRect(w - 22, h - 6, 21, 5);
+    var ammo = 30 - (frame % 40);
+    ctx.fillStyle = '#ff0060';
+    // Bullet icon
+    ctx.fillRect(w - 21, h - 5, 1, 3);
+    ctx.fillRect(w - 19, h - 5, 1, 3);
+    ctx.fillStyle = '#00e5ff';
+    // Ammo count as small bar
+    var ammoW = Math.max(1, Math.floor(ammo / 2));
+    ctx.fillRect(w - 16, h - 4, ammoW, 1);
+
+    // WAVE indicator (top right)
+    ctx.fillStyle = 'rgba(0,0,0,0.4)';
+    ctx.fillRect(w - 26, 1, 25, 7);
+    ctx.fillStyle = '#ff0060';
+    ctx.fillRect(w - 25, 2, 2, 5);
+    ctx.fillStyle = '#00e5ff';
+    // "W" letter approximation + wave number dots
+    ctx.fillRect(w - 22, 2, 1, 4);
+    ctx.fillRect(w - 21, 5, 1, 1);
+    ctx.fillRect(w - 20, 4, 1, 1);
+    ctx.fillRect(w - 19, 5, 1, 1);
+    ctx.fillRect(w - 18, 2, 1, 4);
+    // Wave number as dots
+    for (var wd = 0; wd < Math.min(wave, 5); wd++) {
+      ctx.fillRect(w - 15 + wd * 2, 4, 1, 1);
+    }
+
+    // Score (top left)
+    ctx.fillStyle = 'rgba(0,0,0,0.4)';
+    ctx.fillRect(1, 1, 18, 7);
+    ctx.fillStyle = '#00e5ff';
+    var score = frame * 7;
+    var scoreStr = String(score);
+    for (var si = 0; si < Math.min(scoreStr.length, 5); si++) {
+      ctx.fillRect(3 + si * 3, 3, 2, 3);
+    }
+
+    // Damage flash (when hit)
+    if (frame % 200 > 185) {
+      ctx.fillStyle = 'rgba(255,0,96,0.15)';
+      ctx.fillRect(0, 0, w, h);
+    }
+  }
+
   // Video play button overlay pixel art
   var artPlay = [
     '..PP......',
@@ -1513,7 +1664,8 @@
     { id: 'sand', title: 'Sand Timer ASMR', ch: 'OddlyPixel', views: '3.1K', anim: animSand },
     { id: 'maze', title: '3D Maze Walkthrough', ch: 'MazeRunner', views: '5.7K', anim: animMaze },
     { id: 'city', title: 'Sunny City Walk', ch: 'PixelVibes', views: '12K', anim: animCity },
-    { id: 'vtuber', title: 'Miko Ch. Live Stream', ch: 'MikoVT', views: '8.4K', anim: animVtuber }
+    { id: 'vtuber', title: 'Miko Ch. Live Stream', ch: 'MikoVT', views: '8.4K', anim: animVtuber },
+    { id: 'gekko', title: 'GEKKO Advanced Tactics', ch: 'ArenaGamer', views: '2.1K', anim: animGekko }
   ];
 
   // Thumbnail pixel art (small icons for each video)
@@ -1589,8 +1741,17 @@
   ];
   var palThVtuber = { D: '#1a0828', P: '#ff80b0', F: '#ffe0d0', E: '#3070d0', M: '#e07080' };
 
-  var thumbArts = [thumbFish, thumbCat, thumbStars, thumbPiano, thumbSand, thumbMaze, thumbCity, thumbVtuber];
-  var thumbPals = [palThFish, palThCat, palThStars, palThPiano, palThSand, palThMaze, palThCity, palThVtuber];
+  var thumbGekko = [
+    'DCDCD',
+    'DDCDD',
+    'CCMCC',
+    'DDCDD',
+    'DCDCD'
+  ];
+  var palThGekko = { D: '#050510', C: '#00e5ff', M: '#ff0060' };
+
+  var thumbArts = [thumbFish, thumbCat, thumbStars, thumbPiano, thumbSand, thumbMaze, thumbCity, thumbVtuber, thumbGekko];
+  var thumbPals = [palThFish, palThCat, palThStars, palThPiano, palThSand, palThMaze, palThCity, palThVtuber, palThGekko];
 
   pages['tiny://videos'] = function () {
     var accent = getAccentColor();
@@ -1651,7 +1812,8 @@
     { title: 'Pixel Cat Desktop Pet', url: 'tiny://news', desc: 'Cat spotted walking on desktop' },
     { title: '3D Maze Record', url: 'tiny://news', desc: 'New maze speed record broken' },
     { title: 'Piano Music', url: 'tiny://home', desc: 'Play piano on TinyOS' },
-    { title: 'Minesweeper Tips', url: 'tiny://home', desc: 'How to beat minesweeper' }
+    { title: 'Minesweeper Tips', url: 'tiny://home', desc: 'How to beat minesweeper' },
+    { title: 'GEKKO Advanced Tactics', url: 'tiny://videos', desc: 'FPS walkthrough: weapon strategy and wave tactics' }
   ];
 
   // ----- 404 page -----

@@ -1393,7 +1393,14 @@
       if(currentWave>=totalWaves-1){
         // WIN
         gameState='win';stateTimer=2;
-        _winStats.innerHTML='<b>SCORE:</b> '+score+'<br><b>MAX COMBO:</b> x'+maxCombo+'<br><b>TIME:</b> '+formatTime(gameTime);
+        _winStats.textContent='';
+        var _ws=document.createDocumentFragment();
+        var _b1=document.createElement('b');_b1.textContent='SCORE:';_ws.appendChild(_b1);_ws.appendChild(document.createTextNode(' '+score));
+        _ws.appendChild(document.createElement('br'));
+        var _b2=document.createElement('b');_b2.textContent='MAX COMBO:';_ws.appendChild(_b2);_ws.appendChild(document.createTextNode(' x'+maxCombo));
+        _ws.appendChild(document.createElement('br'));
+        var _b3=document.createElement('b');_b3.textContent='TIME:';_ws.appendChild(_b3);_ws.appendChild(document.createTextNode(' '+formatTime(gameTime)));
+        _winStats.appendChild(_ws);
         _ovActive='';updateOverlay();
         playSound('win');
       }else{
@@ -1409,7 +1416,14 @@
 
   function triggerGameover(){
     gameState='gameover';stateTimer=2;
-    _deadStats.innerHTML='<b>WAVE:</b> '+(currentWave+1)+'/'+totalWaves+'<br><b>SCORE:</b> '+score+'<br><b>KILLS:</b> '+totalKills;
+    _deadStats.textContent='';
+    var _ds=document.createDocumentFragment();
+    var _d1=document.createElement('b');_d1.textContent='WAVE:';_ds.appendChild(_d1);_ds.appendChild(document.createTextNode(' '+(currentWave+1)+'/'+totalWaves));
+    _ds.appendChild(document.createElement('br'));
+    var _d2=document.createElement('b');_d2.textContent='SCORE:';_ds.appendChild(_d2);_ds.appendChild(document.createTextNode(' '+score));
+    _ds.appendChild(document.createElement('br'));
+    var _d3=document.createElement('b');_d3.textContent='KILLS:';_ds.appendChild(_d3);_ds.appendChild(document.createTextNode(' '+totalKills));
+    _deadStats.appendChild(_ds);
     _ovActive='';updateOverlay();
     playSound('death');
   }

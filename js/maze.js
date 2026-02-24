@@ -124,7 +124,7 @@
   }
 
   // ----- Input -----
-  var keys = {};
+  var keys = Object.create(null);
 
   document.addEventListener('keydown', function (e) {
     if (!isMazeActive()) return;

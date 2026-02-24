@@ -1882,6 +1882,43 @@ body {
   image-rendering: crisp-edges;
 }
 
+/* ===== Tetris Icon ===== */
+.di-tetris {
+  background: #1a1a2e;
+  border-color: #00d4ff;
+}
+
+.di-tetris::after {
+  content: 'T';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  font-family: "Press Start 2P", monospace;
+  font-size: 7px;
+  color: #00d4ff;
+  line-height: 1;
+}
+
+.tb-tetris {
+  background: #1a1a2e;
+  border-color: #00d4ff;
+}
+
+/* ===== Tetris Window ===== */
+#tetris-body {
+  padding: 0;
+  background: #000;
+  line-height: 0;
+}
+
+#tetris-canvas {
+  display: block;
+  width: 100%;
+  image-rendering: pixelated;
+  image-rendering: crisp-edges;
+}
+
 /* ===== Desktop Pet ===== */
 #pet-canvas {
   position: absolute;

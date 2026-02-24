@@ -23,6 +23,7 @@
 
           <!-- Desktop Icons -->
           <div id="desktop-icons">
+            <!-- Column 1: Utilities -->
             <div class="desktop-icon" data-target="window-clock" style="left: 4px; top: 4px;">
               <div class="di-img di-clock"></div>
               <div class="di-label">Clock</div>
@@ -35,37 +36,43 @@
               <div class="di-img di-term"></div>
               <div class="di-label">Terminal</div>
             </div>
-            <div class="desktop-icon" data-target="window-aquarium" style="left: 4px; top: 118px;">
-              <div class="di-img di-aqua"></div>
-              <div class="di-label">Aquarium</div>
-            </div>
-            <div class="desktop-icon" data-target="widget-hourglass" style="left: 4px; top: 156px;">
+            <div class="desktop-icon" data-target="widget-hourglass" style="left: 4px; top: 118px;">
               <div class="di-img di-timer"></div>
               <div class="di-label">Timer</div>
             </div>
-            <div class="desktop-icon" data-target="widget-david" style="left: 4px; top: 194px;">
-              <div class="di-img di-david"></div>
-              <div class="di-label">David</div>
-            </div>
-            <div class="desktop-icon" data-target="window-minesweeper" style="left: 4px; top: 232px;">
-              <div class="di-img di-mine"></div>
-              <div class="di-label">Mines</div>
-            </div>
-            <div class="desktop-icon" data-target="window-maze" style="left: 4px; top: 270px;">
-              <div class="di-img di-maze"></div>
-              <div class="di-label">3D Maze</div>
-            </div>
-            <div class="desktop-icon" data-target="window-piano" style="left: 42px; top: 4px;">
-              <div class="di-img di-piano"></div>
-              <div class="di-label">Piano</div>
-            </div>
-            <div class="desktop-icon" data-target="window-browser" style="left: 42px; top: 42px;">
+            <!-- Column 2: Apps -->
+            <div class="desktop-icon" data-target="window-browser" style="left: 42px; top: 4px;">
               <div class="di-img di-browser"></div>
               <div class="di-label">TinyWeb</div>
             </div>
-            <div class="desktop-icon" data-target="window-fps" style="left: 42px; top: 80px;">
+            <div class="desktop-icon" data-target="window-aquarium" style="left: 42px; top: 42px;">
+              <div class="di-img di-aqua"></div>
+              <div class="di-label">Aquarium</div>
+            </div>
+            <div class="desktop-icon" data-target="window-piano" style="left: 42px; top: 80px;">
+              <div class="di-img di-piano"></div>
+              <div class="di-label">Piano</div>
+            </div>
+            <div class="desktop-icon" data-target="widget-david" style="left: 42px; top: 118px;">
+              <div class="di-img di-david"></div>
+              <div class="di-label">David</div>
+            </div>
+            <!-- Column 3: Games -->
+            <div class="desktop-icon" data-target="window-fps" style="left: 80px; top: 4px;">
               <div class="di-img di-fps"></div>
               <div class="di-label">GEKKO</div>
+            </div>
+            <div class="desktop-icon" data-target="window-tetris" style="left: 80px; top: 42px;">
+              <div class="di-img di-tetris"></div>
+              <div class="di-label">Tetris</div>
+            </div>
+            <div class="desktop-icon" data-target="window-minesweeper" style="left: 80px; top: 80px;">
+              <div class="di-img di-mine"></div>
+              <div class="di-label">Mines</div>
+            </div>
+            <div class="desktop-icon" data-target="window-maze" style="left: 80px; top: 118px;">
+              <div class="di-img di-maze"></div>
+              <div class="di-label">3D Maze</div>
             </div>
           </div>
 
@@ -197,6 +204,20 @@
             </div>
           </div>
 
+          <!-- Tetris Window (starts closed) -->
+          <div class="window closed" id="window-tetris" style="left: 130px; top: 20px; width: 130px;">
+            <div class="title-bar" data-window="window-tetris">
+              <span class="title-bar-text">Tetris</span>
+              <div class="title-bar-controls">
+                <button class="btn-minimize" data-window="window-tetris">_</button>
+                <button class="btn-close" data-window="window-tetris">&times;</button>
+              </div>
+            </div>
+            <div class="window-body" id="tetris-body">
+              <canvas id="tetris-canvas" width="120" height="160"></canvas>
+            </div>
+          </div>
+
           <!-- Browser Window (starts closed) -->
           <div class="window closed" id="window-browser" style="left: 60px; top: 20px; width: 280px; height: 220px;">
             <div class="title-bar" data-window="window-browser">
@@ -242,7 +263,7 @@
                 <div class="about-row"><span class="about-key">Arch</span><span class="about-val">CSS/JS</span></div>
                 <div class="about-row"><span class="about-key">Display</span><span class="about-val">440 x 330</span></div>
                 <div class="about-row"><span class="about-key">Memory</span><span class="about-val">640 KB</span></div>
-                <div class="about-row"><span class="about-key">Apps</span><span class="about-val">10 installed</span></div>
+                <div class="about-row"><span class="about-key">Apps</span><span class="about-val">11 installed</span></div>
                 <div class="about-row"><span class="about-key">Uptime</span><span class="about-val" id="about-uptime">0:00</span></div>
               </div>
             </div>
@@ -263,6 +284,7 @@
           <button class="start-menu-item" data-open="window-piano"><span class="tb-icon tb-piano"></span>Piano</button>
           <button class="start-menu-item" data-open="window-browser"><span class="tb-icon tb-browser"></span>TinyWeb</button>
           <button class="start-menu-item" data-open="window-fps"><span class="tb-icon tb-fps"></span>GEKKO</button>
+          <button class="start-menu-item" data-open="window-tetris"><span class="tb-icon tb-tetris"></span>Tetris</button>
           <div class="start-menu-sep"></div>
           <div class="start-menu-sub">
             <button class="start-menu-item start-menu-parent">Theme <span class="sub-arrow">▸</span></button>
@@ -330,6 +352,7 @@
   <script src="js/minesweeper.js"></script>
   <script src="js/maze.js"></script>
   <script src="js/fps.js"></script>
+  <script src="js/tetris.js"></script>
   <script src="js/wallpaper.js"></script>
   <script src="js/piano.js"></script>
   <script src="js/browser.js"></script>

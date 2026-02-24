@@ -86,7 +86,7 @@
   });
 
   // Keyboard input
-  var activeKeys = {};
+  var activeKeys = Object.create(null);
 
   function isPianoActive() {
     var win = document.getElementById('window-piano');
