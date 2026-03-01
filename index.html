@@ -75,6 +75,10 @@
               <div class="di-img di-solitaire"></div>
               <div class="di-label">Solitaire</div>
             </div>
+            <div class="desktop-icon" data-target="window-pinball" style="left: 42px; top: 194px;">
+              <div class="di-img di-pinball"></div>
+              <div class="di-label">Pinball</div>
+            </div>
           </div>
 
           <!-- Clock Window -->
@@ -233,6 +237,20 @@
             </div>
           </div>
 
+          <!-- Pinball Window (starts closed) -->
+          <div class="window closed" id="window-pinball" style="left: 160px; top: 20px; width: 180px;">
+            <div class="title-bar" data-window="window-pinball">
+              <span class="title-bar-text">Pinball</span>
+              <div class="title-bar-controls">
+                <button class="btn-minimize" data-window="window-pinball">_</button>
+                <button class="btn-close" data-window="window-pinball">&times;</button>
+              </div>
+            </div>
+            <div class="window-body" id="pinball-body">
+              <canvas id="pinball-canvas" width="120" height="210"></canvas>
+            </div>
+          </div>
+
           <!-- Browser Window (starts closed) -->
           <div class="window closed" id="window-browser" style="left: 60px; top: 20px; width: 280px; height: 220px;">
             <div class="title-bar" data-window="window-browser">
@@ -278,7 +296,7 @@
                 <div class="about-row"><span class="about-key">Arch</span><span class="about-val">CSS/JS</span></div>
                 <div class="about-row"><span class="about-key">Display</span><span class="about-val">440 x 330</span></div>
                 <div class="about-row"><span class="about-key">Memory</span><span class="about-val">640 KB</span></div>
-                <div class="about-row"><span class="about-key">Apps</span><span class="about-val">12 installed</span></div>
+                <div class="about-row"><span class="about-key">Apps</span><span class="about-val">13 installed</span></div>
                 <div class="about-row"><span class="about-key">Uptime</span><span class="about-val" id="about-uptime">0:00</span></div>
               </div>
             </div>
@@ -301,6 +319,7 @@
           <button class="start-menu-item" data-open="window-fps"><span class="tb-icon tb-fps"></span>GEKKO</button>
           <button class="start-menu-item" data-open="window-tetris"><span class="tb-icon tb-tetris"></span>Tetris</button>
           <button class="start-menu-item" data-open="window-solitaire"><span class="tb-icon tb-solitaire"></span>Solitaire</button>
+          <button class="start-menu-item" data-open="window-pinball"><span class="tb-icon tb-pinball"></span>Pinball</button>
           <div class="start-menu-sep"></div>
           <div class="start-menu-sub">
             <button class="start-menu-item start-menu-parent">Theme <span class="sub-arrow">▸</span></button>
@@ -370,6 +389,7 @@
   <script src="js/fps.js"></script>
   <script src="js/tetris.js"></script>
   <script src="js/solitaire.js"></script>
+  <script src="js/pinball.js"></script>
   <script src="js/wallpaper.js"></script>
   <script src="js/piano.js"></script>
   <script src="js/browser.js"></script>
