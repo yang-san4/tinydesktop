@@ -7,7 +7,7 @@
   var ctx = canvas.getContext('2d');
 
   // ===== Constants =====
-  var CANVAS_W = 120, CANVAS_H = 210;
+  var CANVAS_W = 180, CANVAS_H = 200;
   var TABLE_W = 80, TABLE_H = 180;
   var BALL_R = 2.5;
   var GRAVITY = 0.08;
@@ -2099,11 +2099,29 @@
       drawLedString(CANVAS_W / 2 - 26, 115, 'PRESS SPACE', '#33ff66', 1);
     }
 
-    drawLedString(CANVAS_W / 2 - 20, 140, 'ARROWS', '#3a2840', 1);
-    drawLedString(CANVAS_W / 2 - 24, 150, 'FLIPPER', '#3a2840', 1);
+    // Controls section
+    var cx = CANVAS_W / 2;
+    drawLedString(cx - 16, 108, 'KEYS', '#6a4870', 1);
 
-    drawLedString(CANVAS_W / 2 - 20, 165, 'SPACE.', '#3a2840', 1);
-    drawLedString(CANVAS_W / 2 - 20, 175, 'LAUNCH', '#3a2840', 1);
+    // Separator
+    ctx.strokeStyle = '#3a1828';
+    ctx.lineWidth = 0.5;
+    ctx.beginPath();
+    ctx.moveTo(cx - 40, 115);
+    ctx.lineTo(cx + 40, 115);
+    ctx.stroke();
+
+    // Flipper controls
+    drawLedString(cx - 36, 120, 'A . D', '#33ff66', 1);
+    drawLedString(cx + 4, 120, 'FLIPPER', '#6a4870', 1);
+
+    // Launch control
+    drawLedString(cx - 36, 132, 'SPACE', '#33ff66', 1);
+    drawLedString(cx + 4, 132, 'LAUNCH', '#6a4870', 1);
+
+    // Hold hint
+    drawLedString(cx - 24, 148, 'HOLD SPACE', '#3a2840', 1);
+    drawLedString(cx - 28, 158, 'FOR POWER!', '#3a2840', 1);
   }
 
   function drawGameOver() {
