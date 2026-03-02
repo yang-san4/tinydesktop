@@ -99,19 +99,19 @@
     { x1: 2,  y1: 20,  x2: 2,  y2: 170 },   // left wall
     { x1: 66, y1: 55,  x2: 66, y2: 170 },   // right wall
     { x1: 2,  y1: 170, x2: 66, y2: 170 },   // top wall
-    { x1: 2,  y1: 20,  x2: 15, y2: 5 },     // left drain guide
+    { x1: 2,  y1: 20,  x2: 12, y2: 5 },     // left drain guide
     { x1: 66, y1: 55,  x2: 55, y2: 5 }      // right drain guide
   ];
 
   // Flipper constants — REST = open (V-down), ACTIVE = closed (tips up)
   var FLIPPER_LEN = 20;
-  var FLIPPER_SPEED = 0.15;
+  var FLIPPER_SPEED = 0.25;
   var LEFT_REST = -30 * Math.PI / 180;
   var LEFT_ACTIVE = 25 * Math.PI / 180;
   var RIGHT_REST = 210 * Math.PI / 180;
   var RIGHT_ACTIVE = 155 * Math.PI / 180;
 
-  var leftFlipper = { px: 17, py: 38, angle: LEFT_REST, active: false };
+  var leftFlipper = { px: 13, py: 38, angle: LEFT_REST, active: false };
   var rightFlipper = { px: 63, py: 38, angle: RIGHT_REST, active: false };
 
   // ===== Game State =====
