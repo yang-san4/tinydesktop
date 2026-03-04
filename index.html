@@ -23,61 +23,67 @@
 
           <!-- Desktop Icons -->
           <div id="desktop-icons">
-            <div class="desktop-icon" data-target="window-clock" style="left: 4px; top: 4px;">
+            <!-- Column 1: Tools & Widgets -->
+            <div class="desktop-icon" data-target="window-clock">
               <div class="di-img di-clock"></div>
               <div class="di-label">Clock</div>
             </div>
-            <div class="desktop-icon" data-target="window-calendar" style="left: 4px; top: 42px;">
+            <div class="desktop-icon" data-target="window-calendar">
               <div class="di-img di-cal"></div>
               <div class="di-label">Calendar</div>
             </div>
-            <div class="desktop-icon" data-target="window-terminal" style="left: 4px; top: 80px;">
+            <div class="desktop-icon" data-target="window-terminal">
               <div class="di-img di-term"></div>
               <div class="di-label">Terminal</div>
             </div>
-            <div class="desktop-icon" data-target="window-aquarium" style="left: 4px; top: 118px;">
-              <div class="di-img di-aqua"></div>
-              <div class="di-label">Aquarium</div>
-            </div>
-            <div class="desktop-icon" data-target="widget-hourglass" style="left: 4px; top: 156px;">
-              <div class="di-img di-timer"></div>
-              <div class="di-label">Timer</div>
-            </div>
-            <div class="desktop-icon" data-target="widget-david" style="left: 4px; top: 194px;">
-              <div class="di-img di-david"></div>
-              <div class="di-label">David</div>
-            </div>
-            <div class="desktop-icon" data-target="window-minesweeper" style="left: 4px; top: 232px;">
-              <div class="di-img di-mine"></div>
-              <div class="di-label">Mines</div>
-            </div>
-            <div class="desktop-icon" data-target="window-maze" style="left: 4px; top: 270px;">
-              <div class="di-img di-maze"></div>
-              <div class="di-label">3D Maze</div>
-            </div>
-            <div class="desktop-icon" data-target="window-piano" style="left: 42px; top: 4px;">
+            <div class="desktop-icon" data-target="window-piano">
               <div class="di-img di-piano"></div>
               <div class="di-label">Piano</div>
             </div>
-            <div class="desktop-icon" data-target="window-browser" style="left: 42px; top: 42px;">
+            <div class="desktop-icon" data-target="window-browser">
               <div class="di-img di-browser"></div>
               <div class="di-label">TinyWeb</div>
             </div>
-            <div class="desktop-icon" data-target="window-fps" style="left: 42px; top: 80px;">
+            <div class="desktop-icon" data-target="window-aquarium">
+              <div class="di-img di-aqua"></div>
+              <div class="di-label">Aquarium</div>
+            </div>
+            <div class="desktop-icon" data-target="widget-hourglass">
+              <div class="di-img di-timer"></div>
+              <div class="di-label">Timer</div>
+            </div>
+            <div class="desktop-icon" data-target="widget-david">
+              <div class="di-img di-david"></div>
+              <div class="di-label">David</div>
+            </div>
+            <!-- Column 2: Games -->
+            <div class="desktop-icon" data-target="window-fps">
               <div class="di-img di-fps"></div>
               <div class="di-label">GEKKO</div>
             </div>
-            <div class="desktop-icon" data-target="window-tetris" style="left: 42px; top: 118px;">
+            <div class="desktop-icon" data-target="window-fpsc">
+              <div class="di-img di-fpsc"></div>
+              <div class="di-label">Classic</div>
+            </div>
+            <div class="desktop-icon" data-target="window-tetris">
               <div class="di-img di-tetris"></div>
               <div class="di-label">Tetris</div>
             </div>
-            <div class="desktop-icon" data-target="window-solitaire" style="left: 42px; top: 156px;">
+            <div class="desktop-icon" data-target="window-solitaire">
               <div class="di-img di-solitaire"></div>
               <div class="di-label">Solitaire</div>
             </div>
-            <div class="desktop-icon" data-target="window-pinball" style="left: 42px; top: 194px;">
+            <div class="desktop-icon" data-target="window-pinball">
               <div class="di-img di-pinball"></div>
               <div class="di-label">Pinball</div>
+            </div>
+            <div class="desktop-icon" data-target="window-minesweeper">
+              <div class="di-img di-mine"></div>
+              <div class="di-label">Mines</div>
+            </div>
+            <div class="desktop-icon" data-target="window-maze">
+              <div class="di-img di-maze"></div>
+              <div class="di-label">3D Maze</div>
             </div>
           </div>
 
@@ -209,6 +215,20 @@
             </div>
           </div>
 
+          <!-- FPS Classic Window (starts closed) -->
+          <div class="window closed" id="window-fpsc" style="left: 44px; top: 10px; width: 352px;">
+            <div class="title-bar" data-window="window-fpsc">
+              <span class="title-bar-text">GEKKO Classic</span>
+              <div class="title-bar-controls">
+                <button class="btn-minimize" data-window="window-fpsc">_</button>
+                <button class="btn-close" data-window="window-fpsc">&times;</button>
+              </div>
+            </div>
+            <div class="window-body" id="fpsc-body">
+              <canvas id="fpsc-canvas" width="200" height="150"></canvas>
+            </div>
+          </div>
+
           <!-- Tetris Window (starts closed) -->
           <div class="window closed" id="window-tetris" style="left: 130px; top: 20px; width: 130px;">
             <div class="title-bar" data-window="window-tetris">
@@ -296,7 +316,7 @@
                 <div class="about-row"><span class="about-key">Arch</span><span class="about-val">CSS/JS</span></div>
                 <div class="about-row"><span class="about-key">Display</span><span class="about-val">440 x 330</span></div>
                 <div class="about-row"><span class="about-key">Memory</span><span class="about-val">640 KB</span></div>
-                <div class="about-row"><span class="about-key">Apps</span><span class="about-val">13 installed</span></div>
+                <div class="about-row"><span class="about-key">Apps</span><span class="about-val">14 installed</span></div>
                 <div class="about-row"><span class="about-key">Uptime</span><span class="about-val" id="about-uptime">0:00</span></div>
               </div>
             </div>
@@ -317,6 +337,7 @@
           <button class="start-menu-item" data-open="window-piano"><span class="tb-icon tb-piano"></span>Piano</button>
           <button class="start-menu-item" data-open="window-browser"><span class="tb-icon tb-browser"></span>TinyWeb</button>
           <button class="start-menu-item" data-open="window-fps"><span class="tb-icon tb-fps"></span>GEKKO</button>
+          <button class="start-menu-item" data-open="window-fpsc"><span class="tb-icon tb-fpsc"></span>GEKKO Classic</button>
           <button class="start-menu-item" data-open="window-tetris"><span class="tb-icon tb-tetris"></span>Tetris</button>
           <button class="start-menu-item" data-open="window-solitaire"><span class="tb-icon tb-solitaire"></span>Solitaire</button>
           <button class="start-menu-item" data-open="window-pinball"><span class="tb-icon tb-pinball"></span>Pinball</button>
@@ -347,6 +368,7 @@
         <!-- Context Menu -->
         <div id="context-menu" class="hidden">
           <button class="ctx-item" data-action="new-folder">New Folder</button>
+          <button class="ctx-item" data-action="arrange">Clean Up</button>
           <div class="ctx-sep"></div>
           <button class="ctx-item" data-action="show-all">Show All</button>
           <button class="ctx-item" data-action="hide-all">Hide All</button>
@@ -387,6 +409,7 @@
   <script src="js/minesweeper.js"></script>
   <script src="js/maze.js"></script>
   <script src="js/fps.js"></script>
+  <script src="js/fps-classic.js"></script>
   <script src="js/tetris.js"></script>
   <script src="js/solitaire.js"></script>
   <script src="js/pinball.js"></script>

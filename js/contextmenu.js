@@ -60,6 +60,14 @@
     menu.classList.add('hidden');
   });
 
+  // Clean Up (arrange icons)
+  menu.querySelector('[data-action="arrange"]').addEventListener('click', function () {
+    if (window._tinyDesktopArrange) {
+      window._tinyDesktopArrange();
+    }
+    menu.classList.add('hidden');
+  });
+
   // Show All
   menu.querySelector('[data-action="show-all"]').addEventListener('click', function () {
     document.querySelectorAll('.window.minimized, .widget.minimized, .window.closed, .widget.closed').forEach(function (el) {

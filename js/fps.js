@@ -33,7 +33,7 @@
     '@keyframes fpsSlideIn{0%{transform:translateY(-10px);opacity:0}100%{transform:translateY(0);opacity:1}}' +
     '.fps-scr{position:absolute;top:0;left:0;width:100%;height:100%;display:none;' +
     'flex-direction:column;align-items:center;justify-content:center;gap:0;' +
-    'font-family:"Press Start 2P",monospace;text-align:center;box-sizing:border-box;padding:4% 4%}' +
+    'font-family:"Press Start 2P",monospace;text-align:center;box-sizing:border-box;padding:4% 4%;background:rgba(5,8,18,0.88)}' +
     '.fps-scr.on{display:flex}' +
     '.fps-blink{animation:fpsPulse 1.8s ease-in-out infinite}' +
     '.fps-key{display:inline-block;border:1px solid rgba(0,229,255,0.45);padding:2px 4px;font-size:5px;border-radius:2px;margin:0 1px;background:rgba(0,229,255,0.06);color:#00e5ff;line-height:1;vertical-align:middle;font-family:"Press Start 2P",monospace}' +
@@ -42,18 +42,18 @@
     '.fps-bi{display:inline-block;width:10px;height:10px;border-radius:3px;border:1px solid;vertical-align:middle;box-sizing:border-box}' +
     '.fps-cr{display:flex;align-items:center;justify-content:center;gap:10px;margin:2px 0;flex-wrap:wrap}' +
     '.fps-ci{display:flex;align-items:center;gap:4px;font-size:5px;color:#c8d8e8;white-space:nowrap}' +
-    '.fps-logo{background:rgba(10,15,25,0.7);border-top:2px solid #00e5ff;border-bottom:2px solid #00e5ff;padding:12px 28px 10px;text-align:center}' +
+    '.fps-logo{background:rgba(5,8,18,0.92);border-top:2px solid #00e5ff;border-bottom:2px solid #00e5ff;padding:12px 28px 10px;text-align:center}' +
     '.fps-logo-t{font-size:18px;color:#00e5ff;text-shadow:0 0 8px #00e5ff80,0 0 18px #00e5ff40;letter-spacing:8px}' +
     '.fps-logo-sep{width:50%;height:1px;background:linear-gradient(90deg,transparent,#ff006060,transparent);margin:8px auto 6px}' +
     '.fps-logo-sub{font-size:4px;color:#ff0060;letter-spacing:2px;opacity:.65}' +
-    '.fps-hud-hint{position:absolute;bottom:3px;right:4px;display:none;align-items:center;gap:3px;font-family:"Press Start 2P",monospace;font-size:4px;opacity:.3}.fps-hud-hint.on{display:flex}' +
+    '.fps-hud-hint{position:absolute;bottom:3px;right:4px;display:none;align-items:center;gap:3px;font-family:"Press Start 2P",monospace;font-size:4px;text-shadow:0 0 4px rgba(0,0,0,0.9)}.fps-hud-hint.on{display:flex}' +
     '.fps-wave-title{font-size:14px;color:#00e5ff;text-shadow:0 0 10px #00e5ff;animation:fpsSlideIn 0.5s ease-out}' +
     '.fps-wave-sub{font-size:6px;color:#ff0060;margin-top:6px;animation:fpsSlideIn 0.5s ease-out 0.2s both}' +
     '.fps-wave-info{font-size:4px;color:#c8d8e8;margin-top:4px;opacity:.7;animation:fpsSlideIn 0.5s ease-out 0.4s both}' +
     '.fps-stats{font-size:5px;color:#c8d8e8;margin-top:10px;line-height:2}.fps-stats b{color:#00e5ff}';
   document.head.appendChild(_ovCss);
   function _mkScr(){var d=document.createElement('div');d.className='fps-scr';_ov.appendChild(d);return d;}
-  function _pcControls(){return '<div class="fps-cr"><div class="fps-ci"><span class="fps-key">W</span><span class="fps-key">A</span><span class="fps-key">S</span><span class="fps-key">D</span> MOVE</div><div class="fps-ci"><span class="fps-key" style="font-size:4px">MOUSE</span> LOOK</div></div><div class="fps-cr"><div class="fps-ci"><span class="fps-key" style="font-size:4px">CLICK</span> SHOOT</div><div class="fps-ci"><span class="fps-key" style="font-size:4px">SPACE</span> JUMP/JET</div><div class="fps-ci"><span class="fps-key">Q</span> DASH</div><div class="fps-ci"><span class="fps-key">E</span> GRAPPLE</div></div><div class="fps-cr"><div class="fps-ci"><span class="fps-key">1</span><span class="fps-key">2</span><span class="fps-key">3</span> WEAPONS</div></div>';}
+  function _pcControls(){return '<div class="fps-cr"><div class="fps-ci"><span class="fps-key">W</span><span class="fps-key">A</span><span class="fps-key">S</span><span class="fps-key">D</span> MOVE</div><div class="fps-ci"><span class="fps-key" style="font-size:4px">MOUSE</span> LOOK</div></div><div class="fps-cr"><div class="fps-ci"><span class="fps-key" style="font-size:4px">CLICK</span> SHOOT</div><div class="fps-ci"><span class="fps-key" style="font-size:4px">SPACE</span> JUMP/JET</div><div class="fps-ci"><span class="fps-key">Q</span> DASH</div><div class="fps-ci"><span class="fps-key">E</span> GRAPPLE</div></div><div class="fps-cr"><div class="fps-ci"><span class="fps-key">1</span><span class="fps-key">2</span><span class="fps-key">3</span> WEAPONS</div><div class="fps-ci"><span class="fps-key" style="font-size:4px">ESC</span> PAUSE</div></div>';}
   function _mobControls(){return '<div class="fps-cr"><div class="fps-ci"><span class="fps-si" style="color:#00e5ff;border-color:rgba(0,229,255,0.45)"></span> MOVE</div><div class="fps-ci"><span class="fps-si" style="color:#ff0060;border-color:rgba(255,0,96,0.45)"></span> LOOK</div></div><div class="fps-cr"><div class="fps-ci"><span class="fps-bi" style="border-color:#ff3c3c;background:rgba(255,60,60,0.15)"></span> FIRE</div><div class="fps-ci"><span class="fps-bi" style="border-color:#00e5ff;background:rgba(0,229,255,0.15)"></span> JUMP</div><div class="fps-ci"><span class="fps-bi" style="border-color:#ff0060;background:rgba(255,0,96,0.15)"></span> DASH</div></div>';}
   var _scrTitle=_mkScr();
   _scrTitle.innerHTML='<div class="fps-logo"><div class="fps-logo-t">GEKKO</div><div class="fps-logo-sep"></div><div class="fps-logo-sub">SKY CITY ARENA</div></div><div style="flex:1 0 14px;max-height:28px"></div><div class="fps-blink" style="font-size:8px;color:#fff"></div><div style="flex:1 0 10px;max-height:20px"></div><div style="opacity:.6"></div>';

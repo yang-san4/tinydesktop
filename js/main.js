@@ -565,7 +565,24 @@
     });
   }
 
+  // ----- Arrange desktop icons in a grid -----
+  function arrangeDesktopIcons() {
+    var icons = document.querySelectorAll('#desktop-icons > .desktop-icon:not(.in-folder)');
+    var startX = 4, startY = 3, cellW = 40, cellH = 37, maxRows = 8;
+    var idx = 0;
+    icons.forEach(function (icon) {
+      var col = Math.floor(idx / maxRows);
+      var row = idx % maxRows;
+      icon.style.left = (startX + col * cellW) + 'px';
+      icon.style.top = (startY + row * cellH) + 'px';
+      idx++;
+    });
+  }
+
+  window._tinyDesktopArrange = arrangeDesktopIcons;
+
   // ----- Init -----
+  arrangeDesktopIcons();
   updateTaskbarItems();
   const firstWin = document.querySelector('.window');
   if (firstWin) bringToFront(firstWin);

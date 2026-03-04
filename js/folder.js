@@ -7,10 +7,11 @@
   var desktopIcons = document.getElementById('desktop-icons');
 
   // ----- Create folder -----
-  function createFolder(x, y) {
+  function createFolder(x, y, name) {
     folderId++;
     var id = 'folder-' + folderId;
-    folders[id] = { name: 'Folder', iconTargets: [] };
+    var folderName = name || 'Folder';
+    folders[id] = { name: folderName, iconTargets: [] };
 
     var icon = document.createElement('div');
     icon.className = 'desktop-icon desktop-folder';
@@ -19,7 +20,7 @@
     icon.style.top = y + 'px';
     icon.innerHTML =
       '<div class="di-img di-folder"></div>' +
-      '<div class="di-label">Folder</div>';
+      '<div class="di-label">' + folderName + '</div>';
 
     // Double-click opens folder window
     icon.addEventListener('dblclick', function () {
@@ -331,6 +332,14 @@
     folderIdFromWindow: folderIdFromWindow
   };
 
-  // ----- Create a default folder on startup -----
-  createFolder(42, 232);
+  // ----- Create a Game folder on startup with game icons -----
+  var gameTargets = [
+    'window-fps', 'window-fpsc', 'window-tetris',
+    'window-solitaire', 'window-pinball', 'window-minesweeper', 'window-maze'
+  ];
+  var gameFolderId = createFolder(0, 0, 'Game');
+  gameTargets.forEach(function (targetId) {
+    var iconEl = desktopIcons.querySelector('[data-target="' + targetId + '"]');
+    if (iconEl) addToFolder(gameFolderId, iconEl);
+  });
 })();

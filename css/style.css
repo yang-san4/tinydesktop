@@ -247,9 +247,9 @@ body {
   line-height: 1;
 }
 
-/* Aquarium icon: blue gradient, fish dot */
+/* Aquarium icon: theme-aware gradient, fish dot */
 .di-aqua {
-  background: linear-gradient(180deg, #0a2a5a, #0a4a6a);
+  background: linear-gradient(180deg, var(--surface2), var(--body-deep));
   border-color: var(--accent);
 }
 
@@ -260,9 +260,9 @@ body {
   left: 4px;
   width: 4px;
   height: 2px;
-  background: #ff9040;
+  background: var(--accent2);
   border-radius: 50%;
-  box-shadow: 5px 3px 0 0 #40e0d0;
+  box-shadow: 5px 3px 0 0 var(--accent3);
 }
 
 /* Timer icon: accent3 border, hourglass shape */
@@ -409,7 +409,7 @@ body {
 }
 
 .tb-aquarium {
-  background: linear-gradient(180deg, #0a2a5a, #0a4a6a);
+  background: linear-gradient(180deg, var(--surface2), var(--body-deep));
   border-color: var(--accent);
 }
 
@@ -425,8 +425,8 @@ body {
 }
 
 .tb-minesweeper {
-  background: #c0c0c0;
-  border-color: #808080;
+  background: var(--surface2);
+  border-color: var(--text-dim);
 }
 
 .tb-maze {
@@ -440,10 +440,6 @@ body {
 .tb-about {
   border-color: var(--accent2);
   background: linear-gradient(135deg, var(--accent3), var(--accent));
-}
-
-#screen.theme-mac .tb-aquarium {
-  background: linear-gradient(180deg, #4a7a9a, #5a8aaa);
 }
 
 .taskbar-item:hover {
@@ -1156,10 +1152,6 @@ body {
   text-shadow: 1px 1px 0 rgba(255, 255, 255, 0.6);
 }
 
-#screen.theme-mac .di-aqua {
-  background: linear-gradient(180deg, #4a7a9a, #5a8aaa);
-}
-
 /* ========================================
    THEME: OS X (Aqua)
    ======================================== */
@@ -1263,14 +1255,6 @@ body {
 #screen.theme-osx .di-label {
   color: #fff;
   text-shadow: 0 1px 2px rgba(0, 0, 0, 0.7);
-}
-
-#screen.theme-osx .di-aqua {
-  background: linear-gradient(180deg, #2868a0, #3878b8);
-}
-
-#screen.theme-osx .tb-aquarium {
-  background: linear-gradient(180deg, #2868a0, #3878b8);
 }
 
 #screen.theme-osx .window::after {
@@ -1847,8 +1831,8 @@ body {
 
 /* ===== GEKKO FPS Icon ===== */
 .di-fps {
-  background: #c8dce8;
-  border-color: #d4a852;
+  background: var(--surface2);
+  border-color: var(--accent2);
 }
 
 .di-fps::after {
@@ -1859,17 +1843,47 @@ body {
   transform: translate(-50%, -50%);
   font-family: "Press Start 2P", monospace;
   font-size: 7px;
-  color: #d4a852;
+  color: var(--accent2);
   line-height: 1;
 }
 
 .tb-fps {
-  background: #c8dce8;
-  border-color: #d4a852;
+  background: var(--surface2);
+  border-color: var(--accent2);
+}
+
+/* ===== GEKKO Classic Icon ===== */
+.di-fpsc {
+  background: var(--body-deep);
+  border-color: var(--accent3);
+}
+
+.di-fpsc::after {
+  content: '+';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  font-family: "Press Start 2P", monospace;
+  font-size: 7px;
+  color: var(--accent3);
+  line-height: 1;
+}
+
+.tb-fpsc {
+  background: var(--body-deep);
+  border-color: var(--accent3);
 }
 
 /* ===== FPS Arena Window ===== */
 #fps-body {
+  padding: 0;
+  background: #000;
+  line-height: 0;
+}
+
+/* ===== FPS Classic Window ===== */
+#fpsc-body {
   padding: 0;
   background: #000;
   line-height: 0;
@@ -1884,8 +1898,8 @@ body {
 
 /* ===== Tetris Icon ===== */
 .di-tetris {
-  background: #1a1a2e;
-  border-color: #00d4ff;
+  background: var(--body-deep);
+  border-color: var(--accent3);
 }
 
 .di-tetris::after {
@@ -1896,13 +1910,13 @@ body {
   transform: translate(-50%, -50%);
   font-family: "Press Start 2P", monospace;
   font-size: 7px;
-  color: #00d4ff;
+  color: var(--accent3);
   line-height: 1;
 }
 
 .tb-tetris {
-  background: #1a1a2e;
-  border-color: #00d4ff;
+  background: var(--body-deep);
+  border-color: var(--accent3);
 }
 
 /* ===== Tetris Window ===== */
@@ -1921,8 +1935,8 @@ body {
 
 /* ===== Solitaire Icon ===== */
 .di-solitaire {
-  background: #1a6030;
-  border-color: #2a8040;
+  background: var(--surface);
+  border-color: var(--accent);
 }
 
 .di-solitaire::after {
@@ -1932,15 +1946,15 @@ body {
   left: 3px;
   width: 8px;
   height: 8px;
-  background: #f0f0e8;
-  border: 1px solid #a0a0a0;
+  background: var(--text-bright);
+  border: 1px solid var(--text-dim);
   border-radius: 1px;
   box-shadow: 1px 1px 0 rgba(0,0,0,0.2);
 }
 
 .tb-solitaire {
-  background: #1a6030;
-  border-color: #2a8040;
+  background: var(--surface);
+  border-color: var(--accent);
 }
 
 /* ===== Solitaire Window ===== */
@@ -1959,8 +1973,8 @@ body {
 
 /* ===== Pinball Icon ===== */
 .di-pinball {
-  background: #0a0a2e;
-  border-color: #c0a020;
+  background: var(--body-deep);
+  border-color: var(--accent2);
 }
 
 .di-pinball::after {
@@ -1970,15 +1984,15 @@ body {
   left: 50%;
   width: 3px;
   height: 3px;
-  background: #e0e0e0;
+  background: var(--text-bright);
   border-radius: 50%;
   transform: translate(-50%, -50%);
-  box-shadow: 0 0 2px #fff;
+  box-shadow: 0 0 2px var(--text-bright);
 }
 
 .tb-pinball {
-  background: #0a0a2e;
-  border-color: #c0a020;
+  background: var(--body-deep);
+  border-color: var(--accent2);
 }
 
 /* ===== Pinball Window ===== */
