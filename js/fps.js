@@ -701,6 +701,8 @@
   var fovKick=0,grappleInRange=false,grapplePoint=null;
   var debugMode=false,debugFps=0,debugFrames=0,debugFpsTimer=0;
   var manualPause=false; // explicit ESC pause — needed in AI mode where no pointer lock exists
+  var RESPAWN_T=0.9;
+  var respawnT=0,fallMsgT=0; // void-fall blackout + post-respawn message
   var spJustPressed=false,recentJet=0,jetCutoff=false;
   var aiMode=false,aiTimer=0,aiState='explore',aiWp=null,aiStuck=0,aiLastX=0,aiLastY=0,aiShootT=0;
   var keys={w:false,a:false,s:false,d:false,sp:false};
@@ -1010,8 +1012,8 @@
     if(!player.grounded&&player.vz>=0)player.fellFrom=Math.max(player.fellFrom,player.z);
 
     // --- void fall ---
-    if(player.z<VOID_Z){
-      damagePlayerVoid();
+    if(player.z<VOID_Z&&respawnT<=0){
+      beginVoidRespawn();
     }
 
     // --- timers ---
@@ -1020,13 +1022,35 @@
     // head bob
     if(player.grounded&&hspd>0.5)player.bobPhase+=dt*hspd*1.8;
   }
-  function damagePlayerVoid(){
-    player.hp-=10;
-    dmgFlash=1;screenShake=4;
-    playSound('hurt');
+  // Void fall: 20 dmg + combo lost + ~0.9s blackout respawn.
+  // Falling has to hurt — the whole movement kit exists to avoid this.
+  var FALL_DMG=20;
+  function beginVoidRespawn(){
+    player.hp-=FALL_DMG;
+    combo=0;comboTimer=0;
+    dmgFlash=1;screenShake=5;
+    playSound('fall');
     if(player.hp<=0){player.hp=0;respawnPlayer();gameOver();return;}
-    player.iFrames=0.8;
-    respawnPlayer();
+    respawnT=RESPAWN_T;
+    player.iFrames=RESPAWN_T+1.0; // covers blackout + recovery window
+  }
+  function updateRespawn(dt){
+    if(respawnT<=0)return;
+    var prev=respawnT;
+    respawnT-=dt;
+    // teleport at the midpoint, while the screen is fully dark
+    if(prev>RESPAWN_T/2&&respawnT<=RESPAWN_T/2){
+      respawnPlayer();
+      fallMsgT=1.6;
+      ringParticles(player.x,player.y,player.z+0.2,[0.0,0.9,1.0]);
+      ringParticles(player.x,player.y,player.z+0.9,[0.6,0.4,1.0]);
+      for(var i=0;i<10;i++){
+        spawnP(player.x+(Math.random()-0.5)*0.4,player.y+(Math.random()-0.5)*0.4,player.z+Math.random()*1.2,
+          0,0,2+Math.random()*2,0.4+Math.random()*0.3,0.07,0.3,0.9,1.0,-3);
+      }
+      addLight(player.x,player.y,player.z+1,5,0.1,0.9,1.0,1.8,0.5);
+      playSound('respawn');
+    }
   }
   // ===== PARTICLES =====
   var particles=[];
@@ -1431,6 +1455,7 @@
     score=0;combo=0;comboTimer=0;maxCombo=0;totalKills=0;gameTime=0;
     refillAmmo();weaponIdx=0;
     manualPause=false;
+    respawnT=0;fallMsgT=0;
     gameState='playing';
     startWave(1);
     startMusic();
@@ -1599,7 +1624,7 @@
     var cx=player.x,cy=player.y,cz=player.z+PLAYER_EYE+bob-dip;
     var ca=player.a+shx,cp=player.p+shy;
     var spd=Math.sqrt(player.vx*player.vx+player.vy*player.vy);
-    var fov=FOV_BASE*(1+fovKick*0.13+clamp((spd-WALK_SPD)/14,0,0.08));
+    var fov=FOV_BASE*(1+fovKick*0.13+clamp((spd-WALK_SPD)/14,0,0.08)+clamp((-player.vz-8)/40,0,0.07));
     var proj=matPerspective(fov,W/H,NEAR,FAR);
     var view=matView(cx,cy,cz,ca,cp);
     _vp=matMul(proj,view);
@@ -1787,6 +1812,20 @@
       hud.fillStyle='rgba(255,0,30,'+hb*(1-player.hp/30)+')';
       hud.fillRect(0,0,W,H);
     }
+    // fast-fall wind: radial speed lines from screen edges
+    if(player.vz<-9&&respawnT<=0){
+      var ws=clamp((-player.vz-9)/12,0,1);
+      hud.strokeStyle='rgba(220,230,255,'+(ws*0.35)+')';
+      hud.lineWidth=1;
+      hud.beginPath();
+      for(var sl=0;sl<14;sl++){
+        var sa=Math.random()*TAU;
+        var r0=H*(0.30+Math.random()*0.18),r1=r0+H*(0.10+0.16*ws);
+        hud.moveTo(W/2+Math.cos(sa)*r0,H/2+Math.sin(sa)*r0);
+        hud.lineTo(W/2+Math.cos(sa)*r1,H/2+Math.sin(sa)*r1);
+      }
+      hud.stroke();
+    }
     // --- damage numbers (3D projected) ---
     hud.textAlign='center';hud.textBaseline='middle';
     for(var i=0;i<dmgNums.length;i++){
@@ -1901,6 +1940,23 @@
     }
     renderViewmodel();
     renderMobileHUD();
+    // void-fall blackout: fade to black, teleport at midpoint, fade back
+    if(respawnT>0){
+      var fk=respawnT>RESPAWN_T/2?(RESPAWN_T-respawnT)/(RESPAWN_T/2):respawnT/(RESPAWN_T/2);
+      hud.fillStyle='rgba(4,2,10,'+Math.min(1,fk*1.15)+')';
+      hud.fillRect(0,0,W,H);
+    }
+    // post-respawn penalty message
+    if(fallMsgT>0&&respawnT<=RESPAWN_T/2){
+      var fm=Math.min(1,fallMsgT);
+      hud.textAlign='center';hud.textBaseline='middle';
+      hud.font='bold 11px monospace';
+      hud.fillStyle='rgba(255,70,70,'+fm+')';
+      hud.fillText('FELL  -'+FALL_DMG+' HP',W/2,H*0.36);
+      hud.font='7px monospace';
+      hud.fillStyle='rgba(255,200,80,'+fm*0.9+')';
+      hud.fillText('COMBO LOST',W/2,H*0.36+13);
+    }
     if(debugMode)renderDebugHUD();
   }
 
@@ -2064,6 +2120,8 @@
         case'bosswave':osc('sawtooth',110,55,t0,0.7,0.25);osc('sawtooth',165,82,t0+0.2,0.6,0.2);break;
         case'win':var ns=[523,659,784,1047];for(var j=0;j<4;j++)osc('square',ns[j],ns[j],t0+j*0.13,0.16,0.14);break;
         case'gameover':var gs=[440,330,262,196];for(var k=0;k<4;k++)osc('sawtooth',gs[k],gs[k]*0.95,t0+k*0.2,0.24,0.16);break;
+        case'fall':osc('sawtooth',520,60,t0,0.55,0.28);noise(t0,0.5,0.22,1200);break;
+        case'respawn':osc('sine',300,1200,t0,0.25,0.16);osc('square',600,2400,t0+0.05,0.22,0.08);noise(t0,0.12,0.08,7000);break;
       }
     }catch(e){}
   }
@@ -2082,6 +2140,24 @@
     }else if(jetNode){
       try{jetNode.stop();}catch(e){}
       jetNode=null;
+    }
+  }
+  var windNode=null;
+  function updateWindSound(){
+    var falling=gameState==='playing'&&player.vz<-9&&respawnT<=0;
+    if(!sOK()||!falling){
+      if(windNode){try{windNode.stop();}catch(e){}windNode=null;}
+      return;
+    }
+    if(!windNode){
+      try{
+        windNode=audioCtx.createBufferSource();windNode.buffer=noiseBuffer();windNode.loop=true;
+        var f=audioCtx.createBiquadFilter();f.type='lowpass';f.frequency.value=600;
+        var g=audioCtx.createGain();g.gain.value=0.001;
+        g.gain.exponentialRampToValueAtTime(0.14,audioCtx.currentTime+0.4);
+        windNode.connect(f);f.connect(g);g.connect(masterGain);
+        windNode.start();
+      }catch(e){windNode=null;}
     }
   }
 
@@ -2252,6 +2328,7 @@
       if(!isFpsOpen()){
         if(pointerLocked)document.exitPointerLock();
         if(jetNode){try{jetNode.stop();}catch(e){}jetNode=null;}
+        if(windNode){try{windNode.stop();}catch(e){}windNode=null;}
       }
     }).observe(_wfps,{attributes:true,attributeFilter:['class']});
   }
@@ -2347,6 +2424,7 @@
         var w=weapons[weaponIdx];
         if(mouseDown&&w.auto&&w.timer<=0)playerShoot();
         for(var wi=0;wi<3;wi++)if(weapons[wi].timer>0)weapons[wi].timer-=dt;
+        updateRespawn(dt);
         resolvePhysics(dt);
         var alive=updateEnemies(dt);
         updateBullets(dt);
@@ -2376,17 +2454,25 @@
     if(healFlash>0)healFlash=Math.max(0,healFlash-2.5*rawDt);
     if(hitMarker>0)hitMarker-=rawDt;
     if(killMarker>0)killMarker-=rawDt;
+    if(fallMsgT>0)fallMsgT-=rawDt;
     if(fovKick>0)fovKick=Math.max(0,fovKick-5*rawDt);
     if(vmKick>0)vmKick=Math.max(0,vmKick-7*rawDt);
     if(vmFlash>0)vmFlash=Math.max(0,vmFlash-11*rawDt);
 
     updateJetSound();
+    updateWindSound();
     scheduleMusic();
     renderScene();
     renderHUD();
     updateOverlay();
     updateOverlayPrompts();
   }
+
+  // ===== TEST HOOK (used by the headless harness; harmless in normal play) =====
+  window._gekkoTest={
+    fall:function(){if(gameState==='playing'){player.z=VOID_Z-0.5;player.vz=-14;}},
+    state:function(){return{hp:player.hp,combo:combo,wave:currentWave,z:player.z,respawnT:respawnT,grounded:player.grounded};}
+  };
 
   // ===== INIT =====
   updateOverlay();
