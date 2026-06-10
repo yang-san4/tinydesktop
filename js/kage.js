@@ -67,7 +67,7 @@
     '.kg-stats{font-size:5px;color:#c8c0d8;margin-top:10px;line-height:2}.kg-stats b{color:#e8d2a0}';
   document.head.appendChild(_ovCss);
   function _mkScr(){var d=document.createElement('div');d.className='kg-scr';_ov.appendChild(d);return d;}
-  function _pcControls(){return '<div class="kg-cr"><div class="kg-ci"><span class="kg-key">W</span><span class="kg-key">A</span><span class="kg-key">S</span><span class="kg-key">D</span> MOVE</div><div class="kg-ci"><span class="kg-key" style="font-size:4px">MOUSE</span> CAMERA</div></div><div class="kg-cr"><div class="kg-ci"><span class="kg-key" style="font-size:4px">CLICK</span> SLASH</div><div class="kg-ci"><span class="kg-key" style="font-size:4px">RCLICK/F</span> SHURIKEN</div><div class="kg-ci"><span class="kg-key" style="font-size:4px">SPACE</span> JUMP</div></div><div class="kg-cr"><div class="kg-ci"><span class="kg-key">Q</span> DASH</div><div class="kg-ci"><span class="kg-key">E</span> KAGINAWA</div><div class="kg-ci"><span class="kg-key" style="font-size:4px">ESC</span> PAUSE</div></div>';}
+  function _pcControls(){return '<div class="kg-cr"><div class="kg-ci"><span class="kg-key">W</span><span class="kg-key">A</span><span class="kg-key">S</span><span class="kg-key">D</span> MOVE</div><div class="kg-ci"><span class="kg-key" style="font-size:4px">MOUSE</span> CAMERA</div></div><div class="kg-cr"><div class="kg-ci"><span class="kg-key" style="font-size:4px">CLICK</span> SLASH</div><div class="kg-ci"><span class="kg-key" style="font-size:4px">RCLICK/F</span> SHURIKEN</div><div class="kg-ci"><span class="kg-key" style="font-size:4px">SPACE</span> JUMP</div></div><div class="kg-cr"><div class="kg-ci"><span class="kg-key">Q</span> DASH</div><div class="kg-ci"><span class="kg-key">E</span> AIM HOOK</div><div class="kg-ci"><span class="kg-key" style="font-size:4px">ESC</span> PAUSE</div></div>';}
   function _mobControls(){return '<div class="kg-cr"><div class="kg-ci">KAGE needs a keyboard and mouse.</div></div><div class="kg-cr"><div class="kg-ci">Visit again from a desktop, ninja.</div></div>';}
   var _scrTitle=_mkScr();
   _scrTitle.innerHTML='<div class="kg-logo"><div class="kg-logo-t">KAGE</div><div class="kg-logo-sep"></div><div class="kg-logo-sub">A NINJA\'S NIGHT &mdash; SILENCE THE LORD</div></div><div style="flex:1 0 14px;max-height:28px"></div><div class="kg-blink" style="font-size:8px;color:#fff"></div><div style="flex:1 0 10px;max-height:20px"></div><div style="opacity:.6"></div>';
@@ -529,6 +529,7 @@
   var mouseDown=false;
   var spJustPressed=false;
   var screenShake=0,dmgFlash=0,healFlash=0,hitStop=0,slowMo=0,fovKick=0;
+  var aimMode=false; // kaginawa aim stance (first-person)
   var killMsgT=0,killMsgTxt='';
   var koban=0,kills=0,stealthKills=0,gameTime=0;
   var curZone=0; // 0 town, 1 gate, 2 keep
@@ -538,7 +539,7 @@
   var WALK_SPD=4.2,SNEAK_SPD=2.0,AIR_CTRL=8,FRICTION=10;
   var JUMP_VEL=6.8,COYOTE_T=0.12;
   var DASH_SPD=11,DASH_T=0.18,DASH_CD=1.0;
-  var GRAP_SPD=16,GRAP_RNG=8;
+  var GRAP_SPD=16,GRAP_RNG=16;
   var GRAVITY_K=18; // design value
 
   // ===== PLAYER (third-person ninja) =====
@@ -551,7 +552,7 @@
     grappling:false,grapX:0,grapY:0,grapZ:0,
     atkPhase:0,atkT:0,combo:0,        // melee state machine
     shuriken:5,maxShuriken:8,
-    hasDouble:false,hasHook:false,    // scroll unlocks
+    hasDouble:true,hasHook:true,      // full kit from the start
     runPhase:0,scarfT:0,fellFrom:0,landDip:0
   };
   // Camera (orbit behind player)
@@ -826,7 +827,9 @@
   // Handles anchors above roofs, wall lips that pin the climb, everything.
   function releaseGrapple(){
     player.grappling=false;
-    var pTop=groundTopAt(player.grapX,player.grapY,player.grapZ+0.6,0.5);
+    var pTop=-999;
+    if(player.grapTop!==undefined&&player.grapTop>-900&&player.grapTop-player.grapZ<2.6)pTop=player.grapTop;
+    if(pTop<-900)pTop=groundTopAt(player.grapX,player.grapY,player.grapZ+0.6,0.5);
     var dx=player.grapX-player.x,dy=player.grapY-player.y;
     var dl=Math.sqrt(dx*dx+dy*dy);
     if(pTop>-999){
@@ -854,6 +857,7 @@
     if(player.hp<=0){player.hp=0;killPlayer('');}
   }
   function killPlayer(why){
+    aimMode=false;
     gameState='dead';stateTimer=1.2;
     stopMusic();
     playSound('die');
@@ -1071,31 +1075,37 @@
   }
 
   // ===== KAGINAWA (grappling hook) =====
-  var anchors=[]; // {x,y,z} gold emissive markers
+  var anchors=[]; // gold markers — now decorative route hints for the free-aim hook
   var grapCD=0;
-  function tryGrapple(){
-    if(gameState!=='playing'||!player.hasHook||grapCD>0)return;
-    if(player.grappling){player.grappling=false;return;}
-    // best anchor: aimed at (3D direction vs camera), or almost directly overhead
+  function toggleAim(){
+    if(gameState!=='playing')return;
+    if(player.grappling){player.grappling=false;return;} // E mid-pull lets go
+    aimMode=!aimMode;
+    playSound(aimMode?'aimon':'aimoff');
+  }
+  // March a ray from the eyes along the camera; return hit point + solid
+  function aimRay(){
     var fa=cam.yaw,fp=cam.pitch;
-    var fwd=[Math.sin(fa)*Math.cos(fp),Math.cos(fa)*Math.cos(fp),Math.sin(fp)];
-    var best=null,bestScore=-1;
-    for(var i=0;i<anchors.length;i++){
-      var a=anchors[i];
-      var dx=a.x-player.x,dy=a.y-player.y,dz=a.z-(player.z+1);
-      var d=Math.sqrt(dx*dx+dy*dy+dz*dz);
-      if(d>GRAP_RNG||d<1.0)continue;
-      var dot=(dx*fwd[0]+dy*fwd[1]+dz*fwd[2])/d;
-      var overhead=Math.sqrt(dx*dx+dy*dy)<2.5&&dz>1.5;
-      if(dot<0.45&&!overhead)continue;
-      var score=dot+(overhead?0.5:0)-d*0.03;
-      if(score>bestScore){bestScore=score;best=a;}
+    var dx=Math.sin(fa)*Math.cos(fp),dy=Math.cos(fa)*Math.cos(fp),dz=Math.sin(fp);
+    var x=player.x,y=player.y,z=player.z+1.45;
+    var step=0.2;
+    for(var t=0.6;t<GRAP_RNG;t+=step){
+      var px=x+dx*t,py=y+dy*t,pz=z+dz*t;
+      var hit=pointInSolid(px,py,pz,0.04);
+      if(hit)return{x:px,y:py,z:pz,solid:hit,dist:t};
     }
-    if(best){
+    return null;
+  }
+  function fireGrapple(){
+    if(!aimMode||gameState!=='playing'||grapCD>0)return;
+    var hit=aimRay();
+    if(hit){
       player.grappling=true;
-      player.grapX=best.x;player.grapY=best.y;player.grapZ=best.z;
+      player.grapX=hit.x;player.grapY=hit.y;player.grapZ=hit.z;
+      player.grapTop=hit.solid.top;
       player.grapLastD=999;player.grapStall=0;
-      grapCD=1.5;
+      grapCD=1.2;
+      aimMode=false;
       playSound('grapple');
     }else{
       playSound('grapfail');
@@ -1642,7 +1652,8 @@
     S(-16,-14,0,2,2,4.5,C_WOOD,C_WOOD);
     S(-16,-14,4.5,3,3,0.25,C_KAWARA,C_KAWARA_L);
     for(var l=0;l<9;l++)S(-14.7,-14,l*0.5,0.6,0.8,0.12,C_WOOD,[0.3,0.22,0.16]);
-    pickups.push({kind:'scroll1',x:-16,y:-14,z:5.0,t:0});
+    pickups.push({kind:'koban',x:-16,y:-14.4,z:5.0,t:0});
+    pickups.push({kind:'koban',x:-15.6,y:-13.6,z:5.0,t:0});
     chochin(-15,-15.4,2.2);
     // sakura trees
     sakuraTree(13,-24);sakuraTree(-13.5,-44);sakuraTree(14,-7);
@@ -1704,7 +1715,8 @@
     // boathouse with kaginawa scroll
     S(-12,-11,0,3,2,1.6,C_WOOD,C_KAWARA);
     S(-12,-11,1.6,3.8,2.8,0.25,C_KAWARA,C_KAWARA);
-    pickups.push({kind:'scroll2',x:-12,y:-9.6,z:0.5,t:0});
+    pickups.push({kind:'shubox',x:-12,y:-9.6,z:0.5,t:0});
+    pickups.push({kind:'koban',x:-11.2,y:-9.6,z:0.5,t:0});
     // masugata enclosure (walls h3) — south gate + east gate
     // south wall segments around first gate at x=0
     S(-9.5,1,0,13,1.4,3,C_WALL,C_KAWARA);
@@ -1777,7 +1789,6 @@
     S(8,-2,2.0,9,7,0.3,C_KAWARA,C_KAWARA);
     W2(8,-5,1.0,3,1.2,3,C_ANDON[0],C_ANDON[1],C_ANDON[2],0.55);
     barrel(11.6,-6,0);
-    if(!player.hasHook)pickups.push({kind:'scroll2',x:4.6,y:-4,z:0.5,t:0}); // spare, against soft-locks
     // the keep: 4 tiers + rooftop arena
     S(0,10,0,10,10,2.5,C_WALL,C_WOOD);
     S(0,10,2.5,11.4,11.4,0.3,C_KAWARA,C_KAWARA);     // tier-1 eaves (landable ring)
@@ -1848,6 +1859,7 @@
     bakeStatic();
     player.vx=player.vy=player.vz=0;
     player.grappling=false;player.atkPhase=0;player.combo=0;player.dashT=0;
+    aimMode=false;
     if(aiMode){aiWpIdx=0;aiStuck=0;aiTimer=0;}
     announceZone(n);
   }
@@ -2024,7 +2036,7 @@
   // ===== SCENE BUILD =====
   function buildDynScene(){
     dynLen=0;
-    drawNinja();
+    if(!aimMode)drawNinja(); // first-person while aiming
     for(var i=0;i<enemies.length;i++)if(!enemies[i].dead)drawEnemy(enemies[i]);
     for(var c=0;c<corpses.length;c++)drawCorpse(corpses[c]);
     // gate doors
@@ -2125,17 +2137,18 @@
   function renderScene(){
     // third-person camera: orbit behind, clipped against world
     var shx=(Math.random()-0.5)*screenShake*0.014,shy=(Math.random()-0.5)*screenShake*0.014;
-    var lookX=player.x,lookY=player.y,lookZ=player.z+1.3;
-    var cp=clamp(cam.pitch,-1.05,0.55);
+    var lookX=player.x,lookY=player.y,lookZ=player.z+(aimMode?1.45:1.3);
+    var cp=clamp(cam.pitch,-1.05,aimMode?1.0:0.55);
     var fx=Math.sin(cam.yaw)*Math.cos(cp),fy=Math.cos(cam.yaw)*Math.cos(cp),fz=Math.sin(cp);
-    var idealX=lookX-fx*cam.dist,idealY=lookY-fy*cam.dist,idealZ=lookZ-fz*cam.dist+0.35;
+    var aimD=aimMode?0.28:cam.dist;
+    var idealX=lookX-fx*aimD,idealY=lookY-fy*aimD,idealZ=lookZ-fz*aimD+(aimMode?0:0.35);
     var cc=cameraClip(lookX,lookY,lookZ,idealX,idealY,idealZ);
     cam.x=cc[0];cam.y=cc[1];
     var camFloor=groundTopAt(cc[0],cc[1],cc[2],0.1);
     var snapped=Math.max(cc[2],camFloor>-999?camFloor+0.25:cc[2]);
     cam.z=pointInSolid(cc[0],cc[1],snapped,0.1)?cc[2]:snapped;
     var ca=cam.yaw+shx,cpv=cp+shy;
-    var fov=FOV_BASE*(1+fovKick*0.12);
+    var fov=FOV_BASE*(1+fovKick*0.12)*(aimMode?0.82:1);
     var proj=matPerspective(fov,W/H,NEAR,FAR);
     var view=matView(cam.x,cam.y,cam.z,ca,cpv);
     _vp=matMul(proj,view);
@@ -2386,8 +2399,41 @@
       hud.fillStyle='rgba(160,170,200,0.6)';
       hud.fillText('shadow',W-10,22);
     }
-    // hook indicator: nearest usable anchor
-    if(player.hasHook){
+    // kaginawa aim stance: reticle + predicted hit point
+    if(aimMode){
+      hud.strokeStyle='rgba(232,210,160,0.9)';
+      hud.lineWidth=1.5;
+      hud.beginPath();
+      hud.moveTo(W/2-8,H/2);hud.lineTo(W/2-3,H/2);
+      hud.moveTo(W/2+3,H/2);hud.lineTo(W/2+8,H/2);
+      hud.moveTo(W/2,H/2-8);hud.lineTo(W/2,H/2-3);
+      hud.moveTo(W/2,H/2+3);hud.lineTo(W/2,H/2+8);
+      hud.stroke();
+      var ah=aimRay();
+      if(ah){
+        var ap=project(ah.x,ah.y,ah.z);
+        if(ap){
+          var pls2=0.7+0.3*Math.sin(t*9);
+          hud.strokeStyle='rgba(120,255,170,'+pls2+')';
+          hud.beginPath();
+          hud.moveTo(ap[0],ap[1]-5);hud.lineTo(ap[0]+5,ap[1]);
+          hud.lineTo(ap[0],ap[1]+5);hud.lineTo(ap[0]-5,ap[1]);
+          hud.closePath();hud.stroke();
+          hud.font='6px monospace';hud.textAlign='center';
+          hud.fillStyle='rgba(120,255,170,0.8)';
+          hud.fillText(ah.dist.toFixed(1),ap[0],ap[1]+12);
+        }
+      }else{
+        hud.font='7px monospace';hud.textAlign='center';
+        hud.fillStyle='rgba(255,90,90,0.8)';
+        hud.fillText('OUT OF REACH',W/2,H/2+16);
+      }
+      hud.font='6px monospace';hud.textAlign='center';
+      hud.fillStyle='rgba(232,210,160,0.6)';
+      hud.fillText('CLICK: THROW   E: LOWER',W/2,H-14);
+    }
+    // gold markers: suggested hook routes
+    if(!aimMode){
       for(var an2=0;an2<anchors.length;an2++){
         var ac2=anchors[an2];
         var d2=dist3d(ac2.x,ac2.y,ac2.z,player.x,player.y,player.z+1);
@@ -2507,6 +2553,8 @@
         case'snuff':noise(t0,0.12,0.1,900);break;
         case'grapple':osc('square',900,1800,t0,0.08,0.08);noise(t0+0.05,0.06,0.08,5000);break;
         case'grapfail':osc('square',400,260,t0,0.08,0.06);break;
+        case'aimon':osc('sine',700,1100,t0,0.08,0.06);break;
+        case'aimoff':osc('sine',1100,700,t0,0.08,0.05);break;
         case'alert':hyoshigi(t0);osc('square',587,784,t0+0.05,0.15,0.1);break;
         case'arrow':noise(t0,0.14,0.1,3000,'bandpass');break;
         case'fan':noise(t0,0.12,0.12,2400,'bandpass');osc('sine',800,500,t0,0.1,0.05);break;
@@ -2579,12 +2627,13 @@
   // ===== GAME FLOW =====
   function startGame(){
     koban=0;kills=0;stealthKills=0;alertCount=0;gameTime=0;
-    player.maxHp=3;player.hasDouble=false;player.hasHook=false;
+    player.maxHp=3;player.hasDouble=true;player.hasHook=true;
     resetPlayer();
     manualPause=false;bossActive=false;
     zoneFade=0;zoneFadeDir=0;
     buildZone(0);
     gameState='playing';
+    showHint('E: AIM THE KAGINAWA / CLICK: THROW / SPACE x2: DOUBLE JUMP');
     startMusic();
     if(!isMobileKg)canvas.requestPointerLock();
     updateOverlay();
@@ -2613,10 +2662,11 @@
       case'ShiftLeft':case'ShiftRight':keys.sneak=down;break;
       case'Space':if(down&&!keys.sp)spJustPressed=true;keys.sp=down;if(down)e.preventDefault();break;
       case'KeyQ':if(down)tryDash();break;
-      case'KeyE':if(down)tryGrapple();break;
+      case'KeyE':if(down)toggleAim();break;
       case'KeyF':if(down)tryShuriken();break;
       case'Escape':
         if(down&&gameState==='playing'){
+          if(aimMode){aimMode=false;playSound('aimoff');break;}
           if(aiMode){manualPause=!manualPause;if(pointerLocked)document.exitPointerLock();}
           else if(pointerLocked)document.exitPointerLock();
         }
@@ -2628,9 +2678,9 @@
   document.addEventListener('keyup',function(e){handleKey(e,false);});
   document.addEventListener('mousemove',function(e){
     if(!pointerLocked||gameState!=='playing')return;
-    cam.yaw+=e.movementX*0.0032;
-    cam.pitch-=e.movementY*0.0032;
-    cam.pitch=clamp(cam.pitch,-1.05,0.55);
+    cam.yaw+=e.movementX*(aimMode?0.002:0.0032);
+    cam.pitch-=e.movementY*(aimMode?0.002:0.0032);
+    cam.pitch=clamp(cam.pitch,-1.05,aimMode?1.0:0.55);
   });
   canvas.addEventListener('mousedown',function(e){
     ensureAudio();
@@ -2640,6 +2690,11 @@
     if(gameState==='win'){if(stateTimer<=0){gameState='title';_ovActive='';updateOverlay();}return;}
     if(gameState==='playing'&&!pointerLocked&&!isMobileKg&&!aiMode){canvas.requestPointerLock();return;}
     if(gameState==='playing'){
+      if(aimMode){
+        if(e.button===2){aimMode=false;playSound('aimoff');}
+        else fireGrapple();
+        return;
+      }
       if(e.button===2)tryShuriken();
       else{mouseDown=true;tryAttack();}
     }
@@ -2736,10 +2791,17 @@
         return;
       }
     }
-    if(wp.hook&&player.hasHook&&wpd<GRAP_RNG&&player.z<((wp.z||0)-1)){
-      cam.yaw=Math.atan2(wp.x-player.x,wp.y-player.y);
-      cam.pitch=0.5;
-      if(!player.grappling&&grapCD<=0)tryGrapple();
+    if(wp.hook&&wpd<GRAP_RNG-2&&player.z<((wp.z||0)-1)){
+      if(!player.grappling&&grapCD<=0){
+        var hdx=wp.x-player.x,hdy=wp.y-player.y;
+        var hh=Math.sqrt(hdx*hdx+hdy*hdy)||0.1;
+        var htz=(wp.z||player.z)-0.35; // aim just under the ledge line
+        cam.yaw=Math.atan2(hdx,hdy);
+        cam.pitch=clamp(Math.atan2(htz-(player.z+1.45),hh),-1.0,1.0);
+        aimMode=true;
+        fireGrapple();
+        if(!player.grappling)aimMode=false; // missed: walk on, retry next pass
+      }
       if(player.grappling)return;
     }
     if(wp.boss){
@@ -2785,6 +2847,7 @@
     var dt=rawDt;
     if(hitStopT>0){hitStopT-=rawDt;dt*=0.1;}
     if(slowMo>0){slowMo-=rawDt;dt*=0.35;}
+    if(aimMode&&gameState==='playing')dt*=0.45; // focus: the world slows while you aim
 
     if(gameState==='title'){
       cam.yaw=_time*0.06;
