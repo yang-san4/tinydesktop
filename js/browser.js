@@ -1988,18 +1988,141 @@
   ];
   var palPlay = { P: 'rgba(255,255,255,0.8)' };
 
+  // --- Pre-roll ad: TinyMart commercial (skippable) ---
+  function animAd(ctx, w, h, frame) {
+    ctx.fillStyle = '#1c1430';
+    ctx.fillRect(0, 0, w, h);
+    // sweeping diagonal stripes
+    ctx.fillStyle = 'rgba(255,224,102,0.08)';
+    for (var s = -2; s < 8; s++) {
+      var sx = ((s * 18 + frame * 1.5) % (w + 40)) - 20;
+      ctx.save();
+      ctx.translate(sx, 0);
+      ctx.beginPath();
+      ctx.moveTo(0, h); ctx.lineTo(8, h); ctx.lineTo(16, 0); ctx.lineTo(8, 0);
+      ctx.closePath(); ctx.fill();
+      ctx.restore();
+    }
+    // bouncing product box
+    var bob = Math.abs(Math.sin(frame * 0.18)) * 6;
+    ctx.fillStyle = '#7dff8a';
+    ctx.fillRect(34, 22 - bob, 12, 12);
+    ctx.fillStyle = '#19401e';
+    ctx.fillRect(39, 22 - bob, 2, 12);
+    ctx.fillRect(34, 27 - bob, 12, 2);
+    // sparkle
+    if (frame % 14 < 4) {
+      ctx.fillStyle = '#fff';
+      ctx.fillRect(48, 16 - bob, 2, 2);
+      ctx.fillRect(31, 30 - bob, 2, 2);
+    }
+    ctx.textAlign = 'center';
+    ctx.font = '7px monospace';
+    ctx.fillStyle = '#ffe066';
+    ctx.fillText('TINYMART', w / 2, 10);
+    ctx.font = '6px monospace';
+    ctx.fillStyle = frame % 20 < 12 ? '#fff' : '#ffe066';
+    ctx.fillText('MYSTERY BOX 99.99px', w / 2, 44);
+    ctx.font = '5px monospace';
+    ctx.fillStyle = '#888';
+    ctx.fillText('Ad 1 of 1', 12, 8);
+  }
+
+  // --- GEKKO v2 trailer: dusk sky city, neon trims, dragon flyby ---
+  function animGekkoV2(ctx, w, h, frame) {
+    // dusk gradient sky
+    var grad = ctx.createLinearGradient(0, 0, 0, h);
+    grad.addColorStop(0, '#1a1042');
+    grad.addColorStop(0.55, '#fa7347');
+    grad.addColorStop(0.75, '#4d1a4d');
+    grad.addColorStop(1, '#26102e');
+    ctx.fillStyle = grad;
+    ctx.fillRect(0, 0, w, h);
+    // sun with shimmer
+    ctx.fillStyle = '#ffd9a0';
+    ctx.fillRect(56, 22 + Math.floor(Math.sin(frame * 0.05)), 8, 8);
+    ctx.fillStyle = 'rgba(255,150,80,0.35)';
+    ctx.fillRect(54, 20, 12, 12);
+    // stars near top
+    ctx.fillStyle = 'rgba(255,255,255,' + (0.4 + 0.3 * Math.sin(frame * 0.1)) + ')';
+    ctx.fillRect(10, 4, 1, 1); ctx.fillRect(30, 7, 1, 1); ctx.fillRect(70, 3, 1, 1);
+    // floating islands (silhouettes with neon edges)
+    var isl = [
+      { x: 4, y: 30, w: 22, c: '#00e5ff' },
+      { x: 32, y: 36, w: 18, c: '#ff0060' },
+      { x: 56, y: 32, w: 20, c: '#00e5ff' }
+    ];
+    for (var i = 0; i < isl.length; i++) {
+      var o = isl[i];
+      var fy = o.y + Math.sin(frame * 0.04 + i * 2) * 1.5;
+      ctx.fillStyle = '#1c1432';
+      ctx.fillRect(o.x, fy, o.w, 5);
+      ctx.fillRect(o.x + 3, fy + 5, o.w - 6, 3);
+      // buildings on island
+      ctx.fillRect(o.x + 3, fy - 7, 4, 7);
+      ctx.fillRect(o.x + o.w - 8, fy - 5, 5, 5);
+      // neon edge (blinks slightly out of phase per island)
+      ctx.fillStyle = (frame + i * 5) % 30 < 26 ? o.c : '#332244';
+      ctx.fillRect(o.x, fy - 1, o.w, 1);
+      // windows
+      ctx.fillStyle = '#ffb060';
+      if ((frame + i * 7) % 40 > 6) ctx.fillRect(o.x + 4, fy - 5, 1, 1);
+      ctx.fillRect(o.x + o.w - 6, fy - 3, 1, 1);
+    }
+    // dragon flyby (silhouette, wings flap)
+    var dx = ((frame * 0.7) % (w + 30)) - 15;
+    var dy = 12 + Math.sin(frame * 0.1) * 2;
+    var wing = Math.sin(frame * 0.4) * 3;
+    ctx.fillStyle = '#0e0a1e';
+    ctx.fillRect(dx, dy, 7, 2);              // body
+    ctx.fillRect(dx + 6, dy - 1, 3, 2);      // head
+    ctx.fillRect(dx + 1, dy - 1 - Math.max(0, wing), 4, 1 + Math.abs(wing)); // wing
+    // logo flash every ~6s
+    if (frame % 72 > 56) {
+      ctx.textAlign = 'center';
+      ctx.font = '9px monospace';
+      ctx.fillStyle = '#00e5ff';
+      ctx.fillText('GEKKO', w / 2, 24);
+      ctx.font = '5px monospace';
+      ctx.fillStyle = '#ff0060';
+      ctx.fillText('DUSKFALL', w / 2, 32);
+    }
+  }
+
   // Video list data
+  // dur = seconds (at 12fps); Infinity-ish durations behave like livestreams/marathons
   var videoList = [
-    { id: 'fish', title: 'Relaxing Fish Tank', ch: 'AquariumFan', views: '1.2K', anim: animFish },
-    { id: 'cat', title: 'Cat Does Nothing 10hr', ch: 'PixelPets', views: '847', anim: animCat },
-    { id: 'stars', title: 'Space Screensaver', ch: 'CosmicVibes', views: '2.3K', anim: animStars },
-    { id: 'piano', title: 'Piano Melody Loop', ch: 'TinyMusic', views: '456', anim: animPiano },
-    { id: 'sand', title: 'Sand Timer ASMR', ch: 'OddlyPixel', views: '3.1K', anim: animSand },
-    { id: 'maze', title: '3D Maze Walkthrough', ch: 'MazeRunner', views: '5.7K', anim: animMaze },
-    { id: 'city', title: 'Sunny City Walk', ch: 'PixelVibes', views: '12K', anim: animCity },
-    { id: 'vtuber', title: 'Miko Ch. Live Stream', ch: 'MikoVT', views: '8.4K', anim: animVtuber },
-    { id: 'gekko', title: 'GEKKO Advanced Tactics', ch: 'ArenaGamer', views: '2.1K', anim: animGekko }
+    { id: 'gekkov2', title: 'GEKKO v2 - Duskfall Trailer', ch: 'ArenaOfficial', chCol: '#ff0060', subs: '12K', age: 'NEW today', dur: 24, views: 302, likes: 88, anim: animGekkoV2,
+      comments: [['PilotMomo', 'everything is purple now and i love it'], ['gravity_fan', 'fell off the map 6 times. worth it'], ['Kevin', 'first']] },
+    { id: 'fish', title: 'Relaxing Fish Tank', ch: 'AquariumFan', chCol: '#ff6030', subs: '3.1K', age: '2 weeks ago', dur: 32, views: 1243, likes: 211, anim: animFish,
+      comments: [['sleepy_px', 'i play this every night to fall asleep'], ['FishFan99', 'the orange one is my favorite']] },
+    { id: 'cat', title: 'Cat Does Nothing 10hr', ch: 'PixelPets', chCol: '#b08860', subs: '847', age: '847 days ago', dur: 36000, views: 847, likes: 847, anim: animCat,
+      comments: [['mom', 'i watched the whole thing'], ['timestamp_guy', '4:32:17 he blinks'], ['Kevin', 'second']] },
+    { id: 'stars', title: 'Space Screensaver', ch: 'CosmicVibes', chCol: '#8090ff', subs: '2.5K', age: '1 month ago', dur: 28, views: 2341, likes: 190, anim: animStars,
+      comments: [['void_enjoyer', 'space is just pixels turned off']] },
+    { id: 'piano', title: 'Piano Melody Loop', ch: 'TinyMusic', chCol: '#f0f0f0', subs: '901', age: '3 weeks ago', dur: 20, views: 458, likes: 77, anim: animPiano,
+      comments: [['metronome', 'slightly off beat. subscribed']] },
+    { id: 'sand', title: 'Sand Timer ASMR', ch: 'OddlyPixel', chCol: '#d8b848', subs: '5.0K', age: '5 days ago', dur: 30, views: 3102, likes: 402, anim: animSand,
+      comments: [['grain_counter', 'there are 112 grains. i counted'], ['asmr_lord', 'so satisfying when it flips']] },
+    { id: 'maze', title: '3D Maze Walkthrough', ch: 'MazeRunner', chCol: '#5a98d0', subs: '7.7K', age: '1 week ago', dur: 26, views: 5704, likes: 530, anim: animMaze,
+      comments: [['lost_again', 'followed this and got MORE lost'], ['speedrun_kid', 'wall hugging is meta']] },
+    { id: 'city', title: 'Sunny City Walk', ch: 'PixelVibes', chCol: '#50a850', subs: '15K', age: '4 days ago', dur: 40, views: 12030, likes: 1800, anim: animCity,
+      comments: [['walk_with_me', 'i pretend i live here'], ['birdwatcher', 'THERE ARE BIRDS AT 0:12']] },
+    { id: 'vtuber', title: 'Miko Ch. Live Stream', ch: 'MikoVT', chCol: '#ff80b0', subs: '24K', age: 'started 2h ago', dur: 0, live: true, views: 8412, likes: 3200, anim: animVtuber,
+      comments: [['chat_spam', 'MIKO MIKO MIKO'], ['gachikoi', 'sent 500px superchat. she said thanks. worth it'], ['Kevin', 'is this anime']] },
+    { id: 'gekko', title: 'GEKKO Advanced Tactics', ch: 'ArenaGamer', chCol: '#00e5ff', subs: '4.4K', age: '2 months ago', dur: 35, views: 2105, likes: 320, anim: animGekko,
+      comments: [['wave5_wiper', 'outdated since v2 but still good fundamentals'], ['railgun_andy', 'rail is hitscan now, this aged well']] }
   ];
+  function fmtViews(n) {
+    if (n >= 1000000) return (n / 1000000).toFixed(1) + 'M';
+    if (n >= 1000) return (n / 1000).toFixed(1) + 'K';
+    return String(n);
+  }
+  function fmtTime(sec) {
+    var m = Math.floor(sec / 60), s = Math.floor(sec % 60);
+    if (m >= 60) return Math.floor(m / 60) + ':' + String(m % 60).padStart(2, '0') + ':' + String(s).padStart(2, '0');
+    return m + ':' + String(s).padStart(2, '0');
+  }
 
   // Thumbnail pixel art (small icons for each video)
   var thumbFish = [
@@ -2083,43 +2206,75 @@
   ];
   var palThGekko = { D: '#050510', C: '#00e5ff', M: '#ff0060' };
 
-  var thumbArts = [thumbFish, thumbCat, thumbStars, thumbPiano, thumbSand, thumbMaze, thumbCity, thumbVtuber, thumbGekko];
-  var thumbPals = [palThFish, palThCat, palThStars, palThPiano, palThSand, palThMaze, palThCity, palThVtuber, palThGekko];
+  var thumbGekkoV2 = [
+    'PPSPP',
+    'POOPP',
+    'DCDCD',
+    'DDDDD',
+    'MDDDM'
+  ];
+  var palThGekkoV2 = { P: '#4d1a4d', S: '#ffd9a0', O: '#fa7347', D: '#1c1432', C: '#00e5ff', M: '#ff0060' };
+
+  var thumbArts = [thumbGekkoV2, thumbFish, thumbCat, thumbStars, thumbPiano, thumbSand, thumbMaze, thumbCity, thumbVtuber, thumbGekko];
+  var thumbPals = [palThGekkoV2, palThFish, palThCat, palThStars, palThPiano, palThSand, palThMaze, palThCity, palThVtuber, palThGekko];
 
   pages['tiny://videos'] = function () {
     var accent = getAccentColor();
     var link = getLinkColor();
+    var extraViews = lsGet('tube_views', {});
     var html = '<div style="padding:4px;">' +
       // Header
       '<div style="display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid ' + accent + ';padding-bottom:2px;margin-bottom:4px;">' +
         '<span style="font-size:6px;color:' + accent + ';">TinyTube</span>' +
-        '<span style="font-size:3px;color:#888;">Pixel Video</span>' +
+        '<span id="tube-autoplay" style="font-size:3px;color:#888;cursor:pointer;border:1px solid #444;padding:1px 3px;">autoplay: ON</span>' +
       '</div>' +
       // Main layout: left=player, right=list
       '<div style="display:flex;gap:4px;align-items:flex-start;">' +
-        // Left column: player + info
+        // Left column: player + seek + meta + comments
         '<div style="flex:1;min-width:0;">' +
-          '<div style="background:#000;border:1px solid #333;line-height:0;">' +
-            '<canvas id="video-player" width="80" height="50" style="display:block;width:100%;image-rendering:pixelated;image-rendering:crisp-edges;"></canvas>' +
+          '<div style="background:#000;border:1px solid #333;line-height:0;position:relative;">' +
+            '<canvas id="video-player" width="80" height="50" style="display:block;width:100%;image-rendering:pixelated;image-rendering:crisp-edges;cursor:pointer;"></canvas>' +
+            '<button id="video-skip-ad" style="display:none;position:absolute;right:2px;bottom:8px;font-family:\'Press Start 2P\',monospace;' +
+              'font-size:4px;padding:2px 3px;background:rgba(0,0,0,0.75);border:1px solid #aaa;color:#fff;cursor:pointer;"></button>' +
           '</div>' +
-          '<div id="video-controls" style="display:flex;align-items:center;gap:2px;margin-top:2px;">' +
-            '<button id="video-play" style="font-family:\'Press Start 2P\',monospace;font-size:4px;padding:1px 3px;background:' + accent + ';border:1px solid #888;color:#fff;cursor:pointer;">Play</button>' +
-            '<div id="video-title-display" style="font-size:4px;color:' + link + ';flex:1;overflow:hidden;white-space:nowrap;">Select a video</div>' +
+          // seek bar (red, clickable)
+          '<div id="video-seek" style="height:4px;background:#333;cursor:pointer;position:relative;">' +
+            '<div id="video-seek-fill" style="height:100%;width:0%;background:#e02020;"></div>' +
           '</div>' +
-          '<div id="video-info" style="font-size:3px;color:#888;margin-top:1px;"></div>' +
+          '<div id="video-controls" style="display:flex;align-items:center;gap:3px;margin-top:2px;">' +
+            '<button id="video-play" style="font-family:\'Press Start 2P\',monospace;font-size:4px;padding:1px 3px;background:' + accent + ';border:1px solid #888;color:#fff;cursor:pointer;">&#9654;</button>' +
+            '<span id="video-time" style="font-size:3px;color:#888;">0:00 / 0:00</span>' +
+            '<div id="video-title-display" style="font-size:4px;color:' + link + ';flex:1;overflow:hidden;white-space:nowrap;text-align:right;">Select a video</div>' +
+          '</div>' +
+          // channel row + like
+          '<div id="video-meta" style="display:none;align-items:center;gap:3px;margin-top:3px;border-top:1px solid #333;padding-top:3px;">' +
+            '<div id="video-ch-avatar" style="width:7px;height:7px;border-radius:50%;flex-shrink:0;"></div>' +
+            '<div style="flex:1;min-width:0;">' +
+              '<div id="video-ch-name" style="font-size:3px;color:#ccc;"></div>' +
+              '<div id="video-ch-subs" style="font-size:3px;color:#666;"></div>' +
+            '</div>' +
+            '<span id="video-like" style="font-size:3px;color:#888;cursor:pointer;border:1px solid #444;padding:1px 3px;flex-shrink:0;"></span>' +
+          '</div>' +
+          '<div id="video-info" style="font-size:3px;color:#888;margin-top:2px;"></div>' +
+          '<div id="video-comments" style="margin-top:3px;"></div>' +
         '</div>' +
         // Right column: video list
-        '<div style="width:90px;flex-shrink:0;overflow-y:auto;max-height:180px;">' +
+        '<div style="width:90px;flex-shrink:0;overflow-y:auto;max-height:190px;">' +
           '<div style="font-size:3px;color:#888;margin-bottom:2px;">Up next</div>';
     for (var i = 0; i < videoList.length; i++) {
       var v = videoList[i];
       var thumb = pxArt(thumbArts[i], thumbPals[i], 3);
+      var badge = v.live ?
+        '<span style="background:#e02020;color:#fff;font-size:3px;padding:0 1px;">LIVE</span>' :
+        '<span style="background:#000;color:#ccc;font-size:3px;padding:0 1px;">' + fmtTime(v.dur) + '</span>';
+      var vc = v.views + (extraViews[v.id] || 0);
       html += '<div class="video-item" data-video-idx="' + i + '" style="display:flex;gap:2px;padding:1px;margin-bottom:2px;cursor:pointer;border:1px solid transparent;align-items:flex-start;">' +
-        '<div style="flex-shrink:0;border:1px solid #444;line-height:0;">' + thumb + '</div>' +
+        '<div style="flex-shrink:0;border:1px solid #444;line-height:0;position:relative;">' + thumb +
+          '<div style="position:absolute;right:0;bottom:0;line-height:1;">' + badge + '</div></div>' +
         '<div style="flex:1;min-width:0;overflow:hidden;">' +
           '<div style="font-size:3px;color:' + link + ';line-height:1.4;overflow:hidden;white-space:nowrap;text-overflow:ellipsis;">' + v.title + '</div>' +
           '<div style="font-size:3px;color:#888;line-height:1.3;">' + v.ch + '</div>' +
-          '<div style="font-size:3px;color:#666;line-height:1.3;">' + v.views + ' views</div>' +
+          '<div style="font-size:3px;color:#666;line-height:1.3;">' + fmtViews(vc) + (v.live ? ' watching' : ' views') + ' &#183; ' + v.age + '</div>' +
         '</div>' +
       '</div>';
     }
@@ -2152,7 +2307,8 @@
     { title: 'Kevin\'s Homepage', url: 'tiny://kevin', desc: 'Personal homepage of Kevin. Under construction. Has music.' },
     { title: 'Mystery Box', url: 'tiny://mart', desc: 'Contains a smaller mystery box. 99.99px' },
     { title: 'How to stop falling off the map', url: 'tiny://videos', desc: 'GEKKO pilots guide: grapple early, grapple often' },
-    { title: 'Tiny Webring', url: 'tiny://kevin', desc: 'A ring of websites. It is small but it is round.' }
+    { title: 'Tiny Webring', url: 'tiny://kevin', desc: 'A ring of websites. It is small but it is round.' },
+    { title: 'GEKKO v2 Duskfall Trailer', url: 'tiny://videos', desc: 'Official trailer: neon sky city at dusk, dragon included' }
   ];
 
   // ----- 404 page -----
@@ -2634,61 +2790,218 @@
       var vPlayBtn = document.getElementById('video-play');
       var vTitleEl = document.getElementById('video-title-display');
       var vInfoEl = document.getElementById('video-info');
-      var currentAnim = null;
-      var isPlaying = false;
+      var vTimeEl = document.getElementById('video-time');
+      var vSeek = document.getElementById('video-seek');
+      var vSeekFill = document.getElementById('video-seek-fill');
+      var vMeta = document.getElementById('video-meta');
+      var vChAvatar = document.getElementById('video-ch-avatar');
+      var vChName = document.getElementById('video-ch-name');
+      var vChSubs = document.getElementById('video-ch-subs');
+      var vLike = document.getElementById('video-like');
+      var vComments = document.getElementById('video-comments');
+      var vSkipBtn = document.getElementById('video-skip-ad');
+      var vAutoBtn = document.getElementById('tube-autoplay');
+      var FPS = 12;
+      // player state machine: idle | buffer | ad | play | pause | ended
+      var mode = 'idle', curIdx = -1, frame = 0, totalFrames = 0, adFrame = 0;
+      var AD_FRAMES = 4 * FPS, AD_SKIP_AFTER = 2 * FPS;
+      var autoplayOn = lsGet('tube_autoplay', true);
+      if (vAutoBtn) {
+        vAutoBtn.textContent = 'autoplay: ' + (autoplayOn ? 'ON' : 'OFF');
+        vAutoBtn.addEventListener('click', function () {
+          autoplayOn = !autoplayOn;
+          lsSet('tube_autoplay', autoplayOn);
+          this.textContent = 'autoplay: ' + (autoplayOn ? 'ON' : 'OFF');
+        });
+      }
 
-      // Draw play button overlay on canvas
-      function drawPlayOverlay() {
+      function drawIdle(msg) {
         if (!vCtx) return;
         vCtx.fillStyle = '#111';
         vCtx.fillRect(0, 0, 80, 50);
-        // Play triangle
         vCtx.fillStyle = '#555';
-        vCtx.fillRect(35, 18, 2, 14);
-        vCtx.fillRect(37, 20, 2, 10);
-        vCtx.fillRect(39, 22, 2, 6);
-        vCtx.fillRect(41, 24, 2, 2);
+        vCtx.fillRect(35, 18, 2, 14); vCtx.fillRect(37, 20, 2, 10);
+        vCtx.fillRect(39, 22, 2, 6); vCtx.fillRect(41, 24, 2, 2);
+        if (msg) {
+          vCtx.font = '6px monospace'; vCtx.textAlign = 'center';
+          vCtx.fillStyle = '#888';
+          vCtx.fillText(msg, 40, 44);
+        }
       }
-      drawPlayOverlay();
-
-      function startAnim(animFn, idx) {
-        stopVideoAnim();
-        currentAnim = animFn;
-        isPlaying = true;
-        vPlayBtn.textContent = 'Pause';
+      function drawBuffer() {
+        vCtx.fillStyle = '#000';
+        vCtx.fillRect(0, 0, 80, 50);
+        // rotating spinner blocks
+        var seg = Math.floor(frame / 1.5) % 8;
+        var pos = [[38, 18], [42, 19], [44, 23], [42, 27], [38, 28], [34, 27], [32, 23], [34, 19]];
+        for (var i = 0; i < 8; i++) {
+          var a = (i - seg + 8) % 8;
+          vCtx.fillStyle = 'rgba(255,255,255,' + (0.9 - a * 0.11) + ')';
+          vCtx.fillRect(pos[i][0], pos[i][1], 3, 3);
+        }
+        vCtx.font = '5px monospace'; vCtx.textAlign = 'center';
+        vCtx.fillStyle = '#666';
+        vCtx.fillText('buffering...', 40, 44);
+      }
+      function updateChrome() {
+        var v = curIdx >= 0 ? videoList[curIdx] : null;
+        vPlayBtn.innerHTML = (mode === 'play' || mode === 'ad' || mode === 'buffer') ? '&#10074;&#10074;' : '&#9654;';
+        if (!v) { vTimeEl.textContent = '0:00 / 0:00'; vSeekFill.style.width = '0%'; return; }
+        if (v.live) {
+          vTimeEl.innerHTML = '<span style="color:#e02020;">&#9679; LIVE</span>';
+          vSeekFill.style.width = '100%';
+        } else if (mode === 'ad') {
+          vTimeEl.textContent = 'Ad';
+          vSeekFill.style.width = (adFrame / AD_FRAMES * 100) + '%';
+          vSeekFill.style.background = '#e0b020';
+        } else {
+          vTimeEl.textContent = fmtTime(frame / FPS) + ' / ' + fmtTime(v.dur);
+          vSeekFill.style.width = Math.min(100, frame / totalFrames * 100) + '%';
+          vSeekFill.style.background = '#e02020';
+        }
+      }
+      function renderMeta(idx) {
         var v = videoList[idx];
+        var extraViews = lsGet('tube_views', {});
+        var liked = lsGet('tube_likes', {});
+        vMeta.style.display = 'flex';
         vTitleEl.textContent = v.title;
-        vInfoEl.textContent = v.ch + ' \u00B7 ' + v.views + ' views';
-        // Highlight selected
+        vChAvatar.style.background = v.chCol;
+        vChAvatar.style.border = '1px solid #555';
+        vChName.textContent = v.ch;
+        vChSubs.textContent = v.subs + ' subscribers';
+        var likeCount = v.likes + (liked[v.id] ? 1 : 0);
+        vLike.innerHTML = (liked[v.id] ? '&#9829;' : '&#9825;') + ' ' + fmtViews(likeCount);
+        vLike.style.color = liked[v.id] ? '#ff6080' : '#888';
+        var vc = v.views + (extraViews[v.id] || 0);
+        vInfoEl.textContent = v.live ? ('LIVE \u00B7 ' + fmtViews(vc) + ' watching \u00B7 ' + v.age) : (fmtViews(vc) + ' views \u00B7 ' + v.age);
+        var ch = '<div style="font-size:3px;color:#888;border-top:1px solid #333;padding-top:2px;">Comments (' + v.comments.length + ')</div>';
+        for (var c = 0; c < v.comments.length; c++) {
+          ch += '<div style="font-size:3px;margin-top:2px;"><span style="color:' + v.chCol + ';">' + v.comments[c][0] + '</span> ' +
+            '<span style="color:#999;">' + v.comments[c][1] + '</span></div>';
+        }
+        vComments.innerHTML = ch;
+      }
+      function highlight(idx) {
         content.querySelectorAll('.video-item').forEach(function (el) {
           el.style.borderColor = el.getAttribute('data-video-idx') == idx ? getAccentColor() : 'transparent';
         });
-        var frame = 0;
-        var lastTime = 0;
-        function loop(ts) {
-          if (!isPlaying || currentAnim !== animFn) return;
-          // ~12fps
-          if (ts - lastTime > 80) {
-            lastTime = ts;
-            animFn(vCtx, 80, 50, frame);
+      }
+      var lastTime = 0;
+      function loop(ts) {
+        if (mode === 'idle' || mode === 'pause' || mode === 'ended') return;
+        if (ts - lastTime > 1000 / FPS) {
+          lastTime = ts;
+          var v = videoList[curIdx];
+          if (mode === 'buffer') {
+            drawBuffer();
             frame++;
+            if (frame > 8) { frame = 0; mode = 'play'; }
+          } else if (mode === 'ad') {
+            animAd(vCtx, 80, 50, adFrame);
+            adFrame++;
+            if (adFrame >= AD_SKIP_AFTER) {
+              vSkipBtn.textContent = 'SKIP AD \u25B8';
+              vSkipBtn.disabled = false;
+            } else {
+              vSkipBtn.textContent = 'Ad \u00B7 ' + Math.ceil((AD_SKIP_AFTER - adFrame) / FPS);
+              vSkipBtn.disabled = true;
+            }
+            if (adFrame >= AD_FRAMES) endAd();
+          } else if (mode === 'play') {
+            v.anim(vCtx, 80, 50, frame);
+            frame++;
+            // live viewer jitter
+            if (v.live && frame % 30 === 0) {
+              var extraViews = lsGet('tube_views', {});
+              var vc = v.views + (extraViews[v.id] || 0) + Math.floor(Math.sin(frame * 0.7) * 40);
+              vInfoEl.textContent = 'LIVE \u00B7 ' + fmtViews(vc) + ' watching \u00B7 ' + v.age;
+            }
+            if (!v.live && frame >= totalFrames) {
+              if (autoplayOn) { selectVideo((curIdx + 1) % videoList.length, true); return; }
+              mode = 'ended';
+              drawIdle('replay?');
+              updateChrome();
+              return;
+            }
           }
-          videoAnimId = requestAnimationFrame(loop);
+          updateChrome();
         }
         videoAnimId = requestAnimationFrame(loop);
       }
-
-      function pauseAnim() {
-        isPlaying = false;
+      function startLoop() {
         stopVideoAnim();
-        vPlayBtn.textContent = 'Play';
+        videoAnimId = requestAnimationFrame(loop);
       }
-
-      // Click on video items
+      function endAd() {
+        vSkipBtn.style.display = 'none';
+        mode = 'buffer';
+        frame = 0;
+        startLoop();
+      }
+      function selectVideo(idx, autostart) {
+        stopVideoAnim();
+        curIdx = idx;
+        var v = videoList[idx];
+        frame = 0; adFrame = 0;
+        totalFrames = v.dur * FPS;
+        highlight(idx);
+        renderMeta(idx);
+        // count the view (persisted)
+        var extraViews = lsGet('tube_views', {});
+        extraViews[v.id] = (extraViews[v.id] || 0) + 1;
+        lsSet('tube_views', extraViews);
+        // occasional skippable pre-roll (never on livestreams \u2014 they suffer enough)
+        if (!v.live && Math.random() < 0.35) {
+          mode = 'ad';
+          vSkipBtn.style.display = 'block';
+          vSkipBtn.disabled = true;
+        } else {
+          mode = 'buffer';
+        }
+        updateChrome();
+        startLoop();
+      }
+      if (vSkipBtn) {
+        vSkipBtn.addEventListener('click', function () {
+          if (mode === 'ad' && adFrame >= AD_SKIP_AFTER) endAd();
+        });
+      }
+      if (vSeek) {
+        vSeek.addEventListener('mousedown', function (e) {
+          if (curIdx < 0 || videoList[curIdx].live || mode === 'ad') return;
+          var r = this.getBoundingClientRect();
+          frame = Math.floor((e.clientX - r.left) / r.width * totalFrames);
+          if (mode === 'pause' || mode === 'ended') { mode = 'play'; startLoop(); }
+          updateChrome();
+        });
+      }
+      if (vLike) {
+        vLike.addEventListener('click', function () {
+          if (curIdx < 0) return;
+          var liked = lsGet('tube_likes', {});
+          var id = videoList[curIdx].id;
+          liked[id] = !liked[id];
+          lsSet('tube_likes', liked);
+          renderMeta(curIdx);
+        });
+      }
+      function togglePlay() {
+        if (curIdx < 0) { selectVideo(0, true); return; }
+        if (mode === 'play' || mode === 'buffer') { mode = 'pause'; stopVideoAnim(); updateChrome(); }
+        else if (mode === 'pause') { mode = 'play'; startLoop(); updateChrome(); }
+        else if (mode === 'ended') { frame = 0; mode = 'play'; startLoop(); updateChrome(); }
+      }
+      if (vCanvas) {
+        vCanvas.addEventListener('mousedown', function () {
+          if (mode === 'ad') { navigate('tiny://mart'); return; } // clicking the ad opens the ad
+          togglePlay();
+        });
+      }
+      if (vPlayBtn) vPlayBtn.addEventListener('click', togglePlay);
       content.querySelectorAll('.video-item').forEach(function (el) {
         el.addEventListener('click', function () {
-          var idx = parseInt(this.getAttribute('data-video-idx'));
-          startAnim(videoList[idx].anim, idx);
+          selectVideo(parseInt(this.getAttribute('data-video-idx'), 10), true);
         });
         el.addEventListener('mouseenter', function () {
           if (this.style.borderColor === 'transparent' || !this.style.borderColor) {
@@ -2699,27 +3012,7 @@
           this.style.background = '';
         });
       });
-
-      // Play/pause button
-      if (vPlayBtn) {
-        vPlayBtn.addEventListener('click', function () {
-          if (isPlaying) {
-            pauseAnim();
-          } else if (currentAnim) {
-            // Resume last video
-            var idx = 0;
-            content.querySelectorAll('.video-item').forEach(function (el) {
-              if (el.style.borderColor && el.style.borderColor !== 'transparent') {
-                idx = parseInt(el.getAttribute('data-video-idx'));
-              }
-            });
-            startAnim(videoList[idx].anim, idx);
-          } else {
-            // Auto-play first video
-            startAnim(videoList[0].anim, 0);
-          }
-        });
-      }
+      drawIdle('');
     }
 
     // Guestbook page
