@@ -105,3 +105,24 @@ chrome --headless=new --enable-unsafe-swiftshader --enable-logging=stderr \
 - `js/fps.js` — v2 本体（全面書き換え、約2100行）
 - `js/fps-classic.js` — 旧 Canvas 2D 版はそのまま（GEKKO Classic として併存）
 - `README.md` — 技術説明を v2 に更新
+
+## 追記（同日）: v1 の併存と AI モードのポーズ修正
+
+### GEKKO V1 を比較用アプリとして復元
+
+v1 を git 履歴（`abbe613`）から `js/fps-v1.js` として取り出し、「GEKKO V1」アプリとしてデスクトップに併存させた。v2 と DOM が衝突しないよう、ファイル内の id とクラスを一括改名している（`fps-canvas`→`fpsv1-canvas`、`window-fps`→`window-fpsv1`、注入 CSS クラス `fps-*`→`fpsv1-*`）。v1 のゲームループは自ウィンドウが最前面のときしか動かない実装なので、3本（v2 / V1 / Classic）併存しても CPU 負荷は重ならない。
+
+**学習ポイント**: 同一ページに同系アプリを併存させるときの衝突点は「DOM id」「注入 style のクラス名」「document レベルのイベントリスナ」の3つ。前2つは機械的リネームで解決でき、リスナは元から z-index 判定（`isFpsActive`）でゲートされていたので無改修で済んだ。
+
+### AI テストモードで ESC が効かなくなるバグ
+
+v2 の設計バグ。ポーズは「ポインターロック解除」で発動する仕組みだが、AI モードはロックなしで動くため、AI を一度有効にすると ESC が何もしなくなり、AI を解除するためのポーズメニュー自体に戻れないデッドロックだった。
+
+修正: 明示的な `manualPause` フラグを導入。
+
+- AI モード中の ESC は `manualPause` をトグル（ポーズ画面が出て AI TEST ボタンに到達できる）
+- 更新ゲート `canRun` と画面判定 `isPaused` の両方に `manualPause` を反映
+- ポーズ画面クリック時は `manualPause` を解除し、非 AI 時のみポインターロックを再取得
+- `startGame` / RESET でフラグをリセット
+
+検証はヘッドレス Chrome の rAF スタブハーネスで6ケース（AI 中はポーズ非表示 / ESC でポーズ / 持続 / ESC 復帰 / クリック復帰 / ポーズ中 AI 解除後もポーズ維持）すべて PASS。

@@ -1852,6 +1852,29 @@ body {
   border-color: var(--accent2);
 }
 
+/* ===== GEKKO V1 Icon ===== */
+.di-fpsv1 {
+  background: var(--surface2);
+  border-color: var(--accent);
+}
+
+.di-fpsv1::after {
+  content: '+';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  font-family: "Press Start 2P", monospace;
+  font-size: 7px;
+  color: var(--accent);
+  line-height: 1;
+}
+
+.tb-fpsv1 {
+  background: var(--surface2);
+  border-color: var(--accent);
+}
+
 /* ===== GEKKO Classic Icon ===== */
 .di-fpsc {
   background: var(--body-deep);
@@ -1880,6 +1903,20 @@ body {
   padding: 0;
   background: #000;
   line-height: 0;
+}
+
+/* ===== FPS V1 Window ===== */
+#fpsv1-body {
+  padding: 0;
+  background: #000;
+  line-height: 0;
+}
+
+#fpsv1-canvas {
+  display: block;
+  width: 100%;
+  image-rendering: pixelated;
+  image-rendering: crisp-edges;
 }
 
 /* ===== FPS Classic Window ===== */

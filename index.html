@@ -61,6 +61,10 @@
               <div class="di-img di-fps"></div>
               <div class="di-label">GEKKO</div>
             </div>
+            <div class="desktop-icon" data-target="window-fpsv1">
+              <div class="di-img di-fpsv1"></div>
+              <div class="di-label">GEKKO V1</div>
+            </div>
             <div class="desktop-icon" data-target="window-fpsc">
               <div class="di-img di-fpsc"></div>
               <div class="di-label">Classic</div>
@@ -215,6 +219,20 @@
             </div>
           </div>
 
+          <!-- FPS V1 Window (starts closed) — preserved Canvas 2D build -->
+          <div class="window closed" id="window-fpsv1" style="left: 60px; top: 24px; width: 352px;">
+            <div class="title-bar" data-window="window-fpsv1">
+              <span class="title-bar-text">GEKKO V1</span>
+              <div class="title-bar-controls">
+                <button class="btn-minimize" data-window="window-fpsv1">_</button>
+                <button class="btn-close" data-window="window-fpsv1">&times;</button>
+              </div>
+            </div>
+            <div class="window-body" id="fpsv1-body">
+              <canvas id="fpsv1-canvas" width="200" height="150"></canvas>
+            </div>
+          </div>
+
           <!-- FPS Classic Window (starts closed) -->
           <div class="window closed" id="window-fpsc" style="left: 44px; top: 10px; width: 352px;">
             <div class="title-bar" data-window="window-fpsc">
@@ -337,6 +355,7 @@
           <button class="start-menu-item" data-open="window-piano"><span class="tb-icon tb-piano"></span>Piano</button>
           <button class="start-menu-item" data-open="window-browser"><span class="tb-icon tb-browser"></span>TinyWeb</button>
           <button class="start-menu-item" data-open="window-fps"><span class="tb-icon tb-fps"></span>GEKKO</button>
+          <button class="start-menu-item" data-open="window-fpsv1"><span class="tb-icon tb-fpsv1"></span>GEKKO V1</button>
           <button class="start-menu-item" data-open="window-fpsc"><span class="tb-icon tb-fpsc"></span>GEKKO Classic</button>
           <button class="start-menu-item" data-open="window-tetris"><span class="tb-icon tb-tetris"></span>Tetris</button>
           <button class="start-menu-item" data-open="window-solitaire"><span class="tb-icon tb-solitaire"></span>Solitaire</button>
@@ -409,6 +428,7 @@
   <script src="js/minesweeper.js"></script>
   <script src="js/maze.js"></script>
   <script src="js/fps.js"></script>
+  <script src="js/fps-v1.js"></script>
   <script src="js/fps-classic.js"></script>
   <script src="js/tetris.js"></script>
   <script src="js/solitaire.js"></script>

@@ -90,7 +90,7 @@
   var _btnReset=document.createElement('div');
   _btnReset.style.cssText=_btnStyle+'color:#f44;border-color:#f44;';
   _btnReset.textContent='RESET';
-  _btnReset.addEventListener('mousedown',function(e){e.stopPropagation();e.preventDefault();gameState='title';_ovActive='';stopMusic();updateOverlay();});
+  _btnReset.addEventListener('mousedown',function(e){e.stopPropagation();e.preventDefault();gameState='title';manualPause=false;_ovActive='';stopMusic();updateOverlay();});
   var _btnAI=document.createElement('div');
   _btnAI.style.cssText=_btnStyle+'color:#0f8;border-color:#0f8;';
   _btnAI.textContent='AI TEST';
@@ -103,7 +103,8 @@
   _pauseMenu.appendChild(_btnDebug);_pauseMenu.appendChild(_btnAI);_pauseMenu.appendChild(_btnReset);
   _scrPause.addEventListener('mousedown',function(e){
     if(e.target===_btnDebug||e.target===_btnAI||e.target===_btnReset)return;
-    if(!isMobileFps)canvas.requestPointerLock();
+    manualPause=false;
+    if(!isMobileFps&&!aiMode)canvas.requestPointerLock();
   });
   var _scrWin=_mkScr();_scrWin.style.background='rgba(0,10,20,0.8)';
   _scrWin.innerHTML='<div style="font-size:16px;color:#00e5ff;text-shadow:0 0 10px #00e5ff,0 0 20px #00e5ff60">YOU WIN!</div><div class="fps-stats"></div><div class="fps-blink" style="font-size:7px;color:#fff;margin-top:16px"></div>';
@@ -116,14 +117,14 @@
   _ov.appendChild(_hudHint);
   var _ovActive='';
   function updateOverlay(){
-    var isPaused=gameState==='playing'&&!pointerLocked&&!isMobileFps&&!aiMode;
+    var isPaused=gameState==='playing'&&!isMobileFps&&(manualPause||(!pointerLocked&&!aiMode));
     var scr='none';
     if(gameState==='title')scr='title';
     else if(gameState==='playing'&&waveAnnounceTimer>0)scr='wave';
     else if(isPaused)scr='pause';
     else if(gameState==='win')scr='win';
     else if(gameState==='gameover')scr='dead';
-    _hudHint.className='fps-hud-hint'+((gameState==='playing'&&pointerLocked&&!isMobileFps)?' on':'');
+    _hudHint.className='fps-hud-hint'+((gameState==='playing'&&(pointerLocked||aiMode)&&!isMobileFps&&!manualPause)?' on':'');
     if(scr===_ovActive)return;_ovActive=scr;
     _ov.style.pointerEvents=scr==='pause'?'auto':'none';
     _scrTitle.className='fps-scr'+(scr==='title'?' on':'');
@@ -699,6 +700,7 @@
   var screenShake=0,dmgFlash=0,healFlash=0,hitMarker=0,killMarker=0,hitStop=0;
   var fovKick=0,grappleInRange=false,grapplePoint=null;
   var debugMode=false,debugFps=0,debugFrames=0,debugFpsTimer=0;
+  var manualPause=false; // explicit ESC pause — needed in AI mode where no pointer lock exists
   var spJustPressed=false,recentJet=0,jetCutoff=false;
   var aiMode=false,aiTimer=0,aiState='explore',aiWp=null,aiStuck=0,aiLastX=0,aiLastY=0,aiShootT=0;
   var keys={w:false,a:false,s:false,d:false,sp:false};
@@ -1428,6 +1430,7 @@
     particles.length=0;dmgNums.length=0;pickups.length=0;lights.length=0;
     score=0;combo=0;comboTimer=0;maxCombo=0;totalKills=0;gameTime=0;
     refillAmmo();weaponIdx=0;
+    manualPause=false;
     gameState='playing';
     startWave(1);
     startMusic();
@@ -2124,7 +2127,15 @@
       case'Digit2':weaponIdx=1;break;
       case'Digit3':weaponIdx=2;break;
       case'Escape':
-        if(gameState==='playing'&&pointerLocked)document.exitPointerLock();
+        if(down&&gameState==='playing'){
+          if(aiMode){
+            // no pointer lock in AI mode — toggle an explicit pause instead
+            manualPause=!manualPause;
+            if(pointerLocked)document.exitPointerLock();
+          }else if(pointerLocked){
+            document.exitPointerLock();
+          }
+        }
         break;
       case'F3':
         if(down){debugMode=!debugMode;e.preventDefault();}
@@ -2327,7 +2338,7 @@
       player.a=oa+PI;player.p=-0.3;
       updateClouds(rawDt);updateLights(rawDt);
     }else if(gameState==='playing'){
-      var canRun=(pointerLocked||isMobileFps||aiMode)&&waveAnnounceTimer<=0;
+      var canRun=(pointerLocked||isMobileFps||aiMode)&&waveAnnounceTimer<=0&&!manualPause;
       if(waveAnnounceTimer>0)waveAnnounceTimer-=rawDt;
       if(canRun&&dt>0){
         gameTime+=dt;

@@ -114,7 +114,8 @@ tinydesktop/
 │   ├── maze.js         # 3D 迷路
 │   ├── piano.js        # ミニピアノ
 │   ├── browser.js      # TinyWeb ブラウザ
-│   ├── fps.js          # GEKKO FPS ゲーム
+│   ├── fps.js          # GEKKO FPS ゲーム（v2: WebGL）
+│   ├── fps-v1.js       # GEKKO V1（Canvas 2D ラスタライザ、比較用に保存）
 │   ├── tetris.js       # テトリス
 │   ├── solitaire.js    # ソリティア
 │   └── pinball.js      # ピンボール
