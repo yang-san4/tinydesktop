@@ -889,81 +889,190 @@
     if (videoAnimId) { cancelAnimationFrame(videoAnimId); videoAnimId = null; }
   }
 
-  // Animation: Fish Tank
+  // Animation: Fish Tank (v2: light rays, coral, treasure, tetra school)
   function animFish(ctx, w, h, frame) {
-    // Water
-    ctx.fillStyle = '#0a2848';
-    ctx.fillRect(0, 0, w, h);
-    // Sandy bottom
+    // Water gradient bands
+    var bands = ['#0c3258', '#0a2c50', '#092846', '#08223c'];
+    for (var wb = 0; wb < 4; wb++) {
+      ctx.fillStyle = bands[wb];
+      ctx.fillRect(0, Math.floor(h * wb / 4), w, Math.ceil(h / 4));
+    }
+    // Surface shimmer
+    ctx.fillStyle = 'rgba(180,220,255,0.35)';
+    for (var sh = 0; sh < w; sh += 4) {
+      ctx.fillRect(sh + Math.floor(Math.sin(frame * 0.12 + sh) * 1.5), 0, 2, 1);
+    }
+    // Light rays (diagonal, slowly pulsing)
+    for (var lr = 0; lr < 3; lr++) {
+      var la = 0.05 + 0.04 * Math.sin(frame * 0.03 + lr * 2.1);
+      ctx.fillStyle = 'rgba(190,230,255,' + la + ')';
+      var lx = 12 + lr * 26 + Math.sin(frame * 0.015 + lr) * 3;
+      for (var ly = 0; ly < h - 5; ly++) {
+        ctx.fillRect(Math.floor(lx + ly * 0.35), ly, 4 - lr, 1);
+      }
+    }
+    // Sand bed
     ctx.fillStyle = '#c8a860';
     ctx.fillRect(0, h - 5, w, 5);
     ctx.fillStyle = '#b09848';
     for (var i = 0; i < w; i += 7) ctx.fillRect(i, h - 5, 3, 1);
-    // Seaweed
-    for (var s = 0; s < 3; s++) {
-      var sx = 10 + s * 30;
-      ctx.fillStyle = '#208040';
-      for (var sy = 0; sy < 12; sy++) {
-        var sway = Math.sin((frame * 0.06) + s + sy * 0.3) * 2;
-        ctx.fillRect(sx + sway, h - 6 - sy, 2, 2);
+    ctx.fillStyle = '#9a8440';
+    for (var pb = 0; pb < w; pb += 11) ctx.fillRect(pb + 3, h - 3, 2, 1);
+    // Rocks
+    ctx.fillStyle = '#5a6470';
+    ctx.fillRect(56, h - 8, 9, 3);
+    ctx.fillRect(58, h - 10, 5, 2);
+    ctx.fillStyle = '#48525c';
+    ctx.fillRect(57, h - 6, 7, 1);
+    // Coral (pink branches)
+    ctx.fillStyle = '#e86888';
+    ctx.fillRect(70, h - 9, 2, 4);
+    ctx.fillRect(68, h - 11, 2, 3);
+    ctx.fillRect(72, h - 12, 2, 5);
+    ctx.fillRect(73, h - 14, 2, 3);
+    ctx.fillStyle = '#f888a8';
+    ctx.fillRect(68, h - 12, 2, 1);
+    ctx.fillRect(73, h - 15, 2, 1);
+    // Treasure chest (opens periodically, burps bubbles)
+    var chestOpen = (frame % 110) < 28;
+    ctx.fillStyle = '#8a5a28';
+    ctx.fillRect(28, h - 9, 10, 4);
+    ctx.fillStyle = '#a87038';
+    ctx.fillRect(28, h - (chestOpen ? 12 : 10), 10, 2);
+    ctx.fillStyle = '#ffd750';
+    ctx.fillRect(32, h - 8, 2, 2);
+    if (chestOpen) {
+      ctx.fillStyle = 'rgba(255,230,120,0.6)';
+      ctx.fillRect(30, h - 11, 6, 1);
+      // bubble burst
+      for (var cb = 0; cb < 3; cb++) {
+        var cby = h - 12 - ((frame * 1.2 + cb * 6) % 18);
+        ctx.fillStyle = 'rgba(170,210,255,0.6)';
+        ctx.fillRect(31 + cb * 2 + Math.floor(Math.sin(frame * 0.2 + cb) * 1.5), cby, 1, 1);
       }
     }
-    // Bubbles
-    for (var b = 0; b < 4; b++) {
-      var bx = 15 + b * 20;
+    // Seaweed (multi-strand, swaying)
+    for (var sg = 0; sg < 4; sg++) {
+      var sx = 8 + sg * 22;
+      var tall = 12 + (sg % 2) * 5;
+      for (var sy = 0; sy < tall; sy++) {
+        var sway = Math.sin((frame * 0.06) + sg + sy * 0.32) * 2;
+        ctx.fillStyle = sy % 3 === 0 ? '#28a050' : '#208040';
+        ctx.fillRect(sx + sway, h - 6 - sy, 2, 2);
+        if (sg % 2 === 0 && sy % 4 === 2) {
+          ctx.fillStyle = '#30b858';
+          ctx.fillRect(sx + sway + 2, h - 6 - sy, 1, 1);
+        }
+      }
+    }
+    // Rising bubbles
+    for (var b = 0; b < 5; b++) {
+      var bx = 13 + b * 16;
       var by = h - ((frame * 0.8 + b * 15) % (h + 5));
       ctx.fillStyle = 'rgba(150,200,255,0.5)';
-      ctx.fillRect(bx, by, 2, 2);
+      ctx.fillRect(bx + Math.floor(Math.sin(frame * 0.15 + b) * 1.5), by, 2, 2);
     }
-    // Fish
+    // Neon tetra school (tiny, moving together)
+    var schoolX = ((frame * 0.9) % (w + 30)) - 15;
+    for (var nt = 0; nt < 6; nt++) {
+      var ntx = schoolX - nt * 4 - (nt % 2) * 2;
+      var nty = 9 + (nt % 3) * 2 + Math.sin(frame * 0.1 + nt * 0.8) * 1.5;
+      if (ntx < -2 || ntx > w) continue;
+      ctx.fillStyle = '#40c8ff';
+      ctx.fillRect(Math.floor(ntx), Math.floor(nty), 2, 1);
+      ctx.fillStyle = '#ff5060';
+      ctx.fillRect(Math.floor(ntx), Math.floor(nty) + 1, 1, 1);
+    }
+    // Big background fish (slow, darker — depth)
+    var bgx = ((frame * 0.25) % (w + 30)) - 15;
+    ctx.fillStyle = '#1c4a6e';
+    ctx.fillRect(Math.floor(bgx), 16, 9, 4);
+    ctx.fillRect(Math.floor(bgx) - 3, 17, 3, 2);
+    // Main fish with animated tails
     var fishData = [
-      { color: '#ff6030', speed: 0.6, y: 12, size: 4 },
-      { color: '#40e0d0', speed: -0.4, y: 22, size: 3 },
-      { color: '#ffd700', speed: 0.5, y: 30, size: 4 },
-      { color: '#60a0ff', speed: -0.7, y: 18, size: 3 }
+      { color: '#ff6030', belly: '#ffa060', speed: 0.6, y: 13, size: 4, stripe: true },
+      { color: '#40e0d0', belly: '#80f0e8', speed: -0.4, y: 24, size: 3, stripe: false },
+      { color: '#ffd700', belly: '#ffe860', speed: 0.5, y: 32, size: 4, stripe: false },
+      { color: '#60a0ff', belly: '#90c0ff', speed: -0.7, y: 19, size: 3, stripe: false }
     ];
     for (var fi = 0; fi < fishData.length; fi++) {
       var fd = fishData[fi];
-      var fx = ((frame * fd.speed + fi * 30) % (w + 16)) - 8;
+      var fx = ((frame * Math.abs(fd.speed) + fi * 30) % (w + 16)) - 8;
       if (fd.speed < 0) fx = w - fx;
-      var fy = fd.y + Math.sin(frame * 0.08 + fi) * 3;
-      ctx.fillStyle = fd.color;
+      fx = Math.floor(fx);
+      var fy = Math.floor(fd.y + Math.sin(frame * 0.08 + fi) * 3);
       var dir = fd.speed > 0 ? 1 : -1;
+      var flap = Math.floor(frame / 4 + fi) % 2; // tail flap
       // body
+      ctx.fillStyle = fd.color;
       ctx.fillRect(fx, fy, fd.size * 2, fd.size);
       ctx.fillRect(fx - dir, fy + 1, fd.size * 2 + 2, fd.size - 2);
-      // tail
-      ctx.fillRect(fx - dir * (fd.size), fy - 1, fd.size - 1, fd.size + 2);
+      // belly highlight
+      ctx.fillStyle = fd.belly;
+      ctx.fillRect(fx + 1, fy + fd.size - 1, fd.size * 2 - 2, 1);
+      // clownfish stripe
+      if (fd.stripe) {
+        ctx.fillStyle = '#fff';
+        ctx.fillRect(fx + (dir > 0 ? 2 : fd.size * 2 - 3), fy, 1, fd.size);
+        ctx.fillRect(fx + (dir > 0 ? fd.size + 1 : fd.size - 2), fy, 1, fd.size);
+      }
+      // animated tail
+      ctx.fillStyle = fd.color;
+      var tailX = dir > 0 ? fx - fd.size : fx + fd.size * 2;
+      if (flap) {
+        ctx.fillRect(tailX, fy - 1, fd.size - 1, 2);
+        ctx.fillRect(tailX, fy + fd.size - 1, fd.size - 1, 2);
+      } else {
+        ctx.fillRect(tailX, fy, fd.size - 1, fd.size);
+      }
+      // top fin
+      ctx.fillRect(fx + fd.size - 1, fy - 1, 2, 1);
       // eye
       ctx.fillStyle = '#fff';
       ctx.fillRect(fx + (dir > 0 ? fd.size * 2 - 2 : 0), fy + 1, 1, 1);
     }
+    // Snail crawling along the sand
+    var snx = Math.floor((frame * 0.06) % (w + 10)) - 5;
+    ctx.fillStyle = '#caa0c8';
+    ctx.fillRect(snx, h - 7, 4, 2);
+    ctx.fillStyle = '#9a6898';
+    ctx.fillRect(snx + 1, h - 9, 3, 2);
+    ctx.fillStyle = '#b888b6';
+    ctx.fillRect(snx + 2, h - 9, 1, 1);
+    ctx.fillStyle = '#caa0c8';
+    ctx.fillRect(snx + 4, h - 8, 1, 1); // antenna
   }
 
-  // Animation: Cat (indoor room)
+  // Animation: Cat (v2: breathing, ear twitches, dust motes, wall clock, coffee steam)
   function animCat(ctx, w, h, frame) {
     // Room wall
     ctx.fillStyle = '#e8ddd0';
     ctx.fillRect(0, 0, w, h);
-
-    // Wallpaper subtle stripe
     ctx.fillStyle = '#e0d5c8';
-    for (var sp = 0; sp < w; sp += 8) {
-      ctx.fillRect(sp, 0, 1, h - 8);
-    }
+    for (var sp = 0; sp < w; sp += 8) ctx.fillRect(sp, 0, 1, h - 8);
 
     // Window (left side)
     var winX = 4, winY = 3, winW = 18, winH = 16;
     ctx.fillStyle = '#a08060';
     ctx.fillRect(winX - 1, winY - 1, winW + 2, winH + 2);
-    // Sky through window
     ctx.fillStyle = '#80c8f0';
     ctx.fillRect(winX, winY, winW, winH);
-    // Cloud through window
+    // Clouds through window (two layers)
     ctx.fillStyle = '#fff';
     var cloudX = (frame * 0.06) % 20 - 4;
     ctx.fillRect(winX + Math.floor(cloudX), winY + 3, 6, 2);
     ctx.fillRect(winX + Math.floor(cloudX) + 1, winY + 2, 4, 1);
+    ctx.fillStyle = 'rgba(255,255,255,0.7)';
+    var cloud2 = (frame * 0.035 + 10) % 22 - 4;
+    ctx.fillRect(winX + Math.floor(cloud2), winY + 9, 5, 1);
+    // Bird hops by occasionally on the sill
+    if ((frame % 240) < 60) {
+      var hopX = winX + 3 + Math.floor(((frame % 240) / 60) * 8);
+      var hop = (Math.floor(frame / 4) % 2);
+      ctx.fillStyle = '#705848';
+      ctx.fillRect(hopX, winY + winH - 3 - hop, 2, 2);
+      ctx.fillRect(hopX + 2, winY + winH - 4 - hop, 1, 1);
+    }
     // Window cross frame
     ctx.fillStyle = '#a08060';
     ctx.fillRect(winX + Math.floor(winW / 2) - 1, winY, 2, winH);
@@ -983,7 +1092,6 @@
     ctx.fillStyle = '#a07848';
     ctx.fillRect(shX + 1, shY, 14, 1);
     ctx.fillRect(shX + 1, shY + 9, 14, 1);
-    // Books
     var bookColors = ['#c03030','#3050a0','#208040','#d0a020','#6030a0','#c06020','#306080','#a03060'];
     for (var shelf = 0; shelf < 2; shelf++) {
       var sy = shY + 1 + shelf * 10;
@@ -996,13 +1104,25 @@
       }
     }
 
+    // Wall clock (between frame and shelf, hands actually move)
+    var ckx = w - 26, cky = 6;
+    ctx.fillStyle = '#806038';
+    ctx.fillRect(ckx - 1, cky - 1, 7, 7);
+    ctx.fillStyle = '#f4ecd8';
+    ctx.fillRect(ckx, cky, 5, 5);
+    ctx.fillStyle = '#333';
+    var ha = frame * 0.01; // hour-ish hand
+    ctx.fillRect(ckx + 2 + Math.round(Math.cos(ha)), cky + 2 + Math.round(Math.sin(ha)), 1, 1);
+    var ma = frame * 0.12; // minute hand
+    ctx.fillRect(ckx + 2 + Math.round(Math.cos(ma) * 2), cky + 2 + Math.round(Math.sin(ma) * 2), 1, 1);
+    ctx.fillRect(ckx + 2, cky + 2, 1, 1);
+
     // Picture frame on wall
     var pfx = Math.floor(w / 2) - 1, pfy = 4;
     ctx.fillStyle = '#906838';
     ctx.fillRect(pfx, pfy, 10, 8);
     ctx.fillStyle = '#b0d8a0';
     ctx.fillRect(pfx + 1, pfy + 1, 8, 6);
-    // Tiny landscape in frame
     ctx.fillStyle = '#70b8e0';
     ctx.fillRect(pfx + 1, pfy + 1, 8, 3);
     ctx.fillStyle = '#60a050';
@@ -1010,14 +1130,12 @@
     ctx.fillStyle = '#508040';
     ctx.fillRect(pfx + 2, pfy + 3, 3, 2);
 
-    // Floor (wooden planks)
+    // Floor
     var floorY = h - 8;
     ctx.fillStyle = '#c09860';
     ctx.fillRect(0, floorY, w, 8);
     ctx.fillStyle = '#b08850';
-    for (var pl = 0; pl < w; pl += 10) {
-      ctx.fillRect(pl, floorY, 1, 8);
-    }
+    for (var pl = 0; pl < w; pl += 10) ctx.fillRect(pl, floorY, 1, 8);
     ctx.fillStyle = '#b89058';
     ctx.fillRect(0, floorY, w, 1);
 
@@ -1027,36 +1145,54 @@
     ctx.fillRect(rugX, floorY + 1, 28, 6);
     ctx.fillStyle = '#d06060';
     ctx.fillRect(rugX + 1, floorY + 2, 26, 4);
-    // Rug pattern
     ctx.fillStyle = '#c04848';
     ctx.fillRect(rugX + 3, floorY + 3, 22, 1);
     ctx.fillRect(rugX + 3, floorY + 5, 22, 1);
 
-    // Sunbeam on floor (drawn before cat so cat is on top)
+    // Sunbeam + floating dust motes
     ctx.fillStyle = '#ede2d6';
     ctx.fillRect(winX + winW + 2, floorY + 1, 10, 6);
     ctx.fillStyle = '#e8dcd0';
     ctx.fillRect(winX + winW + 4, floorY - 2, 6, 3);
+    for (var dm = 0; dm < 5; dm++) {
+      var dmx = winX + winW + 2 + ((dm * 5 + Math.floor(frame * 0.15)) % 11);
+      var dmy = floorY - 14 + ((dm * 7 + Math.floor(frame * 0.2)) % 18);
+      ctx.fillStyle = 'rgba(255,250,230,' + (0.25 + 0.2 * Math.sin(frame * 0.1 + dm * 2)) + ')';
+      ctx.fillRect(dmx, dmy, 1, 1);
+    }
 
-    // Cat body (sitting on rug)
+    // Coffee mug with steam (left of rug)
+    var mgx = rugX - 8, mgy = floorY - 3;
+    ctx.fillStyle = '#4878b8';
+    ctx.fillRect(mgx, mgy, 4, 4);
+    ctx.fillRect(mgx + 4, mgy + 1, 1, 2);
+    ctx.fillStyle = '#6a4830';
+    ctx.fillRect(mgx, mgy, 4, 1);
+    for (var st2 = 0; st2 < 2; st2++) {
+      var sty = mgy - 2 - ((frame * 0.4 + st2 * 4) % 8);
+      ctx.fillStyle = 'rgba(255,255,255,' + Math.max(0, 0.45 - (mgy - sty) * 0.05) + ')';
+      ctx.fillRect(mgx + 1 + st2 * 2 + Math.floor(Math.sin(frame * 0.2 + st2 * 3 + sty) * 1), Math.floor(sty), 1, 1);
+    }
+
+    // ===== Cat (breathing, twitching, very much doing nothing) =====
     var cx = Math.floor(w / 2) - 6;
     var cy = floorY - 12;
     var blink = (frame % 70) < 4;
     var sleeping = (frame % 160) > 80;
+    var breath = Math.floor(Math.sin(frame * (sleeping ? 0.05 : 0.1)) + 1) >> 1; // 0|1 slow inhale
+    var earTwitch = !sleeping && (frame % 173) < 3;
 
     ctx.fillStyle = '#b08860';
-    // ears
-    ctx.fillRect(cx + 1, cy, 3, 3);
+    // ears (left one twitches)
+    ctx.fillRect(cx + 1, cy + (earTwitch ? 1 : 0), 3, 3);
     ctx.fillRect(cx + 8, cy, 3, 3);
-    // inner ear
     ctx.fillStyle = '#d0a880';
-    ctx.fillRect(cx + 2, cy + 1, 1, 1);
+    ctx.fillRect(cx + 2, cy + 1 + (earTwitch ? 1 : 0), 1, 1);
     ctx.fillRect(cx + 9, cy + 1, 1, 1);
     // head
     ctx.fillStyle = '#b08860';
     ctx.fillRect(cx, cy + 2, 12, 8);
     ctx.fillRect(cx + 1, cy + 1, 10, 9);
-    // Tabby stripes on head
     ctx.fillStyle = '#987040';
     ctx.fillRect(cx + 2, cy + 3, 2, 1);
     ctx.fillRect(cx + 8, cy + 3, 2, 1);
@@ -1070,35 +1206,31 @@
       ctx.fillRect(cx + 3, cy + 5, 1, 1);
       ctx.fillRect(cx + 8, cy + 5, 1, 1);
     } else {
-      // Closed eyes (happy squint)
       ctx.fillStyle = '#555';
       ctx.fillRect(cx + 3, cy + 6, 2, 1);
       ctx.fillRect(cx + 8, cy + 6, 2, 1);
     }
-    // nose
+    // nose + whiskers
     ctx.fillStyle = '#e07080';
     ctx.fillRect(cx + 5, cy + 7, 2, 1);
-    // whiskers
     ctx.fillStyle = '#ccc';
     ctx.fillRect(cx - 2, cy + 7, 3, 1);
     ctx.fillRect(cx + 11, cy + 7, 3, 1);
     ctx.fillRect(cx - 1, cy + 8, 2, 1);
     ctx.fillRect(cx + 11, cy + 8, 2, 1);
-    // body
+    // body (rises 1px on inhale)
     ctx.fillStyle = '#b08860';
-    ctx.fillRect(cx + 1, cy + 10, 10, 8);
-    ctx.fillRect(cx, cy + 11, 12, 6);
-    // Tabby stripes on body
+    ctx.fillRect(cx + 1, cy + 10 - breath, 10, 8 + breath);
+    ctx.fillRect(cx, cy + 11 - breath, 12, 6 + breath);
     ctx.fillStyle = '#987040';
     ctx.fillRect(cx + 2, cy + 12, 8, 1);
     ctx.fillRect(cx + 3, cy + 15, 6, 1);
-    // tail
-    var tailWag = Math.sin(frame * 0.08) * 2;
+    // tail (lazy wag, faster flick when awake)
+    var tailWag = Math.sin(frame * (sleeping ? 0.04 : 0.1)) * 2;
     ctx.fillStyle = '#b08860';
     ctx.fillRect(cx + 11, cy + 13 + Math.floor(tailWag), 3, 2);
     ctx.fillRect(cx + 13, cy + 12 + Math.floor(tailWag), 3, 2);
     ctx.fillRect(cx + 15, cy + 10 + Math.floor(tailWag), 2, 2);
-    // Tail stripe
     ctx.fillStyle = '#987040';
     ctx.fillRect(cx + 14, cy + 12 + Math.floor(tailWag), 1, 1);
     // paws
@@ -1111,11 +1243,9 @@
       ctx.fillStyle = '#88aacc';
       var zFloat = (frame % 80) * 0.08;
       var zx = cx + 14, zy = cy - 3 - zFloat;
-      // z1
       ctx.fillRect(Math.floor(zx), Math.floor(zy), 3, 1);
       ctx.fillRect(Math.floor(zx) + 2, Math.floor(zy) + 1, 1, 1);
       ctx.fillRect(Math.floor(zx), Math.floor(zy) + 2, 3, 1);
-      // z2 (smaller, higher)
       if (zFloat > 2) {
         ctx.fillStyle = '#99bbdd';
         ctx.fillRect(Math.floor(zx) + 4, Math.floor(zy) - 2, 2, 1);
@@ -1124,142 +1254,319 @@
       }
     }
 
-    // Yarn ball on floor
+    // Yarn ball
     var yarnX = cx - 12, yarnY = floorY - 3;
     ctx.fillStyle = '#e04060';
     ctx.fillRect(yarnX, yarnY, 4, 3);
     ctx.fillRect(yarnX + 1, yarnY - 1, 2, 1);
     ctx.fillRect(yarnX + 1, yarnY + 3, 2, 1);
-    // Yarn string
-    ctx.fillStyle = '#e04060';
     ctx.fillRect(yarnX + 4, yarnY + 1, 2, 1);
     ctx.fillRect(yarnX + 5, yarnY + 2, 2, 1);
     ctx.fillRect(yarnX + 6, yarnY + 1, 1, 1);
   }
 
-  // Animation: Starfield / Space
+  // Animation: Starfield (v2: nebulae, warp trails, shooting stars, ringed planet, ship)
   function animStars(ctx, w, h, frame) {
     ctx.fillStyle = '#050510';
     ctx.fillRect(0, 0, w, h);
-    // Stars moving toward viewer (simple)
-    for (var i = 0; i < 30; i++) {
-      var seed = i * 7919 + 1;
-      var sx = ((seed * 13) % w);
-      var sy = ((seed * 29) % h);
-      // Move outward from center
+    // Nebulae (drifting translucent blobs)
+    var nebs = [
+      { x: 18, y: 12, r: 14, c: '120,40,160', s: 0.04 },
+      { x: 60, y: 34, r: 11, c: '30,120,140', s: 0.025 }
+    ];
+    for (var nb = 0; nb < nebs.length; nb++) {
+      var ne = nebs[nb];
+      var nx = (ne.x + frame * ne.s) % (w + ne.r * 2) - ne.r;
+      for (var rr = ne.r; rr > 2; rr -= 3) {
+        ctx.fillStyle = 'rgba(' + ne.c + ',' + (0.045 + (ne.r - rr) * 0.008) + ')';
+        ctx.fillRect(Math.floor(nx - rr / 2), Math.floor(ne.y - rr / 2.6), rr, Math.floor(rr / 1.3));
+      }
+    }
+    // Far static stars (twinkle)
+    for (var fs = 0; fs < 24; fs++) {
+      var seed = fs * 2113 + 17;
+      var fx = (seed * 7) % w;
+      var fy = (seed * 13) % h;
+      var tw = 0.3 + 0.5 * Math.abs(Math.sin(frame * 0.06 + fs * 1.3));
+      ctx.fillStyle = 'rgba(200,210,255,' + tw + ')';
+      ctx.fillRect(fx, fy, 1, 1);
+    }
+    // Warp stars with motion trails
+    for (var i = 0; i < 22; i++) {
+      var sd = i * 7919 + 1;
+      var sx = ((sd * 13) % w);
+      var sy = ((sd * 29) % h);
       var dx = sx - w / 2;
       var dy = sy - h / 2;
-      var t = (frame * 0.02 + i * 0.1) % 1;
+      var t = (frame * 0.02 + i * 0.13) % 1;
       var px = w / 2 + dx * (1 + t * 2);
       var py = h / 2 + dy * (1 + t * 2);
       if (px < 0 || px >= w || py < 0 || py >= h) continue;
-      var brightness = Math.floor(t * 255);
-      var size = t > 0.5 ? 2 : 1;
-      ctx.fillStyle = 'rgb(' + brightness + ',' + brightness + ',' + Math.min(255, brightness + 50) + ')';
-      ctx.fillRect(px, py, size, size);
+      var bright = Math.floor(t * 255);
+      // trail (two fading steps behind)
+      for (var tr = 1; tr <= 2; tr++) {
+        var tt = Math.max(0, t - tr * 0.04);
+        var tx2 = w / 2 + dx * (1 + tt * 2);
+        var ty2 = h / 2 + dy * (1 + tt * 2);
+        ctx.fillStyle = 'rgba(' + bright + ',' + bright + ',255,' + (0.3 / tr) + ')';
+        ctx.fillRect(Math.floor(tx2), Math.floor(ty2), 1, 1);
+      }
+      var size = t > 0.55 ? 2 : 1;
+      ctx.fillStyle = 'rgb(' + bright + ',' + bright + ',' + Math.min(255, bright + 50) + ')';
+      ctx.fillRect(Math.floor(px), Math.floor(py), size, size);
+    }
+    // Ringed planet drifting slowly right-to-left
+    var plx = w + 12 - ((frame * 0.045) % (w + 30));
+    var ply = 13;
+    ctx.fillStyle = '#c08858';
+    ctx.fillRect(Math.floor(plx) - 3, ply - 3, 7, 7);
+    ctx.fillRect(Math.floor(plx) - 4, ply - 2, 9, 5);
+    ctx.fillStyle = '#a87048';
+    ctx.fillRect(Math.floor(plx) - 3, ply - 1, 7, 1);
+    ctx.fillRect(Math.floor(plx) - 2, ply + 2, 5, 1);
+    ctx.fillStyle = '#e8d8a8';
+    ctx.fillRect(Math.floor(plx) - 7, ply + 1, 15, 1);
+    ctx.fillStyle = 'rgba(232,216,168,0.5)';
+    ctx.fillRect(Math.floor(plx) - 6, ply + 2, 13, 1);
+    // Shooting star (every ~7.5s)
+    var ssT = frame % 90;
+    if (ssT < 10) {
+      var ssx = 8 + ssT * 7;
+      var ssy = 4 + ssT * 2.6;
+      for (var sst = 0; sst < 5; sst++) {
+        ctx.fillStyle = 'rgba(255,255,230,' + (0.9 - sst * 0.18) + ')';
+        ctx.fillRect(Math.floor(ssx - sst * 3), Math.floor(ssy - sst * 1.1), 2, 1);
+      }
+    }
+    // Tiny ship flyby (every ~16s)
+    var shipT = frame % 192;
+    if (shipT < 40) {
+      var shx = -8 + shipT * 2.4;
+      var shy = 38 - Math.sin(shipT * 0.1) * 3;
+      ctx.fillStyle = '#b8c4d8';
+      ctx.fillRect(Math.floor(shx), Math.floor(shy), 5, 2);
+      ctx.fillRect(Math.floor(shx) + 4, Math.floor(shy) - 1, 2, 1);
+      ctx.fillStyle = (Math.floor(frame / 3) % 2) ? '#ff5050' : '#50ff80';
+      ctx.fillRect(Math.floor(shx), Math.floor(shy) - 1, 1, 1);
+      // engine glow
+      ctx.fillStyle = 'rgba(120,200,255,0.7)';
+      ctx.fillRect(Math.floor(shx) - 2, Math.floor(shy) + 1, 2, 1);
     }
   }
 
-  // Animation: Piano keys
+  // Animation: Piano (v2: real melody, pressed keys, lid reflection, scrolling staff)
   function animPiano(ctx, w, h, frame) {
-    ctx.fillStyle = '#1a1018';
-    ctx.fillRect(0, 0, w, h);
-    // Title area
-    ctx.fillStyle = '#333';
-    ctx.fillRect(0, 0, w, 10);
-    ctx.fillStyle = '#888';
-    ctx.fillRect(10, 3, 3, 4); ctx.fillRect(14, 3, 3, 4); // music notes
-    ctx.fillRect(11, 1, 1, 3); ctx.fillRect(15, 1, 1, 3);
-    // Keys
+    // 16-step melody (white key indices 0-7, -1 = rest)
+    var MELODY = [0, 2, 4, 7, 4, 2, 0, -1, 5, 4, 2, 1, 2, -1, 0, -1];
+    var NOTE_COLS = ['#ff71ce', '#ffb066', '#ffd700', '#7dff8a', '#00fff0', '#80a0ff', '#b967ff', '#ff8080'];
+    var step = Math.floor(frame / 5) % 16;
+    var pressed = MELODY[step];
+    var keyTop = 18, keyH = h - keyTop - 1;
     var keyW = Math.floor(w / 8);
-    var keyH = h - 14;
-    var notePattern = [0, 1, 0, 1, 0, 0, 1, 0]; // 0=white, 1=black
-    for (var k = 0; k < 8; k++) {
-      var kx = k * keyW;
-      // Active note changes every few frames
-      var activeKey = Math.floor(frame / 5) % 8;
-      var isActive = k === activeKey;
-      if (notePattern[k] === 0) {
-        ctx.fillStyle = isActive ? '#aaaacc' : '#f0f0f0';
-        ctx.fillRect(kx, 12, keyW - 1, keyH);
-        ctx.fillStyle = '#ccc';
-        ctx.fillRect(kx, 12 + keyH - 1, keyW - 1, 1);
+
+    // Glossy black lid (top area)
+    ctx.fillStyle = '#16101e';
+    ctx.fillRect(0, 0, w, keyTop);
+    ctx.fillStyle = '#241a30';
+    ctx.fillRect(0, keyTop - 3, w, 1);
+    // Faint key reflection in the lid
+    for (var rk = 0; rk < 8; rk++) {
+      ctx.fillStyle = rk === pressed ? 'rgba(160,160,220,0.20)' : 'rgba(220,220,240,0.07)';
+      ctx.fillRect(rk * keyW + 1, keyTop - 7, keyW - 2, 5);
+    }
+    // Scrolling staff with note dots
+    ctx.fillStyle = 'rgba(255,255,255,0.14)';
+    for (var ln = 0; ln < 5; ln++) ctx.fillRect(0, 2 + ln * 2, w, 1);
+    for (var ns = 0; ns < 16; ns++) {
+      var nnote = MELODY[ns];
+      if (nnote < 0) continue;
+      var nx = ((ns * 12) - (frame * 2.4) % 192 + 192 + 8) % 192 - 8;
+      if (nx < -3 || nx > w + 2) continue;
+      var ny = 10 - nnote;
+      var isCur = ns === step;
+      ctx.fillStyle = isCur ? NOTE_COLS[nnote] : 'rgba(200,200,230,0.5)';
+      ctx.fillRect(Math.floor(nx), ny, 2, 2);
+      ctx.fillRect(Math.floor(nx) + 2, ny - 2, 1, 3);
+      if (isCur) {
+        ctx.fillStyle = 'rgba(255,255,255,0.8)';
+        ctx.fillRect(Math.floor(nx), ny - 1, 2, 1);
       }
     }
+
+    // Sustain glow under the pressed key
+    if (pressed >= 0) {
+      var gx = pressed * keyW;
+      ctx.fillStyle = 'rgba(' + (pressed % 2 ? '130,120,255' : '255,120,200') + ',0.10)';
+      ctx.fillRect(gx - 2, keyTop, keyW + 4, keyH);
+    }
+
+    // White keys (pressed key sinks 1px and dims)
     for (var k = 0; k < 8; k++) {
       var kx = k * keyW;
-      var activeKey = Math.floor(frame / 5) % 8;
-      var isActive = k === activeKey;
-      if (notePattern[k] === 1) {
-        ctx.fillStyle = isActive ? '#444466' : '#222';
-        ctx.fillRect(kx + 1, 12, keyW - 3, keyH * 0.6);
+      var isP = k === pressed;
+      ctx.fillStyle = isP ? '#c2c2da' : '#f0f0f0';
+      ctx.fillRect(kx, keyTop + (isP ? 1 : 0), keyW - 1, keyH - (isP ? 1 : 0));
+      ctx.fillStyle = isP ? '#9a9ab8' : '#ccc';
+      ctx.fillRect(kx, keyTop + keyH - 1, keyW - 1, 1);
+      if (!isP) { // top shine
+        ctx.fillStyle = '#fff';
+        ctx.fillRect(kx, keyTop, keyW - 1, 1);
       }
     }
-    // Floating notes
-    for (var n = 0; n < 5; n++) {
-      var nx = 10 + n * 16 + Math.sin(frame * 0.05 + n) * 4;
-      var ny = 30 - ((frame * 0.3 + n * 10) % 35);
-      if (ny < 2) continue;
-      ctx.fillStyle = ['#ff71ce', '#b967ff', '#00fff0', '#ffd700', '#ff6030'][n];
-      ctx.fillRect(nx, ny, 2, 3);
-      ctx.fillRect(nx + 2, ny, 1, 1);
+    // Black keys (after C D F G A = white idx 0,1,3,4,5)
+    var blackAfter = [0, 1, 3, 4, 5];
+    for (var bk2 = 0; bk2 < blackAfter.length; bk2++) {
+      var bx2 = (blackAfter[bk2] + 1) * keyW - 3;
+      ctx.fillStyle = '#1a1a24';
+      ctx.fillRect(bx2, keyTop, 5, Math.floor(keyH * 0.58));
+      ctx.fillStyle = '#34344a';
+      ctx.fillRect(bx2 + 1, keyTop, 1, Math.floor(keyH * 0.58) - 1);
+    }
+
+    // Rising note particles from recently pressed keys
+    for (var pn = 0; pn < 4; pn++) {
+      var pstep = ((step - pn) % 16 + 16) % 16;
+      var pnote = MELODY[pstep];
+      if (pnote < 0) continue;
+      var age = (frame % 5) + pn * 5;
+      var py2 = keyTop - 2 - age * 1.1;
+      if (py2 < 13) continue;
+      var px2 = pnote * keyW + Math.floor(keyW / 2) + Math.sin(frame * 0.2 + pn * 2) * 2;
+      var fade = Math.max(0, 1 - age / 18);
+      ctx.globalAlpha = fade;
+      ctx.fillStyle = NOTE_COLS[pnote];
+      ctx.fillRect(Math.floor(px2), Math.floor(py2), 2, 3);
+      ctx.fillRect(Math.floor(px2) + 2, Math.floor(py2), 1, 1);
+      ctx.globalAlpha = 1;
     }
   }
 
-  // Animation: Sand timer
+  // Animation: Sand timer (v2: funnel dip, grain physics, the FLIP, loop counter)
   function animSand(ctx, w, h, frame) {
+    var SAND_F = 300, FLIP_F = 18, CYCLE = SAND_F + FLIP_F;
+    var phase = frame % CYCLE;
+    var flipping = phase >= SAND_F;
+    var prog = Math.min(1, phase / SAND_F);
+    var loops = Math.floor(frame / CYCLE);
+
     ctx.fillStyle = '#0a0a18';
     ctx.fillRect(0, 0, w, h);
-    var cx = Math.floor(w / 2);
-    var cy = Math.floor(h / 2);
-    // Hourglass frame
+    // vignette
+    ctx.fillStyle = 'rgba(0,0,0,0.35)';
+    ctx.fillRect(0, 0, w, 2); ctx.fillRect(0, h - 2, w, 2);
+    ctx.fillRect(0, 0, 3, h); ctx.fillRect(w - 3, 0, 3, h);
+    // floating dust
+    for (var du = 0; du < 6; du++) {
+      var dux = (du * 17 + Math.floor(frame * 0.1)) % w;
+      var duy = (du * 11 + Math.floor(frame * 0.06 * (du % 2 ? 1 : -1)) % h + h) % h;
+      ctx.fillStyle = 'rgba(216,184,72,' + (0.10 + 0.08 * Math.sin(frame * 0.08 + du)) + ')';
+      ctx.fillRect(dux, duy, 1, 1);
+    }
+
+    var cx = Math.floor(w / 2), cy = Math.floor(h / 2);
+    ctx.save();
+    ctx.translate(cx, cy);
+    if (flipping) {
+      var ft = (phase - SAND_F) / FLIP_F;
+      ft = ft * ft * (3 - 2 * ft); // ease
+      ctx.rotate(Math.PI * ft);
+    }
+
+    // Wooden frame (top/bottom bars + side posts)
     ctx.fillStyle = '#a08848';
-    ctx.fillRect(cx - 14, cy - 18, 28, 2);
-    ctx.fillRect(cx - 14, cy + 16, 28, 2);
-    // Glass shape
-    ctx.fillStyle = '#182030';
-    // Top half (trapezoid)
+    ctx.fillRect(-15, -19, 30, 3);
+    ctx.fillRect(-15, 16, 30, 3);
+    ctx.fillStyle = '#80683a';
+    ctx.fillRect(-15, -17, 30, 1);
+    ctx.fillRect(-15, 18, 30, 1);
+    ctx.fillRect(-15, -16, 2, 32);
+    ctx.fillRect(13, -16, 2, 32);
+
+    // Glass body (dark) + edge highlights
     for (var y = 0; y < 16; y++) {
-      var halfW = 12 - Math.floor(y * 12 / 16);
-      ctx.fillRect(cx - halfW, cy - 16 + y, halfW * 2, 1);
+      var hwT = 12 - Math.floor(y * 12 / 16);
+      ctx.fillStyle = '#182030';
+      ctx.fillRect(-hwT, -16 + y, hwT * 2, 1);
+      ctx.fillStyle = 'rgba(140,180,220,0.35)';
+      ctx.fillRect(-hwT, -16 + y, 1, 1);
+      ctx.fillRect(hwT - 1, -16 + y, 1, 1);
+      var hwB = Math.floor(y * 12 / 16);
+      ctx.fillStyle = '#182030';
+      ctx.fillRect(-hwB, y, hwB * 2 || 2, 1);
+      if (hwB > 0) {
+        ctx.fillStyle = 'rgba(140,180,220,0.35)';
+        ctx.fillRect(-hwB, y, 1, 1);
+        ctx.fillRect(hwB - 1, y, 1, 1);
+      }
     }
-    // Bottom half (inverted trapezoid)
-    for (var y = 0; y < 16; y++) {
-      var halfW = Math.floor(y * 12 / 16);
-      ctx.fillRect(cx - halfW, cy + y, halfW * 2, 1);
-    }
-    // Sand in top (decreasing)
-    var sandLevel = 1 - ((frame * 0.005) % 1);
+    // Glass glint (pulsing diagonal)
+    ctx.fillStyle = 'rgba(255,255,255,' + (0.18 + 0.1 * Math.sin(frame * 0.05)) + ')';
+    ctx.fillRect(-8, -13, 1, 4);
+    ctx.fillRect(-7, -11, 1, 3);
+
+    // Sand in top chamber, surface dips into a funnel at center
+    var topLevel = 1 - prog;
+    var topRows = Math.floor(14 * topLevel);
     ctx.fillStyle = '#d8b848';
-    for (var y = 0; y < Math.floor(16 * sandLevel); y++) {
-      var fromBottom = Math.floor(16 * sandLevel) - y;
-      var halfW = 12 - Math.floor((16 - fromBottom) * 12 / 16);
-      halfW = Math.max(0, halfW);
-      ctx.fillRect(cx - halfW, cy - fromBottom, halfW * 2, 1);
+    for (var ty = 0; ty < topRows; ty++) {
+      var fromBottom = topRows - ty;
+      var hw2 = 12 - Math.floor((16 - fromBottom) * 12 / 16) - 1;
+      if (hw2 <= 0) continue;
+      if (ty === 0 && hw2 > 2) {
+        // surface row with funnel dip
+        ctx.fillRect(-hw2, -fromBottom, hw2 - 1, 1);
+        ctx.fillRect(2, -fromBottom, hw2 - 1, 1);
+      } else {
+        ctx.fillRect(-hw2, -fromBottom, hw2 * 2, 1);
+      }
     }
-    // Sand in bottom (increasing)
-    var botLevel = (frame * 0.005) % 1;
+    // darker sand shading
+    if (topRows > 2) {
+      ctx.fillStyle = '#b89838';
+      ctx.fillRect(-1, -2, 3, Math.min(2, topRows));
+    }
+
+    // Sand pile in bottom chamber (cone, rounded tip)
+    var botRows = Math.floor(14 * prog);
     ctx.fillStyle = '#d8b848';
-    for (var y = 0; y < Math.floor(16 * botLevel); y++) {
-      var fromBottom = y;
-      var halfW = Math.floor(fromBottom * 12 / 16);
-      ctx.fillRect(cx - halfW, cy + 16 - fromBottom - 1, halfW * 2, 1);
+    for (var by = 0; by < botRows; by++) {
+      var up = botRows - by; // rows from pile base going up
+      var hw3 = Math.max(1, Math.floor((by + 2) * 12 / 16) - 1);
+      ctx.fillRect(-hw3, 15 - up, hw3 * 2, 1);
     }
-    // Falling sand stream
-    ctx.fillStyle = '#d8b848';
-    ctx.fillRect(cx - 1, cy - 2, 2, 4);
-    // Particles
-    for (var p = 0; p < 3; p++) {
-      var py = cy + ((frame * 1.5 + p * 5) % 14);
-      var px = cx - 1 + ((p * 3 + frame) % 3) - 1;
-      ctx.fillRect(px, py, 1, 1);
+    if (botRows > 0) {
+      ctx.fillStyle = '#e8cc68';
+      ctx.fillRect(-1, 15 - botRows, 2, 1); // lit tip
     }
+
+    // Falling stream + grains + impact splash
+    if (!flipping && prog < 1) {
+      ctx.fillStyle = '#d8b848';
+      ctx.fillRect(-1, -2, 2, 3);
+      for (var g = 0; g < 4; g++) {
+        var gy = 1 + ((frame * 1.6 + g * 4) % (14 - botRows));
+        var gx = -1 + ((g * 3 + frame) % 3) - 1;
+        ctx.fillRect(gx, Math.floor(gy), 1, 1);
+      }
+      // splash at pile top
+      var spY = 14 - botRows;
+      if (frame % 3 < 2) {
+        ctx.fillStyle = '#e8cc68';
+        ctx.fillRect(-3, spY, 1, 1);
+        ctx.fillRect(2, spY + ((frame % 2)), 1, 1);
+      }
+    }
+    ctx.restore();
+
+    // Loop counter (bottom-right, very ASMR)
+    ctx.font = '5px monospace';
+    ctx.textAlign = 'right';
+    ctx.fillStyle = 'rgba(216,184,72,0.55)';
+    ctx.fillText('loop ' + (loops + 1), w - 4, h - 3);
   }
 
-  // Animation: 3D Maze walkthrough
+  // Animation: 3D Maze walkthrough (v2: textured walls, goal beacon, vignette)
   function animMaze(ctx, w, h, frame) {
-    // Column-based raycasting walkthrough (Wolfenstein 3D style)
-    // 8x8 maze: 1=wall, 0=open — snake-shaped corridor
     var maze = [
       1,1,1,1,1,1,1,1,
       1,0,0,0,0,0,0,1,
@@ -1271,8 +1578,6 @@
       1,1,1,1,1,1,1,1
     ];
     var MZ = 8;
-
-    // Waypoints along the path (cell centers)
     var wp = [
       [1.5,1.5],[2.5,1.5],[3.5,1.5],[4.5,1.5],[5.5,1.5],[6.5,1.5],
       [6.5,2.5],[6.5,3.5],
@@ -1281,31 +1586,23 @@
       [2.5,5.5],[3.5,5.5],[4.5,5.5],[5.5,5.5],[6.5,5.5],
       [6.5,6.5]
     ];
-
     var totalSeg = wp.length - 1;
     var SPD = 10;
     var totalF = totalSeg * SPD;
     var pauseF = 24;
     var cycleF = totalF + pauseF;
     var t = frame % cycleF;
-
     var atGoal = t >= totalF;
     var si = atGoal ? totalSeg - 1 : Math.floor(t / SPD);
     var st = atGoal ? 1.0 : (t % SPD) / SPD;
-
-    // Position: linear interpolation
     var ni = Math.min(si + 1, wp.length - 1);
     var px = wp[si][0] + (wp[ni][0] - wp[si][0]) * st;
     var py = wp[si][1] + (wp[ni][1] - wp[si][1]) * st;
-
-    // Direction angle per segment
     function segAng(i) {
       if (i < 0) i = 0;
       if (i >= totalSeg) i = totalSeg - 1;
       return Math.atan2(wp[i + 1][1] - wp[i][1], wp[i + 1][0] - wp[i][0]);
     }
-
-    // Smooth angle blending at turns
     var ang = segAng(si);
     if (si < totalSeg - 1 && st > 0.55) {
       var na = segAng(si + 1);
@@ -1323,21 +1620,16 @@
       bt2 = bt2 * bt2 * (3 - 2 * bt2);
       ang = ang + (pa - ang) * bt2 * 0.5;
     }
-
-    // Camera bob
     var bob = atGoal ? 0 : Math.sin(frame * 0.25) * 0.6;
     var halfH = Math.floor(h / 2);
-    var FOV = 1.047; // ~60 degrees
+    var FOV = 1.047;
     var halfFOV = FOV / 2;
 
-    // Ceiling
+    // Ceiling + floor
     ctx.fillStyle = '#0e0e18';
     ctx.fillRect(0, 0, w, halfH);
-    // Floor
     ctx.fillStyle = '#28283a';
     ctx.fillRect(0, halfH, w, h - halfH);
-
-    // Floor depth lines
     for (var fl = 0; fl < 4; fl++) {
       var fy = halfH + 3 + fl * (3 + fl);
       if (fy >= h) break;
@@ -1345,49 +1637,83 @@
       ctx.fillRect(0, fy, w, 1);
     }
 
-    // Raycast each column
+    // Raycast walls with texture (mortar seams + brick band)
+    var depth = new Array(w);
     for (var c = 0; c < w; c++) {
       var ra = ang - halfFOV + (c / w) * FOV;
       var rdx = Math.cos(ra);
       var rdy = Math.sin(ra);
-
       var mx = Math.floor(px), my = Math.floor(py);
       var ddx = Math.abs(1 / (rdx || 0.0001));
       var ddy = Math.abs(1 / (rdy || 0.0001));
       var sx, sy, sdx, sdy;
-
       if (rdx < 0) { sx = -1; sdx = (px - mx) * ddx; }
       else { sx = 1; sdx = (mx + 1 - px) * ddx; }
       if (rdy < 0) { sy = -1; sdy = (py - my) * ddy; }
       else { sy = 1; sdy = (my + 1 - py) * ddy; }
-
       var side = 0, hit = false;
       for (var stp = 0; stp < 16; stp++) {
         if (sdx < sdy) { sdx += ddx; mx += sx; side = 0; }
         else { sdy += ddy; my += sy; side = 1; }
         if (mx >= 0 && mx < MZ && my >= 0 && my < MZ && maze[my * MZ + mx]) { hit = true; break; }
       }
-      if (!hit) continue;
-
-      // Perpendicular distance (fisheye corrected)
+      if (!hit) { depth[c] = 99; continue; }
       var dist = side === 0 ? sdx - ddx : sdy - ddy;
       if (dist < 0.05) dist = 0.05;
-
-      // Wall strip
+      depth[c] = dist;
       var wh = Math.floor(h * 0.85 / dist);
       var ds = Math.floor((h - wh) / 2 + bob);
       var de = ds + wh;
-
-      // N/S walls lighter, E/W darker — distance fog
       var shade = Math.max(0.12, 1 - dist / 7);
+      // mortar seam where the ray hits near a cell edge
+      var hitPos = side === 0 ? py + dist * rdy : px + dist * rdx;
+      var frac = hitPos - Math.floor(hitPos);
+      if (frac < 0.05 || frac > 0.95 || Math.abs(frac - 0.5) < 0.03) shade *= 0.72;
       var base = side === 1 ? [90, 152, 210] : [55, 110, 168];
       var r = Math.floor(base[0] * shade);
       var g = Math.floor(base[1] * shade);
       var b = Math.floor(base[2] * shade);
-
       var y0 = Math.max(0, ds), y1 = Math.min(h, de);
       ctx.fillStyle = 'rgb(' + r + ',' + g + ',' + b + ')';
       ctx.fillRect(c, y0, 1, y1 - y0);
+      // horizontal brick bands
+      if (wh > 8) {
+        ctx.fillStyle = 'rgba(0,0,0,0.18)';
+        var b1 = Math.floor(ds + wh * 0.33), b2 = Math.floor(ds + wh * 0.66);
+        if (b1 > 0 && b1 < h) ctx.fillRect(c, b1, 1, 1);
+        if (b2 > 0 && b2 < h) ctx.fillRect(c, b2, 1, 1);
+      }
+    }
+
+    // Goal beacon (gold pillar visible down the final corridor)
+    var gdx = 6.5 - px, gdy = 6.5 - py;
+    var gDist = Math.sqrt(gdx * gdx + gdy * gdy);
+    if (gDist > 0.3) {
+      var gAng = Math.atan2(gdy, gdx) - ang;
+      while (gAng > Math.PI) gAng -= Math.PI * 2;
+      while (gAng < -Math.PI) gAng += Math.PI * 2;
+      if (Math.abs(gAng) < halfFOV) {
+        var gc = Math.floor((gAng + halfFOV) / FOV * w);
+        if (gc >= 0 && gc < w && gDist < depth[gc] + 0.4) {
+          var gh = Math.min(h, Math.floor(h * 0.55 / gDist));
+          var gw2 = Math.max(2, Math.floor(gh / 6));
+          var gy0 = Math.floor(h / 2 - gh / 2 + bob);
+          var pulse = 0.55 + 0.35 * Math.sin(frame * 0.25);
+          ctx.fillStyle = 'rgba(255,215,0,' + pulse + ')';
+          ctx.fillRect(gc - Math.floor(gw2 / 2), gy0, gw2, gh);
+          ctx.fillStyle = 'rgba(255,255,200,' + pulse + ')';
+          ctx.fillRect(gc - Math.floor(gw2 / 2), gy0, gw2, 2);
+          // sparkle above
+          if (frame % 8 < 4) ctx.fillRect(gc, Math.max(0, gy0 - 3), 1, 1);
+        }
+      }
+    }
+
+    // Edge vignette
+    for (var vg = 0; vg < 5; vg++) {
+      ctx.fillStyle = 'rgba(0,0,0,' + (0.16 - vg * 0.03) + ')';
+      ctx.fillRect(vg, 0, 1, h);
+      ctx.fillRect(w - 1 - vg, 0, 1, h);
     }
 
     // Crosshair
@@ -1396,7 +1722,7 @@
     ctx.fillRect(chx - 2, chy, 5, 1);
     ctx.fillRect(chx, chy - 2, 1, 5);
 
-    // Minimap (top-right)
+    // Minimap
     var ms = Math.min(16, Math.floor(w * 0.2));
     var mmx = w - ms - 2, mmy = 2;
     var cs = ms / MZ;
@@ -1410,20 +1736,17 @@
         }
       }
     }
-    // Player dot
     ctx.fillStyle = '#0f0';
     ctx.fillRect(Math.floor(mmx + px * cs) - 1, Math.floor(mmy + py * cs) - 1, 2, 2);
-    // Goal blink
     if (frame % 16 < 10) {
       ctx.fillStyle = '#ffd700';
       ctx.fillRect(Math.floor(mmx + 6.5 * cs) - 1, Math.floor(mmy + 6.5 * cs) - 1, 2, 2);
     }
 
-    // Goal reached overlay
+    // Goal overlay
     if (atGoal) {
       ctx.fillStyle = 'rgba(0,0,0,0.55)';
       ctx.fillRect(0, halfH - 5, w, 10);
-      // Pixel text "GOAL!"
       ctx.fillStyle = '#ffd700';
       var tx = Math.floor(w / 2) - 10, ty = halfH - 2;
       ctx.fillRect(tx,ty,3,1); ctx.fillRect(tx,ty,1,5); ctx.fillRect(tx,ty+4,3,1); ctx.fillRect(tx+2,ty+2,1,3);
@@ -1435,14 +1758,22 @@
       ctx.fillRect(tx,ty,1,5); ctx.fillRect(tx,ty+4,3,1);
       tx += 4;
       ctx.fillRect(tx,ty,1,3); ctx.fillRect(tx,ty+4,1,1);
+      // confetti
+      for (var cf = 0; cf < 8; cf++) {
+        var cfx = (cf * 11 + frame * 1.3) % w;
+        var cfy = ((cf * 7 + frame * 2) % (halfH - 6));
+        ctx.fillStyle = ['#ffd700', '#ff71ce', '#00fff0', '#7dff8a'][cf % 4];
+        ctx.fillRect(Math.floor(cfx), Math.floor(cfy), 1, 1);
+      }
     }
   }
 
-  // Animation: Sunny City Walk (daytime city with nature)
+  // Animation: Sunny City Walk (v2: the camera actually walks — 5-layer parallax)
   function animCity(ctx, w, h, frame) {
     var ground = h - 8;
+    var scroll = frame * 0.55; // walking pace
 
-    // Sky gradient (bright blue)
+    // Sky gradient
     ctx.fillStyle = '#58b0e8';
     ctx.fillRect(0, 0, w, Math.floor(h * 0.25));
     ctx.fillStyle = '#70c0f0';
@@ -1450,24 +1781,12 @@
     ctx.fillStyle = '#90d0f8';
     ctx.fillRect(0, Math.floor(h * 0.4), w, ground - Math.floor(h * 0.4));
 
-    // Clouds (drifting slowly)
-    var clouds = [[8, 3, 8], [30, 5, 10], [55, 2, 7], [75, 6, 9]];
-    for (var ci = 0; ci < clouds.length; ci++) {
-      var cx = (clouds[ci][0] + frame * 0.08 + ci * 5) % (w + 16) - 8;
-      var cy = clouds[ci][1], cw = clouds[ci][2];
-      ctx.fillStyle = '#fff';
-      ctx.fillRect(Math.floor(cx), cy, cw, 2);
-      ctx.fillRect(Math.floor(cx) + 1, cy - 1, cw - 2, 1);
-      ctx.fillRect(Math.floor(cx) + 2, cy + 2, cw - 3, 1);
-    }
-
-    // Sun
+    // Sun (fixed — infinitely far)
     ctx.fillStyle = '#ffe860';
     ctx.fillRect(w - 14, 2, 5, 5);
     ctx.fillRect(w - 15, 3, 7, 3);
     ctx.fillRect(w - 13, 1, 3, 1);
     ctx.fillRect(w - 13, 7, 3, 1);
-    // Sun rays (twinkle)
     if (Math.sin(frame * 0.1) > 0) {
       ctx.fillStyle = '#fff4a0';
       ctx.fillRect(w - 17, 4, 1, 1);
@@ -1476,33 +1795,62 @@
       ctx.fillRect(w - 12, 8, 1, 1);
     }
 
-    // Distant mountains
-    ctx.fillStyle = '#78a8c0';
+    // Clouds (own drift + slight parallax)
+    var clouds = [[8, 3, 8], [30, 5, 10], [55, 2, 7], [75, 6, 9]];
+    for (var ci = 0; ci < clouds.length; ci++) {
+      var ccx = (clouds[ci][0] + frame * 0.08 - scroll * 0.05 + ci * 5) % (w + 16);
+      if (ccx < 0) ccx += w + 16;
+      ccx -= 8;
+      var ccy = clouds[ci][1], cw = clouds[ci][2];
+      ctx.fillStyle = '#fff';
+      ctx.fillRect(Math.floor(ccx), ccy, cw, 2);
+      ctx.fillRect(Math.floor(ccx) + 1, ccy - 1, cw - 2, 1);
+      ctx.fillRect(Math.floor(ccx) + 2, ccy + 2, cw - 3, 1);
+    }
+
+    // --- parallax layers: each pattern is w wide, drawn twice ---
+    function layerOff(par) {
+      var o = -(scroll * par) % w;
+      if (o > 0) o -= w;
+      return Math.floor(o);
+    }
+
+    // Mountains (0.12x)
+    var mOff = layerOff(0.12);
     var mts = [[0,12],[10,16],[22,10],[32,18],[44,13],[56,17],[68,11],[76,14]];
-    for (var mi = 0; mi < mts.length; mi++) {
-      var mx = mts[mi][0], mh = mts[mi][1];
-      for (var my = 0; my < mh; my++) {
-        var mw = Math.max(1, Math.floor((mh - my) * 1.2));
-        ctx.fillRect(mx + my, ground - 16 - mh + my, mw, 1);
+    var snow = [[12,31,13,32],[34,33,35,34],[58,32,59,33]];
+    for (var rep = 0; rep < 2; rep++) {
+      var bx0 = mOff + rep * w;
+      ctx.fillStyle = '#78a8c0';
+      for (var mi = 0; mi < mts.length; mi++) {
+        var mx = mts[mi][0], mh = mts[mi][1];
+        for (var my = 0; my < mh; my++) {
+          var mw = Math.max(1, Math.floor((mh - my) * 1.2));
+          ctx.fillRect(bx0 + mx + my, ground - 16 - mh + my, mw, 1);
+        }
+      }
+      ctx.fillStyle = '#e0f0ff';
+      for (var sn = 0; sn < snow.length; sn++) {
+        ctx.fillRect(bx0 + snow[sn][0], ground - snow[sn][1], 3, 1);
+        ctx.fillRect(bx0 + snow[sn][2], ground - snow[sn][3], 2, 1);
       }
     }
-    // Mountain snow caps
-    ctx.fillStyle = '#e0f0ff';
-    ctx.fillRect(12, ground - 31, 3, 1); ctx.fillRect(13, ground - 32, 2, 1);
-    ctx.fillRect(34, ground - 33, 3, 1); ctx.fillRect(35, ground - 34, 2, 1);
-    ctx.fillRect(58, ground - 32, 3, 1); ctx.fillRect(59, ground - 33, 2, 1);
 
-    // Distant tree line (behind buildings)
-    ctx.fillStyle = '#408040';
-    for (var ti = 0; ti < w; ti += 5) {
-      var th = 3 + ((ti * 7) % 4);
-      ctx.fillRect(ti, ground - 16 - th, 4, th);
-      ctx.fillStyle = '#358035';
-      ctx.fillRect(ti + 1, ground - 16 - th - 1, 2, 1);
-      ctx.fillStyle = '#408040';
+    // Distant tree line (0.25x)
+    var tlOff = layerOff(0.25);
+    for (var rep2 = 0; rep2 < 2; rep2++) {
+      var bx1 = tlOff + rep2 * w;
+      for (var ti = 0; ti < w; ti += 5) {
+        var th = 3 + ((ti * 7) % 4);
+        ctx.fillStyle = '#408040';
+        ctx.fillRect(bx1 + ti, ground - 16 - th, 4, th);
+        ctx.fillStyle = '#358035';
+        ctx.fillRect(bx1 + ti + 1, ground - 16 - th - 1, 2, 1);
+      }
     }
 
-    // Buildings (mid-ground, mixed with trees)
+    // Buildings (0.45x)
+    var bOff = layerOff(0.45);
     var blds = [
       { x: 3, bw: 6, bh: 18, color: '#d8c8b0' },
       { x: 12, bw: 5, bh: 14, color: '#c0b8a8' },
@@ -1512,26 +1860,27 @@
       { x: 64, bw: 6, bh: 16, color: '#d8d0b8' },
       { x: 74, bw: 5, bh: 13, color: '#c0b8a0' }
     ];
-    for (var bi = 0; bi < blds.length; bi++) {
-      var b = blds[bi];
-      ctx.fillStyle = b.color;
-      ctx.fillRect(b.x, ground - b.bh, b.bw, b.bh);
-      // Roof
-      ctx.fillStyle = '#a09080';
-      ctx.fillRect(b.x - 1, ground - b.bh - 1, b.bw + 2, 2);
-      // Windows
-      for (var wy = 3; wy < b.bh - 2; wy += 4) {
-        for (var wx = 1; wx < b.bw - 1; wx += 3) {
-          ctx.fillStyle = '#80c8e8';
-          ctx.fillRect(b.x + wx, ground - b.bh + wy, 2, 2);
-          // Window reflection highlight
-          ctx.fillStyle = '#b0e0f8';
-          ctx.fillRect(b.x + wx, ground - b.bh + wy, 1, 1);
+    for (var rep3 = 0; rep3 < 2; rep3++) {
+      var bx2 = bOff + rep3 * w;
+      for (var bi = 0; bi < blds.length; bi++) {
+        var b = blds[bi];
+        ctx.fillStyle = b.color;
+        ctx.fillRect(bx2 + b.x, ground - b.bh, b.bw, b.bh);
+        ctx.fillStyle = '#a09080';
+        ctx.fillRect(bx2 + b.x - 1, ground - b.bh - 1, b.bw + 2, 2);
+        for (var wy = 3; wy < b.bh - 2; wy += 4) {
+          for (var wx = 1; wx < b.bw - 1; wx += 3) {
+            ctx.fillStyle = '#80c8e8';
+            ctx.fillRect(bx2 + b.x + wx, ground - b.bh + wy, 2, 2);
+            ctx.fillStyle = '#b0e0f8';
+            ctx.fillRect(bx2 + b.x + wx, ground - b.bh + wy, 1, 1);
+          }
         }
       }
     }
 
-    // Trees between buildings (foreground nature)
+    // Trees (0.7x)
+    var trOff = layerOff(0.7);
     var trees = [
       { x: 10, trunk: 4, crown: 6, type: 0 },
       { x: 20, trunk: 5, crown: 7, type: 1 },
@@ -1540,54 +1889,76 @@
       { x: 59, trunk: 4, crown: 6, type: 0 },
       { x: 70, trunk: 5, crown: 7, type: 1 }
     ];
-    for (ti = 0; ti < trees.length; ti++) {
-      var tr = trees[ti];
-      var sway = Math.sin(frame * 0.04 + ti * 1.7) * 0.5;
-      // Trunk
-      ctx.fillStyle = '#806040';
-      ctx.fillRect(tr.x + 1, ground - tr.trunk, 2, tr.trunk);
-      // Crown (round or triangular)
-      if (tr.type === 0) {
-        // Round deciduous
-        ctx.fillStyle = '#30a040';
-        ctx.fillRect(tr.x - 1 + Math.floor(sway), ground - tr.trunk - tr.crown + 1, tr.crown, tr.crown - 1);
-        ctx.fillRect(tr.x + Math.floor(sway), ground - tr.trunk - tr.crown, tr.crown - 2, tr.crown);
-        ctx.fillStyle = '#40b850';
-        ctx.fillRect(tr.x + Math.floor(sway), ground - tr.trunk - tr.crown + 2, tr.crown - 2, 2);
-      } else {
-        // Conifer / triangular
-        ctx.fillStyle = '#207030';
-        for (var ly = 0; ly < tr.crown; ly++) {
-          var lw = Math.max(1, tr.crown - ly);
-          ctx.fillRect(tr.x + 2 - Math.floor(lw / 2) + Math.floor(sway), ground - tr.trunk - tr.crown + ly, lw, 1);
+    for (var rep4 = 0; rep4 < 2; rep4++) {
+      var bx3 = trOff + rep4 * w;
+      for (var t4 = 0; t4 < trees.length; t4++) {
+        var tr = trees[t4];
+        var sway = Math.sin(frame * 0.04 + t4 * 1.7) * 0.5;
+        ctx.fillStyle = '#806040';
+        ctx.fillRect(bx3 + tr.x + 1, ground - tr.trunk, 2, tr.trunk);
+        if (tr.type === 0) {
+          ctx.fillStyle = '#30a040';
+          ctx.fillRect(bx3 + tr.x - 1 + Math.floor(sway), ground - tr.trunk - tr.crown + 1, tr.crown, tr.crown - 1);
+          ctx.fillRect(bx3 + tr.x + Math.floor(sway), ground - tr.trunk - tr.crown, tr.crown - 2, tr.crown);
+          ctx.fillStyle = '#40b850';
+          ctx.fillRect(bx3 + tr.x + Math.floor(sway), ground - tr.trunk - tr.crown + 2, tr.crown - 2, 2);
+        } else {
+          ctx.fillStyle = '#207030';
+          for (var ly = 0; ly < tr.crown; ly++) {
+            var lw = Math.max(1, tr.crown - ly);
+            ctx.fillRect(bx3 + tr.x + 2 - Math.floor(lw / 2) + Math.floor(sway), ground - tr.trunk - tr.crown + ly, lw, 1);
+          }
+          ctx.fillStyle = '#308040';
+          ctx.fillRect(bx3 + tr.x + 1 + Math.floor(sway), ground - tr.trunk - tr.crown + 2, 2, 2);
         }
-        ctx.fillStyle = '#308040';
-        ctx.fillRect(tr.x + 1 + Math.floor(sway), ground - tr.trunk - tr.crown + 2, 2, 2);
       }
     }
 
-    // Grass / ground
+    // Grass / sidewalk / road
     ctx.fillStyle = '#50a850';
     ctx.fillRect(0, ground, w, 2);
     ctx.fillStyle = '#60b860';
     ctx.fillRect(0, ground, w, 1);
-
-    // Sidewalk
     ctx.fillStyle = '#c8c0b0';
     ctx.fillRect(0, ground + 2, w, 2);
-
-    // Road
+    // sidewalk cracks scroll at full speed
+    ctx.fillStyle = '#b0a898';
+    var ckOff = -(scroll % 9);
+    for (var ck = ckOff; ck < w; ck += 9) ctx.fillRect(Math.floor(ck), ground + 2, 1, 2);
     ctx.fillStyle = '#606068';
     ctx.fillRect(0, ground + 4, w, 4);
-    // Road center line
     ctx.fillStyle = '#e0d868';
-    var roadY = ground + 6;
-    for (var rx = -10 + (frame % 12); rx < w; rx += 12) {
-      ctx.fillRect(rx, roadY, 5, 1);
+    var dashOff = -(scroll % 12);
+    for (var rx = dashOff; rx < w; rx += 12) ctx.fillRect(Math.floor(rx), ground + 6, 5, 1);
+
+    // Flowers (1x)
+    var fOff = layerOff(1);
+    var flowers = [[6,0,'#ff6080'],[15,1,'#ffb040'],[28,0,'#e060e0'],[42,1,'#ff6080'],[53,0,'#ffb040'],[67,1,'#e060e0'],[77,0,'#ff6080']];
+    for (var rep5 = 0; rep5 < 2; rep5++) {
+      var bx4 = fOff + rep5 * w;
+      for (var fi = 0; fi < flowers.length; fi++) {
+        var fl = flowers[fi];
+        ctx.fillStyle = fl[2];
+        ctx.fillRect(bx4 + fl[0], ground + fl[1], 1, 1);
+        ctx.fillStyle = '#40a040';
+        ctx.fillRect(bx4 + fl[0], ground + fl[1] + 1, 1, 1);
+      }
     }
 
-    // Car 1 (moving right) — blue
-    var carX = ((frame * 0.5) % (w + 24)) - 12;
+    // Butterflies near the flowers
+    for (var bf = 0; bf < 2; bf++) {
+      var bfx = 20 + bf * 34 + Math.sin(frame * 0.07 + bf * 3) * 8;
+      var bfy = ground - 3 + Math.sin(frame * 0.13 + bf * 1.7) * 2;
+      var wingsUp = Math.floor(frame / 2 + bf) % 2;
+      ctx.fillStyle = bf ? '#ffb040' : '#e060e0';
+      if (wingsUp) ctx.fillRect(Math.floor(bfx), Math.floor(bfy) - 1, 1, 2);
+      else { ctx.fillRect(Math.floor(bfx) - 1, Math.floor(bfy), 1, 1); ctx.fillRect(Math.floor(bfx) + 1, Math.floor(bfy), 1, 1); }
+      ctx.fillStyle = '#333';
+      ctx.fillRect(Math.floor(bfx), Math.floor(bfy), 1, 1);
+    }
+
+    // Cars on the road (world-relative speeds)
+    var carX = ((frame * 1.1 - scroll) % (w + 24) + (w + 24)) % (w + 24) - 12;
     var cxi = Math.floor(carX);
     ctx.fillStyle = '#3070c0';
     ctx.fillRect(cxi, ground + 4, 8, 3);
@@ -1598,9 +1969,7 @@
     ctx.fillStyle = '#222';
     ctx.fillRect(cxi + 1, ground + 7, 2, 1);
     ctx.fillRect(cxi + 6, ground + 7, 2, 1);
-
-    // Car 2 (moving left) — red
-    var carX2 = w + 12 - ((frame * 0.35 + 50) % (w + 24));
+    var carX2 = w + 12 - (((frame * 0.9 + scroll) % (w + 24)) + (w + 24)) % (w + 24);
     var cx2 = Math.floor(carX2);
     ctx.fillStyle = '#c03030';
     ctx.fillRect(cx2, ground + 4, 7, 3);
@@ -1611,6 +1980,18 @@
     ctx.fillStyle = '#222';
     ctx.fillRect(cx2, ground + 7, 2, 1);
     ctx.fillRect(cx2 + 5, ground + 7, 2, 1);
+    // Bus (rare, long)
+    var busPhase = ((frame * 0.8 - scroll * 0.4) % (w * 4) + w * 4) % (w * 4);
+    if (busPhase < w + 30) {
+      var bux = Math.floor(busPhase) - 15;
+      ctx.fillStyle = '#d8a030';
+      ctx.fillRect(bux, ground + 3, 14, 4);
+      ctx.fillStyle = '#90d0e8';
+      for (var bw2 = 0; bw2 < 4; bw2++) ctx.fillRect(bux + 1 + bw2 * 3, ground + 4, 2, 1);
+      ctx.fillStyle = '#222';
+      ctx.fillRect(bux + 2, ground + 7, 2, 1);
+      ctx.fillRect(bux + 10, ground + 7, 2, 1);
+    }
 
     // Birds
     for (var bdi = 0; bdi < 3; bdi++) {
@@ -1628,68 +2009,103 @@
       }
     }
 
-    // Flower patches on grass
-    var flowers = [[6,0,'#ff6080'],[15,1,'#ffb040'],[28,0,'#e060e0'],[42,1,'#ff6080'],[53,0,'#ffb040'],[67,1,'#e060e0'],[77,0,'#ff6080']];
-    for (var fi = 0; fi < flowers.length; fi++) {
-      var fl = flowers[fi];
-      if (fl[0] < w) {
-        ctx.fillStyle = fl[2];
-        ctx.fillRect(fl[0], ground + fl[1], 1, 1);
-        ctx.fillStyle = '#40a040';
-        ctx.fillRect(fl[0], ground + fl[1] + 1, 1, 1);
-      }
-    }
-
-    // Person walking (small silhouette on sidewalk)
-    var personX = ((frame * 0.3 + 20) % (w + 16)) - 8;
-    var pi = Math.floor(personX);
-    var step = (Math.floor(frame * 0.15) % 2);
+    // Walking companion: person + dog on a leash (walking in place, world scrolls)
+    var pxp = 26;
+    var step = (Math.floor(frame * 0.3) % 2);
+    var bob2 = (Math.floor(frame * 0.3) % 4) === 1 ? -1 : 0;
     ctx.fillStyle = '#504040';
-    ctx.fillRect(pi + 1, ground - 1, 2, 1); // head
-    ctx.fillRect(pi, ground, 3, 3);          // body
+    ctx.fillRect(pxp + 1, ground - 7 + bob2, 2, 2);  // head
+    ctx.fillRect(pxp, ground - 5 + bob2, 4, 4);      // body
+    ctx.fillRect(pxp + 3, ground - 4 + bob2, 2, 1);  // arm toward leash
     if (step) {
-      ctx.fillRect(pi, ground + 3, 1, 2);   // leg L
-      ctx.fillRect(pi + 2, ground + 3, 1, 1); // leg R
+      ctx.fillRect(pxp, ground - 1, 1, 3);
+      ctx.fillRect(pxp + 2, ground - 1, 1, 2);
     } else {
-      ctx.fillRect(pi + 2, ground + 3, 1, 2);
-      ctx.fillRect(pi, ground + 3, 1, 1);
+      ctx.fillRect(pxp + 2, ground - 1, 1, 3);
+      ctx.fillRect(pxp, ground - 1, 1, 2);
+    }
+    // leash
+    ctx.fillStyle = '#8a6a4a';
+    ctx.fillRect(pxp + 5, ground - 3 + bob2, 2, 1);
+    ctx.fillRect(pxp + 7, ground - 2, 2, 1);
+    // dog
+    var dogBob = (Math.floor(frame * 0.35) % 4) === 2 ? -1 : 0;
+    var dstep = Math.floor(frame * 0.35) % 2;
+    ctx.fillStyle = '#b08850';
+    ctx.fillRect(pxp + 9, ground - 2 + dogBob, 5, 2);          // body
+    ctx.fillRect(pxp + 13, ground - 4 + dogBob, 2, 3);         // head
+    ctx.fillRect(pxp + 14, ground - 5 + dogBob, 1, 1);         // ear
+    var dtw = Math.sin(frame * 0.4) > 0 ? -1 : 0;
+    ctx.fillRect(pxp + 8, ground - 3 + dogBob + dtw, 1, 1);    // wagging tail
+    ctx.fillStyle = '#806038';
+    if (dstep) { ctx.fillRect(pxp + 9, ground, 1, 1); ctx.fillRect(pxp + 13, ground, 1, 1); }
+    else { ctx.fillRect(pxp + 10, ground, 1, 1); ctx.fillRect(pxp + 12, ground, 1, 1); }
+
+    // Foreground lamppost (1.4x — sweeps past quickly, sells the depth)
+    var lpOff = -(scroll * 1.4) % (w * 2);
+    if (lpOff > 0) lpOff -= w * 2;
+    var lpx = Math.floor(lpOff + w * 1.5);
+    if (lpx > -4 && lpx < w + 2) {
+      ctx.fillStyle = '#3a3a44';
+      ctx.fillRect(lpx, ground - 26, 2, 28);
+      ctx.fillRect(lpx - 2, ground - 27, 6, 2);
+      ctx.fillStyle = '#ffe890';
+      ctx.fillRect(lpx - 1, ground - 25, 4, 1);
     }
   }
 
-  // Animation: VTuber Stream
+  // Animation: VTuber Stream (v2: lip sync, hair sway, superchats, sub alerts)
   function animVtuber(ctx, w, h, frame) {
-    // Background (gradient)
+    // Background: room gradient + cycling LED strip
     ctx.fillStyle = '#1a0828';
     ctx.fillRect(0, 0, w, h);
     ctx.fillStyle = '#280840';
     ctx.fillRect(0, Math.floor(h * 0.3), w, h - Math.floor(h * 0.3));
+    ctx.fillStyle = 'hsl(' + ((frame * 4) % 360) + ',80%,55%)';
+    ctx.fillRect(0, 0, w, 1);
+    ctx.fillStyle = 'hsla(' + ((frame * 4) % 360) + ',80%,55%,0.25)';
+    ctx.fillRect(0, 1, w, 2);
+    // Poster on wall
+    ctx.fillStyle = '#3a1a55';
+    ctx.fillRect(5, 6, 10, 13);
+    ctx.fillStyle = '#ff80b0';
+    ctx.fillRect(8, 9, 4, 4);
+    ctx.fillRect(9, 8, 2, 6);
+    ctx.fillStyle = '#c0c0e0';
+    ctx.fillRect(7, 15, 6, 1);
+    ctx.fillRect(8, 17, 4, 1);
 
-    // Floating particles / sparkles
+    // Sparkles
     for (var pi = 0; pi < 8; pi++) {
       var ppx = (pi * 11 + Math.floor(frame * 0.3 + pi * 7)) % w;
       var ppy = (pi * 8 + Math.floor(frame * 0.2 + pi * 13)) % h;
-      var sparkle = Math.sin(frame * 0.15 + pi * 1.5) > 0;
-      if (sparkle) {
+      if (Math.sin(frame * 0.15 + pi * 1.5) > 0) {
         ctx.fillStyle = pi % 2 === 0 ? '#ff80c0' : '#80c0ff';
         ctx.fillRect(ppx, ppy, 1, 1);
       }
     }
 
-    // VTuber character (center, anime-style face)
     var cx = Math.floor(w / 2) - 10;
     var cy = Math.floor(h * 0.2);
     var breathe = Math.sin(frame * 0.08) * 0.5;
+    var hairSway = Math.round(Math.sin(frame * 0.07));
 
-    // Hair (long, pastel pink)
+    // Hair back + swaying side strands
     ctx.fillStyle = '#ff80b0';
     ctx.fillRect(cx - 1, cy - 1, 22, 4);
     ctx.fillRect(cx - 2, cy + 2, 24, 6);
     ctx.fillRect(cx - 2, cy + 7, 24, 12);
-    // Hair side strands
-    ctx.fillRect(cx - 3, cy + 4, 3, 16);
-    ctx.fillRect(cx + 20, cy + 4, 3, 16);
-    // Hair bangs
+    ctx.fillRect(cx - 3 + hairSway, cy + 4, 3, 16);
+    ctx.fillRect(cx + 20 - hairSway, cy + 4, 3, 16);
+    ctx.fillStyle = '#f070a0';
+    ctx.fillRect(cx - 3 + hairSway, cy + 17, 3, 3);
+    ctx.fillRect(cx + 20 - hairSway, cy + 17, 3, 3);
+    // Ahoge (bouncing single strand)
+    var ah = Math.abs(Math.sin(frame * 0.1)) * 2;
     ctx.fillStyle = '#ff90b8';
+    ctx.fillRect(cx + 9, cy - 5 - Math.floor(ah), 2, 2);
+    ctx.fillRect(cx + 10, cy - 3 - Math.floor(ah), 1, 2 + Math.floor(ah));
+    // Bangs
     ctx.fillRect(cx, cy, 20, 3);
     ctx.fillRect(cx - 1, cy + 1, 4, 3);
     ctx.fillRect(cx + 17, cy + 1, 4, 3);
@@ -1700,43 +2116,44 @@
     ctx.fillRect(cx + 1, cy + 5, 18, 8);
     ctx.fillRect(cx + 3, cy + 2, 14, 1);
 
-    // Eyes (big anime eyes, blink)
+    // Eyes: blink + occasional wink
     var blink = (frame % 90) < 3;
-    if (!blink) {
-      // Left eye
+    var wink = (frame % 210) < 8;
+    function eye(ex, closed) {
+      if (closed) {
+        ctx.fillStyle = '#2050a0';
+        ctx.fillRect(ex, cy + 8, 4, 1);
+        return;
+      }
       ctx.fillStyle = '#2050a0';
-      ctx.fillRect(cx + 4, cy + 6, 4, 4);
+      ctx.fillRect(ex, cy + 6, 4, 4);
       ctx.fillStyle = '#3070d0';
-      ctx.fillRect(cx + 5, cy + 6, 2, 3);
+      ctx.fillRect(ex + 1, cy + 6, 2, 3);
       ctx.fillStyle = '#fff';
-      ctx.fillRect(cx + 4, cy + 6, 2, 2);
+      var hl = Math.floor(frame / 20) % 2; // drifting highlight
+      ctx.fillRect(ex + hl, cy + 6, 2, 2);
       ctx.fillStyle = '#111';
-      ctx.fillRect(cx + 5, cy + 7, 2, 2);
-      // Right eye
-      ctx.fillStyle = '#2050a0';
-      ctx.fillRect(cx + 12, cy + 6, 4, 4);
-      ctx.fillStyle = '#3070d0';
-      ctx.fillRect(cx + 13, cy + 6, 2, 3);
-      ctx.fillStyle = '#fff';
-      ctx.fillRect(cx + 14, cy + 6, 2, 2);
-      ctx.fillStyle = '#111';
-      ctx.fillRect(cx + 13, cy + 7, 2, 2);
-    } else {
-      // Closed eyes (lines)
-      ctx.fillStyle = '#2050a0';
-      ctx.fillRect(cx + 4, cy + 8, 4, 1);
-      ctx.fillRect(cx + 12, cy + 8, 4, 1);
+      ctx.fillRect(ex + 1, cy + 7, 2, 2);
     }
+    eye(cx + 4, blink);
+    eye(cx + 12, blink || wink);
 
-    // Mouth (talking animation)
-    var talking = Math.sin(frame * 0.3) > 0;
+    // Mouth: 3-state lip sync
+    var talkPhase = Math.sin(frame * 0.13) > -0.25;
+    var mState = talkPhase ? Math.floor(frame / 3) % 3 : 0;
     ctx.fillStyle = '#e07080';
-    if (talking) {
+    if (mState === 0) {
+      ctx.fillRect(cx + 8, cy + 12, 4, 1);
+    } else if (mState === 1) {
       ctx.fillRect(cx + 8, cy + 12, 4, 2);
       ctx.fillStyle = '#c05060';
       ctx.fillRect(cx + 9, cy + 13, 2, 1);
     } else {
-      ctx.fillRect(cx + 8, cy + 12, 4, 1);
+      ctx.fillRect(cx + 8, cy + 11, 4, 3);
+      ctx.fillStyle = '#c05060';
+      ctx.fillRect(cx + 9, cy + 12, 2, 2);
+      ctx.fillStyle = '#fff';
+      ctx.fillRect(cx + 9, cy + 11, 2, 1);
     }
 
     // Blush
@@ -1744,15 +2161,15 @@
     ctx.fillRect(cx + 2, cy + 10, 3, 2);
     ctx.fillRect(cx + 15, cy + 10, 3, 2);
 
-    // Cat ears (on hair)
+    // Cat ears (twitch with the beat)
+    var earTw = (frame % 48) < 4 ? 1 : 0;
     ctx.fillStyle = '#ff80b0';
-    ctx.fillRect(cx, cy - 3, 4, 3);
-    ctx.fillRect(cx + 1, cy - 4, 2, 2);
+    ctx.fillRect(cx, cy - 3 + earTw, 4, 3);
+    ctx.fillRect(cx + 1, cy - 4 + earTw, 2, 2);
     ctx.fillRect(cx + 16, cy - 3, 4, 3);
     ctx.fillRect(cx + 17, cy - 4, 2, 2);
-    // Inner ear
     ctx.fillStyle = '#ffa0c0';
-    ctx.fillRect(cx + 1, cy - 2, 2, 2);
+    ctx.fillRect(cx + 1, cy - 2 + earTw, 2, 2);
     ctx.fillRect(cx + 17, cy - 2, 2, 2);
 
     // Body / outfit
@@ -1760,93 +2177,126 @@
     ctx.fillStyle = '#4020a0';
     ctx.fillRect(cx + 1, by, 18, 10);
     ctx.fillRect(cx + 3, by - 1, 14, 2);
-    // Collar ribbon
+    ctx.fillStyle = '#5a35c0';
+    ctx.fillRect(cx + 1, by, 18, 1);
     ctx.fillStyle = '#ff5090';
     ctx.fillRect(cx + 7, by, 6, 2);
     ctx.fillRect(cx + 9, by + 2, 2, 2);
 
-    // Arms
+    // Arms: wave, or hold a peace sign every ~8s
     ctx.fillStyle = '#ffe0d0';
-    // Left arm (waving)
-    var wave = Math.sin(frame * 0.12) * 2;
-    ctx.fillRect(cx - 2, by + 2 + Math.floor(wave), 3, 6);
-    ctx.fillRect(cx - 3, by + 1 + Math.floor(wave), 2, 3);
-    // Right arm
+    var peace = (frame % 96) < 22;
+    if (peace) {
+      ctx.fillRect(cx - 2, by - 4, 3, 8);
+      ctx.fillRect(cx - 3, by - 7, 1, 3); // finger V
+      ctx.fillRect(cx - 1, by - 7, 1, 3);
+    } else {
+      var wave = Math.sin(frame * 0.12) * 2;
+      ctx.fillRect(cx - 2, by + 2 + Math.floor(wave), 3, 6);
+      ctx.fillRect(cx - 3, by + 1 + Math.floor(wave), 2, 3);
+    }
     ctx.fillRect(cx + 19, by + 4, 3, 5);
 
-    // Stream UI overlay elements
-    // Chat box (bottom right)
-    var cbx = w - 22, cby = h - 18;
-    ctx.fillStyle = 'rgba(0,0,0,0.5)';
-    ctx.fillRect(cbx, cby, 20, 16);
+    // Floating hearts (right side)
+    for (var ht = 0; ht < 3; ht++) {
+      var hy = h - ((frame * 0.7 + ht * 17) % (h + 8));
+      var hx = w - 8 + Math.sin(frame * 0.1 + ht * 2) * 2;
+      ctx.fillStyle = 'rgba(255,110,160,' + Math.min(0.8, hy / h + 0.2) + ')';
+      ctx.fillRect(Math.floor(hx), Math.floor(hy), 1, 1);
+      ctx.fillRect(Math.floor(hx) + 2, Math.floor(hy), 1, 1);
+      ctx.fillRect(Math.floor(hx), Math.floor(hy) + 1, 3, 1);
+      ctx.fillRect(Math.floor(hx) + 1, Math.floor(hy) + 2, 1, 1);
+    }
+
+    // Chat box: smooth scrolling rows, gold superchats
+    var cbx = w - 24, cby = h - 19;
+    ctx.fillStyle = 'rgba(0,0,0,0.55)';
+    ctx.fillRect(cbx, cby, 22, 17);
     ctx.fillStyle = '#555';
-    ctx.fillRect(cbx, cby, 20, 1);
-    // Chat messages (scrolling)
+    ctx.fillRect(cbx, cby, 22, 1);
     var chatColors = ['#ff80a0','#80ff80','#80c0ff','#ffff80','#c080ff'];
-    for (var ci = 0; ci < 4; ci++) {
-      var chatY = cby + 2 + ci * 3;
-      var chatOff = (ci + Math.floor(frame * 0.05)) % 5;
-      ctx.fillStyle = chatColors[chatOff];
-      ctx.fillRect(cbx + 1, chatY, 2, 2);
-      ctx.fillStyle = '#888';
-      var msgW = 6 + ((ci * 7 + Math.floor(frame * 0.02)) % 8);
-      ctx.fillRect(cbx + 4, chatY, msgW, 1);
-      ctx.fillRect(cbx + 4, chatY + 1, Math.max(3, msgW - 3), 1);
+    var rowH = 4;
+    var scrollY = (frame % 14) / 14 * rowH;
+    for (var ci2 = 0; ci2 < 5; ci2++) {
+      var msgIdx = Math.floor(frame / 14) + ci2;
+      var chatY = Math.floor(cby + 2 + ci2 * rowH - scrollY);
+      if (chatY < cby + 1 || chatY > cby + 14) continue;
+      var isSuper = msgIdx % 9 === 4;
+      if (isSuper) {
+        ctx.fillStyle = '#c8a020';
+        ctx.fillRect(cbx + 1, chatY, 20, 3);
+        ctx.fillStyle = '#ffe066';
+        ctx.fillRect(cbx + 1, chatY, 20, 1);
+        ctx.fillStyle = '#604808';
+        ctx.fillRect(cbx + 2, chatY + 1, 6, 1);
+        // shine sweep
+        var shx2 = cbx + 1 + ((frame * 1.5) % 20);
+        ctx.fillStyle = 'rgba(255,255,255,0.5)';
+        ctx.fillRect(Math.floor(shx2), chatY, 1, 3);
+      } else {
+        ctx.fillStyle = chatColors[msgIdx % 5];
+        ctx.fillRect(cbx + 1, chatY, 2, 2);
+        ctx.fillStyle = '#999';
+        var msgW = 6 + ((msgIdx * 7) % 9);
+        ctx.fillRect(cbx + 4, chatY, msgW, 1);
+        ctx.fillRect(cbx + 4, chatY + 1, Math.max(3, msgW - 4), 1);
+      }
     }
 
-    // Viewer count (top right)
+    // Sub alert (every ~12s)
+    if ((frame % 144) < 22) {
+      var at = Math.min(1, (frame % 144) / 4);
+      var ay = Math.floor(2 + at * 4);
+      ctx.fillStyle = 'rgba(255,224,102,0.92)';
+      ctx.fillRect(Math.floor(w / 2) - 16, ay, 32, 8);
+      ctx.fillStyle = '#604808';
+      ctx.font = '5px monospace';
+      ctx.textAlign = 'center';
+      ctx.fillText('+1 SUB!', Math.floor(w / 2), ay + 6);
+      ctx.fillStyle = '#fff';
+      if (frame % 6 < 3) {
+        ctx.fillRect(Math.floor(w / 2) - 14, ay + 2, 1, 1);
+        ctx.fillRect(Math.floor(w / 2) + 13, ay + 4, 1, 1);
+      }
+    }
+
+    // LIVE badge (pulsing dot)
     ctx.fillStyle = 'rgba(0,0,0,0.5)';
-    ctx.fillRect(w - 20, 1, 18, 6);
-    ctx.fillStyle = '#ff3030';
-    ctx.fillRect(w - 19, 2, 3, 1);
-    ctx.fillRect(w - 18, 3, 1, 1);
+    ctx.fillRect(w - 20, 3, 18, 6);
+    ctx.fillStyle = (Math.floor(frame / 6) % 2) ? '#ff3030' : '#c01818';
+    ctx.fillRect(w - 18, 5, 2, 2);
     ctx.fillStyle = '#fff';
-    // "LIVE" text (2px)
-    ctx.fillRect(w - 14, 2, 1, 3);
-    ctx.fillRect(w - 14, 4, 2, 1);
-    ctx.fillRect(w - 11, 2, 1, 3);
-    ctx.fillRect(w - 9, 2, 1, 3);
-
-    // Superchat / emoji rain
-    var emojiY = ((frame * 1.2) % (h + 10)) - 5;
-    if (frame % 60 < 30) {
-      ctx.fillStyle = '#ffff00';
-      var ex = 4 + (frame % 7) * 3;
-      ctx.fillRect(ex, h - emojiY, 2, 2);
-    }
+    ctx.font = '5px monospace';
+    ctx.textAlign = 'left';
+    ctx.fillText('LIVE', w - 14, 8);
 
     // Name tag
-    ctx.fillStyle = 'rgba(0,0,0,0.4)';
-    ctx.fillRect(0, h - 6, 30, 6);
+    ctx.fillStyle = 'rgba(0,0,0,0.5)';
+    ctx.fillRect(0, h - 7, 32, 7);
     ctx.fillStyle = '#ff80c0';
-    ctx.fillRect(1, h - 5, 1, 4);
+    ctx.fillRect(1, h - 6, 1, 5);
     ctx.fillStyle = '#fff';
-    // Small name placeholder bars
-    ctx.fillRect(3, h - 4, 8, 1);
-    ctx.fillRect(3, h - 2, 12, 1);
+    ctx.font = '5px monospace';
+    ctx.fillText('Miko Ch.', 4, h - 2);
   }
 
-  // --- GEKKO FPS gameplay animation ---
+  // --- GEKKO FPS gameplay animation (v2: tracers, explosions, camera sway) ---
   function animGekko(ctx, w, h, frame) {
-    // Dark background
+    var ox = Math.sin(frame * 0.05) * 2;      // camera sway
+    var oy = Math.cos(frame * 0.07) * 1;
+    var dash = (frame % 150) < 8;             // dash burst
+    if (dash) ox += (frame % 150) - 4;
+
     ctx.fillStyle = '#050510';
     ctx.fillRect(0, 0, w, h);
-
-    // Cyber grid ground (bottom third)
-    var horizonY = Math.floor(h * 0.55);
-    // Sky gradient lines
+    var horizonY = Math.floor(h * 0.55 + oy);
     for (var sy = 0; sy < horizonY; sy += 3) {
-      var skyAlpha = 0.03 + (sy / horizonY) * 0.06;
-      ctx.fillStyle = 'rgba(0,229,255,' + skyAlpha + ')';
+      ctx.fillStyle = 'rgba(0,229,255,' + (0.03 + (sy / horizonY) * 0.06) + ')';
       ctx.fillRect(0, sy, w, 1);
     }
-    // Horizontal grid lines
     ctx.fillStyle = 'rgba(0,229,255,0.15)';
-    for (var gy = horizonY; gy < h; gy += 4) {
-      ctx.fillRect(0, gy, w, 1);
-    }
-    // Vertical grid lines (perspective)
-    var cx = w / 2;
+    for (var gy = horizonY; gy < h; gy += 4) ctx.fillRect(0, gy, w, 1);
+    var cx = w / 2 + ox;
     for (var gi = -6; gi <= 6; gi++) {
       var gx1 = cx + gi * 3;
       var gx2 = cx + gi * 12;
@@ -1857,53 +2307,93 @@
         if (px >= 0 && px < w) ctx.fillRect(px, py, 1, 1);
       }
     }
+    // Distant island silhouettes
+    ctx.fillStyle = '#10102a';
+    ctx.fillRect(Math.floor(6 + ox * 0.4), horizonY - 7, 16, 4);
+    ctx.fillRect(Math.floor(58 + ox * 0.4), horizonY - 9, 14, 5);
+    ctx.fillStyle = 'rgba(0,229,255,0.4)';
+    ctx.fillRect(Math.floor(6 + ox * 0.4), horizonY - 8, 16, 1);
+    ctx.fillRect(Math.floor(58 + ox * 0.4), horizonY - 10, 14, 1);
 
-    // Enemy spawn logic (based on frame)
-    var wave = Math.floor(frame / 180) + 1;
-    var enemyCount = 2 + (wave % 3);
-    for (var ei = 0; ei < enemyCount; ei++) {
-      var seed = (ei * 137 + wave * 31) % 100;
-      var ex = 8 + (seed * 7 + Math.floor(frame * 0.3 + ei * 40)) % (w - 20);
-      var ey = horizonY - 14 - (seed % 8);
-      var alive = !((frame + ei * 23) % 120 < 15);
-      if (alive) {
-        // Enemy body (magenta polygon-ish shape)
+    var chx = Math.floor(w / 2);
+    var chy = Math.floor(h / 2) - 3;
+    var muzX = chx, muzY = h - 13;
+
+    // Enemies: per-enemy lifecycle (alive -> hit flash -> explosion -> respawn)
+    var CYC = 140;
+    for (var ei = 0; ei < 3; ei++) {
+      var et = (frame + ei * 47) % CYC;
+      var seed = ei * 137 + Math.floor((frame + ei * 47) / CYC) * 31;
+      var baseX = 10 + (seed * 7) % (w - 26);
+      var ex = Math.floor(baseX + Math.sin(frame * 0.06 + ei * 2) * 8 + ox * 0.7);
+      var ey = Math.floor(horizonY - 16 - (seed % 7) + Math.sin(frame * 0.15 + ei) * 2 + oy);
+      if (et < 100) {
+        // alive: wyvern with flapping wings
+        var flap = Math.floor(frame / 3 + ei) % 2;
         ctx.fillStyle = '#ff0060';
-        ctx.fillRect(ex, ey, 6, 8);
-        ctx.fillRect(ex - 1, ey + 2, 8, 4);
-        ctx.fillRect(ex + 1, ey - 1, 4, 1);
-        // Enemy eyes
+        ctx.fillRect(ex, ey, 6, 5);                    // body
+        ctx.fillRect(ex + 5, ey - 1, 3, 3);            // head
+        ctx.fillStyle = '#c00048';
+        if (flap) {
+          ctx.fillRect(ex - 1, ey - 4, 4, 4);          // wings up
+          ctx.fillRect(ex + 4, ey - 4, 4, 4);
+        } else {
+          ctx.fillRect(ex - 2, ey + 2, 4, 3);          // wings down
+          ctx.fillRect(ex + 5, ey + 2, 4, 3);
+        }
         ctx.fillStyle = '#fff';
-        ctx.fillRect(ex + 1, ey + 2, 2, 2);
-        ctx.fillRect(ex + 4, ey + 2, 2, 2);
-        ctx.fillStyle = '#ff0060';
-        ctx.fillRect(ex + 2, ey + 3, 1, 1);
-        ctx.fillRect(ex + 5, ey + 3, 1, 1);
-      } else {
-        // Explosion effect
-        ctx.fillStyle = '#ff6040';
-        ctx.fillRect(ex - 1, ey + 1, 2, 2);
-        ctx.fillRect(ex + 4, ey - 1, 2, 2);
-        ctx.fillRect(ex + 1, ey + 5, 3, 2);
-        ctx.fillStyle = '#ffff40';
-        ctx.fillRect(ex + 2, ey + 2, 2, 2);
+        ctx.fillRect(ex + 6, ey, 1, 1);                // eye
+      } else if (et < 104) {
+        // hit flash + tracer from muzzle
+        ctx.fillStyle = '#fff';
+        ctx.fillRect(ex - 1, ey - 2, 9, 8);
+        var steps = 6;
+        for (var ts2 = 0; ts2 < steps; ts2++) {
+          var tx2 = muzX + (ex + 3 - muzX) * ts2 / steps;
+          var ty2 = muzY + (ey + 2 - muzY) * ts2 / steps;
+          ctx.fillStyle = ts2 % 2 ? '#00e5ff' : '#bffaff';
+          ctx.fillRect(Math.floor(tx2), Math.floor(ty2), 2, 1);
+        }
+        // kill marker at crosshair
+        ctx.fillStyle = '#ff4040';
+        ctx.fillRect(chx - 4, chy - 4, 2, 2); ctx.fillRect(chx + 3, chy - 4, 2, 2);
+        ctx.fillRect(chx - 4, chy + 3, 2, 2); ctx.fillRect(chx + 3, chy + 3, 2, 2);
+      } else if (et < 122) {
+        // explosion: expanding radial particles + score popup
+        var bt2 = (et - 104) / 18;
+        for (var pp = 0; pp < 8; pp++) {
+          var pa = pp / 8 * Math.PI * 2;
+          var pr = 2 + bt2 * 9;
+          ctx.fillStyle = pp % 2 ? '#ff6040' : '#ffd040';
+          ctx.globalAlpha = 1 - bt2;
+          ctx.fillRect(Math.floor(ex + 3 + Math.cos(pa) * pr), Math.floor(ey + 2 + Math.sin(pa) * pr), 2, 2);
+        }
+        ctx.globalAlpha = 1 - bt2;
+        ctx.fillStyle = '#fff';
+        ctx.fillRect(ex + 2, ey + 1, 3, 3);
+        // +100 popup
+        ctx.fillStyle = '#7dff8a';
+        ctx.font = '5px monospace';
+        ctx.textAlign = 'center';
+        ctx.fillText('+100', ex + 3, ey - 2 - bt2 * 6);
+        ctx.globalAlpha = 1;
       }
     }
 
-    // Crosshair (center)
-    var chx = Math.floor(w / 2);
-    var chy = Math.floor(h / 2) - 3;
+    // Crosshair (spreads when firing)
+    var firing = false;
+    for (var fe = 0; fe < 3; fe++) { if (((frame + fe * 47) % CYC) >= 100 && ((frame + fe * 47) % CYC) < 104) firing = true; }
+    var sprd = firing ? 2 : 0;
     ctx.fillStyle = '#00e5ff';
-    ctx.fillRect(chx - 5, chy, 4, 1);
-    ctx.fillRect(chx + 2, chy, 4, 1);
-    ctx.fillRect(chx, chy - 5, 1, 4);
-    ctx.fillRect(chx, chy + 2, 1, 4);
-    // Center dot
+    ctx.fillRect(chx - 5 - sprd, chy, 4, 1);
+    ctx.fillRect(chx + 2 + sprd, chy, 4, 1);
+    ctx.fillRect(chx, chy - 5 - sprd, 1, 4);
+    ctx.fillRect(chx, chy + 2 + sprd, 1, 4);
     ctx.fillStyle = '#ff0060';
     ctx.fillRect(chx, chy, 1, 1);
 
-    // Muzzle flash (every ~40 frames)
-    if (frame % 40 < 4) {
+    // Muzzle flash while firing
+    if (firing) {
       ctx.fillStyle = '#ffff80';
       ctx.fillRect(chx - 1, h - 14, 3, 4);
       ctx.fillStyle = '#ff8020';
@@ -1912,16 +2402,26 @@
       ctx.fillRect(chx, h - 13, 1, 2);
     }
 
-    // Weapon silhouette (bottom center)
-    ctx.fillStyle = '#1a1a30';
-    ctx.fillRect(chx - 6, h - 10, 13, 10);
-    ctx.fillStyle = '#252540';
-    ctx.fillRect(chx - 5, h - 10, 11, 8);
-    ctx.fillRect(chx - 3, h - 12, 7, 3);
-    ctx.fillStyle = '#00e5ff';
-    ctx.fillRect(chx - 2, h - 11, 5, 1);
+    // Dash speedlines
+    if (dash) {
+      ctx.fillStyle = 'rgba(200,240,255,0.4)';
+      for (var sl = 0; sl < 5; sl++) {
+        var sly = 6 + sl * 9;
+        ctx.fillRect(((sl * 31 + frame * 9) % w), sly, 10, 1);
+      }
+    }
 
-    // HUD: Health bar (bottom left)
+    // Weapon viewmodel (sways opposite the camera)
+    var wx2 = chx - Math.floor(ox * 0.6);
+    ctx.fillStyle = '#1a1a30';
+    ctx.fillRect(wx2 - 6, h - 10, 13, 10);
+    ctx.fillStyle = '#252540';
+    ctx.fillRect(wx2 - 5, h - 10, 11, 8);
+    ctx.fillRect(wx2 - 3, h - 12, 7, 3);
+    ctx.fillStyle = '#00e5ff';
+    ctx.fillRect(wx2 - 2, h - 11, 5, 1);
+
+    // HUD: HP bar
     ctx.fillStyle = 'rgba(0,0,0,0.5)';
     ctx.fillRect(1, h - 6, 24, 5);
     ctx.fillStyle = '#333';
@@ -1929,48 +2429,31 @@
     var hp = 14 + Math.floor(Math.sin(frame * 0.01) * 6);
     ctx.fillStyle = hp > 10 ? '#00e5ff' : '#ff0060';
     ctx.fillRect(2, h - 5, hp, 3);
-
-    // HUD: Ammo (bottom right)
+    // HUD: ammo
     ctx.fillStyle = 'rgba(0,0,0,0.5)';
     ctx.fillRect(w - 22, h - 6, 21, 5);
     var ammo = 30 - (frame % 40);
     ctx.fillStyle = '#ff0060';
-    // Bullet icon
     ctx.fillRect(w - 21, h - 5, 1, 3);
     ctx.fillRect(w - 19, h - 5, 1, 3);
     ctx.fillStyle = '#00e5ff';
-    // Ammo count as small bar
-    var ammoW = Math.max(1, Math.floor(ammo / 2));
-    ctx.fillRect(w - 16, h - 4, ammoW, 1);
-
-    // WAVE indicator (top right)
+    ctx.fillRect(w - 16, h - 4, Math.max(1, Math.floor(ammo / 2)), 1);
+    // HUD: wave + combo
     ctx.fillStyle = 'rgba(0,0,0,0.4)';
     ctx.fillRect(w - 26, 1, 25, 7);
     ctx.fillStyle = '#ff0060';
     ctx.fillRect(w - 25, 2, 2, 5);
     ctx.fillStyle = '#00e5ff';
-    // "W" letter approximation + wave number dots
-    ctx.fillRect(w - 22, 2, 1, 4);
-    ctx.fillRect(w - 21, 5, 1, 1);
-    ctx.fillRect(w - 20, 4, 1, 1);
-    ctx.fillRect(w - 19, 5, 1, 1);
-    ctx.fillRect(w - 18, 2, 1, 4);
-    // Wave number as dots
-    for (var wd = 0; wd < Math.min(wave, 5); wd++) {
-      ctx.fillRect(w - 15 + wd * 2, 4, 1, 1);
-    }
-
-    // Score (top left)
+    ctx.font = '5px monospace';
+    ctx.textAlign = 'left';
+    ctx.fillText('W' + (Math.floor(frame / 420) % 5 + 1) + ' x' + (Math.floor(frame / CYC) % 4 + 1), w - 22, 7);
+    // HUD: score (counts up with kills)
     ctx.fillStyle = 'rgba(0,0,0,0.4)';
-    ctx.fillRect(1, 1, 18, 7);
+    ctx.fillRect(1, 1, 22, 7);
     ctx.fillStyle = '#00e5ff';
-    var score = frame * 7;
-    var scoreStr = String(score);
-    for (var si = 0; si < Math.min(scoreStr.length, 5); si++) {
-      ctx.fillRect(3 + si * 3, 3, 2, 3);
-    }
+    ctx.fillText(String(Math.floor(frame / CYC) * 300 + 2400), 3, 7);
 
-    // Damage flash (when hit)
+    // Damage flash
     if (frame % 200 > 185) {
       ctx.fillStyle = 'rgba(255,0,96,0.15)';
       ctx.fillRect(0, 0, w, h);
