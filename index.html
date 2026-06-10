@@ -69,6 +69,10 @@
               <div class="di-img di-fpsc"></div>
               <div class="di-label">Classic</div>
             </div>
+            <div class="desktop-icon" data-target="window-kage">
+              <div class="di-img di-kage"></div>
+              <div class="di-label">KAGE</div>
+            </div>
             <div class="desktop-icon" data-target="window-tetris">
               <div class="di-img di-tetris"></div>
               <div class="di-label">Tetris</div>
@@ -233,6 +237,20 @@
             </div>
           </div>
 
+          <!-- KAGE Ninja ARPG Window (starts closed) -->
+          <div class="window closed" id="window-kage" style="left: 52px; top: 14px; width: 352px;">
+            <div class="title-bar" data-window="window-kage">
+              <span class="title-bar-text">KAGE</span>
+              <div class="title-bar-controls">
+                <button class="btn-minimize" data-window="window-kage">_</button>
+                <button class="btn-close" data-window="window-kage">&times;</button>
+              </div>
+            </div>
+            <div class="window-body" id="kage-body">
+              <canvas id="kage-canvas" width="200" height="150"></canvas>
+            </div>
+          </div>
+
           <!-- FPS Classic Window (starts closed) -->
           <div class="window closed" id="window-fpsc" style="left: 44px; top: 10px; width: 352px;">
             <div class="title-bar" data-window="window-fpsc">
@@ -359,6 +377,7 @@
           <button class="start-menu-item" data-open="window-fps"><span class="tb-icon tb-fps"></span>GEKKO</button>
           <button class="start-menu-item" data-open="window-fpsv1"><span class="tb-icon tb-fpsv1"></span>GEKKO V1</button>
           <button class="start-menu-item" data-open="window-fpsc"><span class="tb-icon tb-fpsc"></span>GEKKO Classic</button>
+          <button class="start-menu-item" data-open="window-kage"><span class="tb-icon tb-kage"></span>KAGE</button>
           <button class="start-menu-item" data-open="window-tetris"><span class="tb-icon tb-tetris"></span>Tetris</button>
           <button class="start-menu-item" data-open="window-solitaire"><span class="tb-icon tb-solitaire"></span>Solitaire</button>
           <button class="start-menu-item" data-open="window-pinball"><span class="tb-icon tb-pinball"></span>Pinball</button>
@@ -432,6 +451,7 @@
   <script src="js/fps.js"></script>
   <script src="js/fps-v1.js"></script>
   <script src="js/fps-classic.js"></script>
+  <script src="js/kage.js"></script>
   <script src="js/tetris.js"></script>
   <script src="js/solitaire.js"></script>
   <script src="js/pinball.js"></script>
