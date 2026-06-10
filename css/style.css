@@ -1709,6 +1709,30 @@ body {
   flex-shrink: 0;
 }
 
+#browser-favicon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 14px;
+  height: 14px;
+  flex-shrink: 0;
+  background: var(--body-deep);
+  border: 1px solid var(--border-dark, #444);
+}
+
+#browser-status {
+  flex-shrink: 0;
+  font-family: "Press Start 2P", monospace;
+  font-size: 4px;
+  color: #888;
+  padding: 2px 4px;
+  border-top: 1px solid var(--border-dark, #444);
+  background: var(--surface, #222);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
 #browser-content {
   flex: 1;
   overflow-y: auto;

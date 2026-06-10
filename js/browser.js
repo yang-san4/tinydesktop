@@ -335,29 +335,138 @@
   ];
   var palErr = { L: '#44aa44', R: '#cc4444', X: '#ffcc00' };
 
+  // ----- Browser extras: injected styles, seeds, storage, favicons -----
+  var statusBar = document.getElementById('browser-status');
+  var faviconEl = document.getElementById('browser-favicon');
+  var _bwCss = document.createElement('style');
+  _bwCss.textContent =
+    '@keyframes bwBlink{0%,49%{opacity:1}50%,100%{opacity:0}}' +
+    '@keyframes bwSpin{0%{transform:rotate(0)}100%{transform:rotate(359deg)}}' +
+    '@keyframes bwMarq{0%{transform:translateX(100%)}100%{transform:translateX(-100%)}}' +
+    '@keyframes bwRainbow{0%{color:#ff7ab8}25%{color:#ffd866}50%{color:#7affc8}75%{color:#7ab8ff}100%{color:#ff7ab8}}' +
+    '.bw-blink{animation:bwBlink 0.9s steps(1) infinite}' +
+    '.bw-spin{display:inline-block;animation:bwSpin 2.2s linear infinite}' +
+    '.bw-rainbow{animation:bwRainbow 3s linear infinite}' +
+    '.bw-marq-box{overflow:hidden;white-space:nowrap;position:relative}' +
+    '.bw-marq-box>span{display:inline-block;animation:bwMarq 9s linear infinite}' +
+    '.bw-counter{display:inline-block;background:#000;border:1px solid #555;padding:1px 2px;letter-spacing:1px;' +
+      'color:#5dff5d;font-size:6px;font-family:"Press Start 2P",monospace}' +
+    '.bw-construction{background:repeating-linear-gradient(45deg,#e6c84a 0,#e6c84a 6px,#222 6px,#222 12px);' +
+      'color:#ffec9e;text-align:center;font-size:5px;padding:3px 0;text-shadow:1px 1px 0 #000;border:1px solid #555}';
+  document.head.appendChild(_bwCss);
+
+  function setStatus(msg) {
+    if (statusBar) statusBar.textContent = msg;
+  }
+  // deterministic per-day randomness (news rotation, weather)
+  function daySeed() {
+    var d = new Date();
+    return d.getFullYear() * 372 + d.getMonth() * 31 + d.getDate();
+  }
+  function seededRng(seed) {
+    return function () { seed = (seed * 9301 + 49297) % 233280; return seed / 233280; };
+  }
+  function lsGet(key, fallback) {
+    try { var v = localStorage.getItem('tinyweb_' + key); return v === null ? fallback : JSON.parse(v); }
+    catch (e) { return fallback; }
+  }
+  function lsSet(key, val) {
+    try { localStorage.setItem('tinyweb_' + key, JSON.stringify(val)); } catch (e) {}
+  }
+
+  // ----- Favicons (5x5 pixel marks per site) -----
+  var favArts = {
+    'tiny://home':      [' GGG ', 'GGGGG', 'G G G', 'GGGGG', ' GGG '],
+    'tiny://search':    ['BBB  ', 'B B  ', 'BBB  ', '   W ', '    W'],
+    'tiny://news':      ['PPPPP', 'P W P', 'PWWWP', 'P W P', 'PPPPP'],
+    'tiny://fish':      ['  O O', ' OOO ', 'OOOOO', ' OOO ', '  O O'],
+    'tiny://weather':   ['  Y  ', ' YYY ', 'YYYYY', ' YYY ', '  Y  '],
+    'tiny://guestbook': ['WWWWW', 'W   W', 'W W W', 'W   W', 'WWWWW'],
+    'tiny://videos':    ['RRRRR', 'R W R', 'R WWR', 'R W R', 'RRRRR'],
+    'tiny://mail':      ['BBBBB', 'BW WB', 'B W B', 'B   B', 'BBBBB'],
+    'tiny://mart':      [' Y Y ', 'YYYYY', 'Y Y Y', 'YYYYY', ' YYY '],
+    'tiny://kevin':     ['C C C', ' CCC ', 'CCCCC', ' CCC ', 'C C C'],
+    'tiny://prize':     ['Y Y Y', ' YYY ', 'YYYYY', ' YYY ', '  Y  ']
+  };
+  var favPal = { G: '#7ab8ff', B: '#9aa6ff', P: '#ff9ad0', O: '#ffb066', Y: '#ffe066', W: '#e8e8f0', R: '#ff7a7a', C: '#7affc8' };
+  function setFavicon(url) {
+    if (!faviconEl) return;
+    var art = favArts[url];
+    if (art) faviconEl.innerHTML = pxArt(art, favPal, 2);
+    else if (url && url.indexOf('tiny://') !== 0) faviconEl.innerHTML = pxArt(['  W  ', ' WW  ', ' W   ', '     ', ' W   '], favPal, 2);
+    else faviconEl.innerHTML = pxArt(['WWWWW', 'W   W', 'W   W', 'W   W', 'WWWWW'], { W: '#666' }, 2);
+  }
+
+  // ----- Tiny Webring (shared footer across member sites) -----
+  var webring = ['tiny://news', 'tiny://fish', 'tiny://weather', 'tiny://guestbook', 'tiny://mart', 'tiny://kevin'];
+  function webringBar(url) {
+    var idx = webring.indexOf(url);
+    if (idx === -1) return '';
+    var prev = webring[(idx + webring.length - 1) % webring.length];
+    var next = webring[(idx + 1) % webring.length];
+    var rnd = webring[Math.floor(Math.random() * webring.length)];
+    var link = getLinkColor();
+    return '<div style="margin:8px 4px 4px;border:1px dashed #555;padding:3px 4px;text-align:center;font-size:3px;color:#777;">' +
+      '<div style="font-size:4px;color:#999;margin-bottom:2px;">~ Tiny Webring ~</div>' +
+      '<a class="blink" data-href="' + prev + '" style="color:' + link + ';">&#9664; prev</a>' +
+      '<span style="margin:0 3px;color:#555;">|</span>' +
+      '<a class="blink" data-href="' + rnd + '" style="color:' + link + ';">random</a>' +
+      '<span style="margin:0 3px;color:#555;">|</span>' +
+      '<a class="blink" data-href="' + next + '" style="color:' + link + ';">next &#9654;</a>' +
+      '<div style="margin-top:2px;color:#555;">member ' + (idx + 1) + ' of ' + webring.length + '</div>' +
+    '</div>';
+  }
+
   // ----- Pages -----
   var pages = {};
+
+  // rotating joke banner ads (all roads lead to tiny://prize)
+  var bannerAds = [
+    { text: 'CONGRATULATIONS! You are the 1,000,000th tiny visitor!!', bg: '#7a1fa0', fg: '#ffe066' },
+    { text: 'HOT DEAL: invisible pixels 50% OFF at TinyMart >>>', bg: '#19401e', fg: '#7dff8a' },
+    { text: 'DOCTORS HATE HIM: local cat discovers one weird trick', bg: '#5a1620', fg: '#ff9a9a' },
+    { text: 'ENLARGE your desktop icons NOW (100% pixel safe)', bg: '#15355a', fg: '#9ad0ff' }
+  ];
+  function bannerAdHtml() {
+    var ad = bannerAds[Math.floor(Math.random() * bannerAds.length)];
+    var target = ad.text.indexOf('TinyMart') !== -1 ? 'tiny://mart' : 'tiny://prize';
+    return '<a class="blink" data-href="' + target + '" style="display:block;background:' + ad.bg + ';color:' + ad.fg + ';' +
+      'border:1px solid #888;padding:3px 2px;font-size:4px;text-align:center;text-decoration:none;cursor:pointer;">' +
+      '<span class="bw-blink">&#9733;</span> ' + ad.text + ' <span class="bw-blink">&#9733;</span></a>';
+  }
+  function counterHtml(n) {
+    var s = String(n);
+    while (s.length < 7) s = '0' + s;
+    return '<span class="bw-counter">' + s + '</span>';
+  }
 
   pages['tiny://home'] = function () {
     var accent = getAccentColor();
     var link = getLinkColor();
     var monitor = pxArt(artMonitor, palMonitor, 2);
+    var visits = lsGet('visits', 4051) + 1;
+    lsSet('visits', visits);
     return '<div style="text-align:center;padding:6px 4px;">' +
       '<div style="margin-bottom:4px;">' + monitor + '</div>' +
       '<div style="font-size:8px;color:' + accent + ';margin-bottom:2px;">TinyWeb</div>' +
-      '<div style="font-size:4px;color:#888;margin-bottom:6px;">Welcome to the Tiny Internet</div>' +
-      '<div style="border-top:1px solid #444;margin:4px 0;"></div>' +
+      '<div style="font-size:4px;color:#888;margin-bottom:5px;">Welcome to the Tiny Internet</div>' +
+      bannerAdHtml() +
+      '<div style="border-top:1px solid #444;margin:5px 0;"></div>' +
       '<div style="font-size:4px;text-align:left;line-height:2.2;">' +
         '<div style="font-size:5px;color:' + accent + ';margin-bottom:3px;">Bookmarks</div>' +
         '<a class="blink" data-href="tiny://search" style="color:' + link + '">TinySearch - Web Search</a><br>' +
         '<a class="blink" data-href="tiny://news" style="color:' + link + '">TinyNews - Daily Headlines</a><br>' +
+        '<a class="blink" data-href="tiny://mail" style="color:' + link + '">TinyMail - You\'ve got 7 mails</a><br>' +
+        '<a class="blink" data-href="tiny://mart" style="color:' + link + '">TinyMart - Online Shopping</a><br>' +
         '<a class="blink" data-href="tiny://fish" style="color:' + link + '">Fish Wiki - Fish Guide</a><br>' +
         '<a class="blink" data-href="tiny://weather" style="color:' + link + '">TinyWeather - Forecast</a><br>' +
         '<a class="blink" data-href="tiny://videos" style="color:' + link + '">TinyTube - Watch Videos</a><br>' +
-        '<a class="blink" data-href="tiny://guestbook" style="color:' + link + '">Guestbook - Say Hello!</a>' +
+        '<a class="blink" data-href="tiny://guestbook" style="color:' + link + '">Guestbook - Say Hello!</a><br>' +
+        '<a class="blink" data-href="tiny://kevin" style="color:' + link + '">Kevin\'s Homepage <span class="bw-blink" style="color:#ffe066;">NEW!</span></a>' +
       '</div>' +
-      '<div style="border-top:1px solid #444;margin:6px 0 3px;"></div>' +
-      '<div style="font-size:3px;color:#666;">TinyWeb Browser v0.1 | 640KB Memory</div>' +
+      '<div style="border-top:1px solid #444;margin:6px 0 4px;"></div>' +
+      '<div style="font-size:4px;color:#888;margin-bottom:3px;">You are visitor ' + counterHtml(visits) + '</div>' +
+      '<div style="font-size:3px;color:#666;">TinyWeb Browser v0.2 | 640KB Memory | best viewed at 280x220</div>' +
     '</div>';
   };
 
@@ -374,7 +483,7 @@
       '</div>' +
       '<div id="search-results" style="text-align:left;font-size:4px;line-height:2;"></div>' +
       '<div style="border-top:1px solid #333;margin:6px 0 3px;"></div>' +
-      '<div style="font-size:3px;color:#555;">Indexing 8 pages on the tiny web</div>' +
+      '<div style="font-size:3px;color:#555;">Indexing 11 pages on the tiny web (we counted twice)</div>' +
     '</div>';
   };
 
@@ -384,49 +493,59 @@
     var d = new Date();
     var months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
     var dateStr = months[d.getMonth()] + ' ' + d.getDate() + ', ' + d.getFullYear();
-    var catImg = pxArt(artCat, palCat, 2);
-    var fishImg = pxArt(artFishSm, palFishSm, 2);
-    var mazeImg = pxArt(artMazeSm, palMazeSm, 2);
-    var paintImg = pxArt(artPaint, palPaint, 2);
-    return '<div style="padding:4px;">' +
-      '<div style="display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid ' + accent + ';padding-bottom:2px;margin-bottom:4px;">' +
+    // headline pool — 4 picked per day so the paper "updates" daily
+    var pool = [
+      { art: artCat, pal: palCat, t: 'Pixel Cat Seen on Desktop', s: 'Residents report a small cat wandering near windows.', href: '' },
+      { art: artFishSm, pal: palFishSm, t: 'Aquarium Fish Stable at 4', s: 'The tiny aquarium ecosystem remains balanced.', href: 'tiny://fish' },
+      { art: artMazeSm, pal: palMazeSm, t: '3D Maze Record Broken', s: 'Maze completed in under 30 seconds!', href: '' },
+      { art: artPaint, pal: palPaint, t: 'New Theme "Aqua" Available', s: 'A refreshing blue theme for TinyOS.', href: '' },
+      { art: artMazeSm, pal: palMazeSm, t: 'GEKKO Arena Rebuilt', s: 'Sky city gets neon skyline. Pilots report "everything is purple now".', href: 'tiny://videos' },
+      { art: artCat, pal: palCat, t: 'Cat Still Doing Nothing', s: 'Day 847. Experts baffled. Watch live on TinyTube.', href: 'tiny://videos' },
+      { art: artFishSm, pal: palFishSm, t: 'Left Half of Fish Recalled', s: 'TinyMart promises full refund of 4.50px.', href: 'tiny://mart' },
+      { art: artPaint, pal: palPaint, t: 'Kevin Updates Homepage', s: 'Visitor counter now displays 7 digits. "Ambitious", say critics.', href: 'tiny://kevin' },
+      { art: artMazeSm, pal: palMazeSm, t: 'Tetris Block Shortage', s: 'I-pieces delayed. Players advised to leave a column open anyway.', href: '' },
+      { art: artFishSm, pal: palFishSm, t: 'Solitaire Champion Retires', s: '"I have seen every card", says local legend.', href: '' }
+    ];
+    var rng = seededRng(daySeed());
+    var picks = [];
+    var used = {};
+    while (picks.length < 4) {
+      var pi = Math.floor(rng() * pool.length);
+      if (!used[pi]) { used[pi] = true; picks.push(pool[pi]); }
+    }
+    var tickers = [
+      'BREAKING: pixel prices hold steady at 1px = 1px',
+      'BREAKING: weather tomorrow expected to be weather',
+      'BREAKING: guestbook reaches new message',
+      'BREAKING: 404 page found (it was right there)',
+      'BREAKING: dragon spotted over sky city, pilots requested'
+    ];
+    var ticker = tickers[Math.floor(rng() * tickers.length)];
+    var html = '<div style="padding:4px;">' +
+      '<div style="display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid ' + accent + ';padding-bottom:2px;margin-bottom:3px;">' +
         '<span style="font-size:6px;color:' + accent + ';">TinyNews</span>' +
         '<span style="font-size:3px;color:#888;">' + dateStr + '</span>' +
       '</div>' +
-      '<div style="font-size:4px;line-height:2;">' +
-        '<div style="display:flex;gap:4px;margin-bottom:4px;align-items:flex-start;">' +
-          '<div style="flex-shrink:0;padding-top:1px;">' + catImg + '</div>' +
-          '<div>' +
-            '<div style="font-size:5px;color:' + link + ';">Pixel Cat Seen on Desktop</div>' +
-            '<div style="color:#999;">Residents report a small cat wandering near windows.</div>' +
-          '</div>' +
-        '</div>' +
-        '<div style="border-top:1px solid #333;margin:3px 0;"></div>' +
-        '<div style="display:flex;gap:4px;margin-bottom:4px;align-items:flex-start;">' +
-          '<div style="flex-shrink:0;padding-top:1px;">' + fishImg + '</div>' +
-          '<div>' +
-            '<div style="font-size:5px;color:' + link + ';">Aquarium Fish Stable at 4</div>' +
-            '<div style="color:#999;">The tiny aquarium ecosystem remains balanced.</div>' +
-          '</div>' +
-        '</div>' +
-        '<div style="border-top:1px solid #333;margin:3px 0;"></div>' +
-        '<div style="display:flex;gap:4px;margin-bottom:4px;align-items:flex-start;">' +
-          '<div style="flex-shrink:0;padding-top:1px;">' + mazeImg + '</div>' +
-          '<div>' +
-            '<div style="font-size:5px;color:' + link + ';">3D Maze Record Broken</div>' +
-            '<div style="color:#999;">Maze completed in under 30 seconds!</div>' +
-          '</div>' +
-        '</div>' +
-        '<div style="border-top:1px solid #333;margin:3px 0;"></div>' +
-        '<div style="display:flex;gap:4px;align-items:flex-start;">' +
-          '<div style="flex-shrink:0;padding-top:1px;">' + paintImg + '</div>' +
-          '<div>' +
-            '<div style="font-size:5px;color:' + link + ';">New Theme "Aqua" Available</div>' +
-            '<div style="color:#999;">A refreshing blue theme for TinyOS.</div>' +
-          '</div>' +
-        '</div>' +
+      '<div class="bw-marq-box" style="border:1px solid #333;background:#181826;font-size:4px;color:#ffd866;padding:1px 0;margin-bottom:4px;">' +
+        '<span>' + ticker + '</span>' +
       '</div>' +
-    '</div>';
+      '<div style="font-size:4px;line-height:2;">';
+    for (var n = 0; n < picks.length; n++) {
+      var it = picks[n];
+      var img = pxArt(it.art, it.pal, 2);
+      var title = it.href ?
+        '<a class="blink" data-href="' + it.href + '" style="font-size:5px;color:' + link + ';">' + it.t + '</a>' :
+        '<div style="font-size:5px;color:' + link + ';">' + it.t + '</div>';
+      if (n > 0) html += '<div style="border-top:1px solid #333;margin:3px 0;"></div>';
+      html += '<div style="display:flex;gap:4px;margin-bottom:4px;align-items:flex-start;">' +
+        '<div style="flex-shrink:0;padding-top:1px;">' + img + '</div>' +
+        '<div>' + title +
+          '<div style="color:#999;">' + it.s + '</div>' +
+        '</div>' +
+      '</div>';
+    }
+    html += '</div>' + webringBar('tiny://news') + '</div>';
+    return html;
   };
 
   pages['tiny://fish'] = function () {
@@ -472,39 +591,58 @@
         '</div>' +
       '</div>' +
       '<div style="border-top:1px solid #333;margin:4px 0 2px;"></div>' +
-      '<div style="font-size:3px;color:#666;">Fish Wiki - A project of TinyOS Aquarium</div>' +
+      '<div style="font-size:3px;color:#666;">Fish Wiki - A project of TinyOS Aquarium - edited 14,302 times (mostly by Kevin)</div>' +
+      webringBar('tiny://fish') +
     '</div>';
   };
 
   pages['tiny://weather'] = function () {
     var accent = getAccentColor();
-    var sunBig = pxArt(artSunBig, palSunBig, 2);
-    var forecasts = [
-      { day: 'Today', art: artSunSm, pal: palSunSm, temp: '72', desc: 'Sunny' },
-      { day: 'Tue', art: artCloud, pal: palCloud, temp: '68', desc: 'Cloudy' },
-      { day: 'Wed', art: artRain, pal: palRain, temp: '65', desc: 'Rain' },
-      { day: 'Thu', art: artPartly, pal: palPartly, temp: '70', desc: 'Partly' },
-      { day: 'Fri', art: artSunSm, pal: palSunSm, temp: '69', desc: 'Sunny' }
+    var d = new Date();
+    var dayNames = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+    // seasonal base temp (F) by month, daily-seeded variation
+    var baseTemps = [42, 45, 54, 63, 71, 78, 84, 83, 76, 65, 53, 44];
+    var conds = [
+      { art: artSunSm, pal: palSunSm, desc: 'Sunny', feel: 'feels like pixel perfect' },
+      { art: artCloud, pal: palCloud, desc: 'Cloudy', feel: 'clouds rendered at 2x scale' },
+      { art: artRain, pal: palRain, desc: 'Rain', feel: 'each drop is 1px wide' },
+      { art: artPartly, pal: palPartly, desc: 'Partly Cloudy', feel: 'partly rendered' }
     ];
+    var rng = seededRng(daySeed());
+    var todayCond;
+    var weird = rng() < 0.12; // rare novelty forecast
+    var forecast = [];
+    for (var i = 0; i < 5; i++) {
+      var ci = Math.floor(rng() * conds.length);
+      var t = baseTemps[d.getMonth()] + Math.floor(rng() * 11) - 5;
+      var dayLabel = i === 0 ? 'Today' : dayNames[(d.getDay() + i) % 7];
+      forecast.push({ day: dayLabel, c: conds[ci], temp: t });
+    }
+    todayCond = forecast[0].c;
+    var sunBig = pxArt(artSunBig, palSunBig, 2);
+    var todayDesc = weird ? 'PIXEL RAIN' : todayCond.desc;
+    var todayFeel = weird ? 'falling pixels expected. umbrellas useless (too small)' : todayCond.feel;
     var html = '<div style="padding:4px;">' +
       '<div style="font-size:6px;color:' + accent + ';border-bottom:1px solid ' + accent + ';padding-bottom:2px;margin-bottom:4px;">TinyWeather</div>' +
       '<div style="text-align:center;margin-bottom:6px;">' +
         '<div style="margin-bottom:2px;">' + sunBig + '</div>' +
-        '<div style="font-size:7px;color:' + accent + ';">72F</div>' +
-        '<div style="font-size:4px;color:#999;">Tiny City, TinyOS</div>' +
-        '<div style="font-size:4px;color:#888;">Sunny - feels like pixel perfect</div>' +
+        '<div style="font-size:7px;color:' + accent + ';">' + forecast[0].temp + 'F</div>' +
+        '<div style="font-size:4px;color:#999;">Tiny City, TinyOS - ' + dayNames[d.getDay()] + '</div>' +
+        '<div style="font-size:4px;color:' + (weird ? '#ffd866' : '#888') + ';">' + todayDesc + ' - ' + todayFeel + '</div>' +
       '</div>' +
       '<div style="display:flex;gap:2px;justify-content:space-around;border-top:1px solid #333;padding-top:4px;">';
-    for (var i = 0; i < forecasts.length; i++) {
-      var f = forecasts[i];
-      var icon = pxArt(f.art, f.pal, 2);
+    for (var j = 0; j < forecast.length; j++) {
+      var f = forecast[j];
+      var icon = pxArt(f.c.art, f.c.pal, 2);
       html += '<div style="text-align:center;font-size:4px;">' +
         '<div style="color:#888;">' + f.day + '</div>' +
         '<div style="margin:2px 0;">' + icon + '</div>' +
         '<div style="color:' + accent + ';">' + f.temp + 'F</div>' +
       '</div>';
     }
-    html += '</div></div>';
+    html += '</div>' +
+      '<div style="font-size:3px;color:#555;text-align:center;margin-top:4px;">forecast accuracy: 100% (weather is whatever we say it is)</div>' +
+      webringBar('tiny://weather') + '</div>';
     return html;
   };
 
@@ -525,27 +663,222 @@
       { name: 'DavidFan', date: '02/15', msg: 'David winks at me <3' },
       { name: 'RetroGamer', date: '02/14', msg: 'Minesweeper is addicting' }
     ];
+    // saved visitor posts (persisted across sessions)
+    var saved = lsGet('guestbook', []);
+    for (var s = 0; s < saved.length; s++) {
+      entries.unshift({ name: 'You', date: saved[s].date, msg: saved[s].msg, you: true });
+    }
     var html = '<div style="padding:4px;">' +
       '<div style="font-size:6px;color:' + accent + ';border-bottom:1px solid ' + accent + ';padding-bottom:2px;margin-bottom:4px;">Guestbook</div>' +
-      '<div style="font-size:4px;color:#888;margin-bottom:4px;">Leave a message for everyone!</div>';
+      '<div style="font-size:4px;color:#888;margin-bottom:4px;">Leave a message for everyone! (' + entries.length + ' messages)</div>';
     for (var i = 0; i < entries.length; i++) {
       var e = entries[i];
+      var av = e.you ? avatars[0] : avatars[i % avatars.length];
       html += '<div style="display:flex;gap:3px;border:1px solid #333;padding:2px 3px;margin-bottom:2px;align-items:center;">' +
-        '<div style="flex-shrink:0;">' + avatars[i] + '</div>' +
+        '<div style="flex-shrink:0;">' + av + '</div>' +
         '<div style="flex:1;min-width:0;">' +
           '<div style="display:flex;justify-content:space-between;">' +
-            '<span style="color:' + link + ';">' + e.name + '</span>' +
+            '<span style="color:' + link + ';">' + escapeHtml(e.name) + '</span>' +
             '<span style="color:#666;font-size:3px;">' + e.date + '</span>' +
           '</div>' +
-          '<div style="color:#ccc;font-size:4px;">' + e.msg + '</div>' +
+          '<div style="color:#ccc;font-size:4px;">' + escapeHtml(e.msg) + '</div>' +
         '</div>' +
       '</div>';
     }
     html += '<div style="margin-top:4px;display:flex;gap:2px;">' +
-      '<input id="gb-input" type="text" style="flex:1;font-family:\'Press Start 2P\',monospace;font-size:4px;padding:2px 3px;border:1px solid #888;background:#1a1a2a;color:#fff;outline:none;" placeholder="Your message...">' +
+      '<input id="gb-input" type="text" maxlength="80" style="flex:1;font-family:\'Press Start 2P\',monospace;font-size:4px;padding:2px 3px;border:1px solid #888;background:#1a1a2a;color:#fff;outline:none;" placeholder="Your message...">' +
       '<button id="gb-send" style="font-family:\'Press Start 2P\',monospace;font-size:3px;padding:2px 4px;background:' + accent + ';border:1px solid #888;color:#fff;cursor:pointer;">Post</button>' +
     '</div>' +
+    webringBar('tiny://guestbook') +
     '</div>';
+    return html;
+  };
+
+  // ----- TinyMail -----
+  var mailFolder = 'inbox';
+  var mailOpen = -1;
+  var mailData = {
+    inbox: [
+      { from: 'TinyOS Team', subj: 'Welcome to TinyMail!', body: 'Your mailbox quota is 640KB.<br>That should be enough for anybody.<br><br>- The TinyOS Team' },
+      { from: 'Kevin', subj: 'check out my homepage!!', body: 'hi its kevin<br><br>i made a website. it has a visitor counter AND music.<br><br><a class="blink" data-href="tiny://kevin" style="color:#7affc8;">tiny://kevin</a><br><br>tell your friends (both of them)' },
+      { from: 'GEKKO Arena', subj: 'Combat Report', body: 'Pilot,<br><br>Dragon engagement logged over the sky city.<br>Falling off the map now costs 20 HP.<br>Please stop falling off the map.<br><br>- Arena Control' },
+      { from: 'Fish Wiki Digest', subj: 'This week: Blue Tang', body: 'Blue Tang appreciation week continues.<br><br>Fun fact: the Blue Tang is blue.<br><br><a class="blink" data-href="tiny://fish" style="color:#7affc8;">Read more on Fish Wiki</a>' }
+    ],
+    spam: [
+      { from: 'WINNER-DEPT', subj: 'CONGRATULATIONS!!! you won 1,000,000 pixels', body: 'YOU have been selected!!!<br><br>CLICK HERE to claim your pixels:<br><a class="blink" data-href="tiny://prize" style="color:#ffe066;">tiny://prize</a><br><br>(offer expires in 3 pixels)' },
+      { from: 'Prince Pixelton III', subj: 'URGENT business proposal', body: 'Greetings dear friend,<br><br>I am prince of a small kingdom (3 pixels wide).<br>I must transfer 1,000,000px out of my kingdom but it does not fit.<br><br>Send me 200px for shipping and I will share 40%.<br><br>Trust me.' },
+      { from: 'tiny-singles.web', subj: 'HOT singles in Tiny City', body: 'They are 8 pixels tall.<br>They are near you (everything here is near you).' },
+      { from: 'mom', subj: 'RE: RE: RE: FW: FW: funny cat', body: 'you have to see this<br><br><a class="blink" data-href="tiny://videos" style="color:#7affc8;">[VIDEO] cat does nothing for 10 hours</a><br><br>love mom' }
+    ]
+  };
+  pages['tiny://mail'] = function () {
+    var accent = getAccentColor();
+    var link = getLinkColor();
+    var read = lsGet('mail_read', {});
+    var list = mailData[mailFolder];
+    var html = '<div style="padding:4px;">' +
+      '<div style="font-size:6px;color:' + accent + ';border-bottom:1px solid ' + accent + ';padding-bottom:2px;margin-bottom:4px;">TinyMail</div>';
+    // folder tabs
+    html += '<div style="display:flex;gap:2px;margin-bottom:4px;font-size:4px;">';
+    ['inbox', 'spam'].forEach(function (f) {
+      var active = mailFolder === f;
+      var count = mailData[f].length;
+      html += '<span data-mail-folder="' + f + '" style="cursor:pointer;padding:2px 5px;border:1px solid ' + (active ? accent : '#444') + ';' +
+        'background:' + (active ? 'rgba(255,255,255,0.06)' : 'transparent') + ';color:' + (active ? accent : '#888') + ';">' +
+        (f === 'inbox' ? 'Inbox' : 'Spam') + ' (' + count + ')</span>';
+    });
+    html += '<span style="flex:1;"></span><span style="font-size:3px;color:#555;align-self:center;">631KB of 640KB used</span></div>';
+    if (mailOpen >= 0 && list[mailOpen]) {
+      var m = list[mailOpen];
+      html += '<div style="font-size:4px;">' +
+        '<span data-mail-back="1" style="cursor:pointer;color:' + link + ';text-decoration:underline;">&#9664; back to ' + mailFolder + '</span>' +
+        '<div style="border:1px solid #333;padding:3px 4px;margin-top:3px;">' +
+          '<div style="color:' + accent + ';font-size:5px;margin-bottom:2px;">' + escapeHtml(m.subj) + '</div>' +
+          '<div style="color:#888;font-size:3px;margin-bottom:3px;">From: ' + escapeHtml(m.from) + ' &lt;' + m.from.toLowerCase().replace(/[^a-z0-9]/g, '') + '@tiny.mail&gt;</div>' +
+          '<div style="border-top:1px solid #333;padding-top:3px;color:#ccc;line-height:1.9;">' + m.body + '</div>' +
+        '</div>' +
+        (mailFolder === 'spam' ? '<div style="font-size:3px;color:#aa6;margin-top:3px;">&#9888; TinySpamFilter: this mail smells suspicious (confidence: 99.7%)</div>' : '') +
+      '</div>';
+    } else {
+      for (var i = 0; i < list.length; i++) {
+        var key = mailFolder + i;
+        var isRead = !!read[key];
+        html += '<div data-mail-open="' + i + '" style="cursor:pointer;border:1px solid #333;padding:2px 3px;margin-bottom:2px;font-size:4px;' +
+          (isRead ? 'opacity:0.6;' : '') + '">' +
+          '<div style="display:flex;justify-content:space-between;">' +
+            '<span style="color:' + (isRead ? '#999' : link) + ';">' + (isRead ? '' : '<span style="color:' + accent + ';">&#9679;</span> ') + escapeHtml(list[i].from) + '</span>' +
+          '</div>' +
+          '<div style="color:' + (isRead ? '#777' : '#ddd') + ';">' + escapeHtml(list[i].subj) + '</div>' +
+        '</div>';
+      }
+    }
+    html += '<div style="font-size:3px;color:#555;text-align:center;margin-top:4px;">TinyMail - now with 100% more folders (2 total)</div></div>';
+    return html;
+  };
+
+  // ----- TinyMart -----
+  var cart = [];
+  var martMsg = '';
+  var martItems = [
+    { name: 'Invisible Pixel', price: 0.00, desc: 'You cannot see it. Trust us, it is there.', col: '#334' },
+    { name: 'Left Half of a Fish', price: 4.50, desc: 'Right half sold separately.', col: '#e8842c' },
+    { name: 'Premium Canned Air', price: 9.99, desc: 'Sourced from above the taskbar.', col: '#9ad0ff' },
+    { name: '1 (one) Polygon', price: 3.00, desc: 'Slightly used in GEKKO. Some neon residue.', col: '#b967ff' },
+    { name: 'Bag of Lorem Ipsum', price: 12.99, desc: 'Dolor sit amet. Open-box item.', col: '#c8a050' },
+    { name: 'Mystery Box', price: 99.99, desc: 'Contains a smaller mystery box.', col: '#7dff8a' }
+  ];
+  pages['tiny://mart'] = function () {
+    var accent = getAccentColor();
+    var link = getLinkColor();
+    var total = 0;
+    for (var c = 0; c < cart.length; c++) total += martItems[cart[c]].price;
+    var html = '<div style="padding:4px;">' +
+      '<div style="display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid ' + accent + ';padding-bottom:2px;margin-bottom:4px;">' +
+        '<span style="font-size:6px;color:' + accent + ';">TinyMart</span>' +
+        '<span style="font-size:4px;color:' + link + ';">&#128722; Cart (' + cart.length + ') ' + total.toFixed(2) + 'px</span>' +
+      '</div>' +
+      '<div style="font-size:3px;color:#888;margin-bottom:4px;">Everything you need. Nothing you need. Free shipping on orders over 1,000,000px.</div>';
+    for (var i = 0; i < martItems.length; i++) {
+      var it = martItems[i];
+      html += '<div style="display:flex;gap:4px;border:1px solid #333;padding:3px;margin-bottom:2px;align-items:center;font-size:4px;">' +
+        '<div style="flex-shrink:0;width:12px;height:12px;background:' + it.col + ';border:1px solid #555;' + (it.name === 'Invisible Pixel' ? 'background:transparent;' : '') + '"></div>' +
+        '<div style="flex:1;min-width:0;">' +
+          '<span style="color:' + link + ';font-size:4px;">' + it.name + '</span>' +
+          '<span style="color:' + accent + ';margin-left:3px;">' + it.price.toFixed(2) + 'px</span><br>' +
+          '<span style="color:#888;font-size:3px;">' + it.desc + '</span>' +
+        '</div>' +
+        '<button data-mart-add="' + i + '" style="font-family:\'Press Start 2P\',monospace;font-size:3px;padding:2px 3px;background:' + accent + ';border:1px solid #888;color:#fff;cursor:pointer;flex-shrink:0;">Add</button>' +
+      '</div>';
+    }
+    html += '<div style="display:flex;gap:3px;align-items:center;margin-top:4px;">' +
+      '<button data-mart-checkout="1" style="font-family:\'Press Start 2P\',monospace;font-size:4px;padding:3px 6px;background:#19401e;border:1px solid #7dff8a;color:#7dff8a;cursor:pointer;">Checkout</button>' +
+      '<span id="mart-msg" style="font-size:3px;color:#ff8a8a;">' + martMsg + '</span>' +
+    '</div>' +
+    '<div style="font-size:3px;color:#555;margin-top:4px;">&#9733;&#9733;&#9733;&#9733;&#9734; 4.2/5 - "the invisible pixel never arrived. or did it?" - verified buyer</div>' +
+    webringBar('tiny://mart') + '</div>';
+    return html;
+  };
+
+  // ----- Kevin's Homepage (under construction since forever) -----
+  var kevinAudio = null;
+  function stopKevinMusic() {
+    if (kevinAudio) {
+      clearInterval(kevinAudio.timer);
+      try { kevinAudio.ctx.close(); } catch (e) {}
+      kevinAudio = null;
+    }
+  }
+  function startKevinMusic() {
+    stopKevinMusic();
+    if (!window._tinyDesktopSound) return;
+    try {
+      var ctx = new (window.AudioContext || window.webkitAudioContext)();
+      var notes = [392, 440, 494, 587, 494, 440, 392, 330, 392, 440, 494, 440, 392, 330, 294, 330];
+      var step = 0;
+      var timer = setInterval(function () {
+        if (!window._tinyDesktopSound) return;
+        var o = ctx.createOscillator(), g = ctx.createGain();
+        o.type = 'square';
+        o.frequency.value = notes[step % notes.length];
+        g.gain.setValueAtTime(0.04, ctx.currentTime);
+        g.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.18);
+        o.connect(g); g.connect(ctx.destination);
+        o.start(); o.stop(ctx.currentTime + 0.2);
+        step++;
+      }, 200);
+      kevinAudio = { ctx: ctx, timer: timer };
+    } catch (e) {}
+  }
+  pages['tiny://kevin'] = function () {
+    var link = getLinkColor();
+    var kVisits = lsGet('kevin_visits', 12) + 1;
+    lsSet('kevin_visits', kVisits);
+    var playing = !!kevinAudio;
+    return '<div style="padding:4px;text-align:center;">' +
+      '<div class="bw-rainbow" style="font-size:7px;margin-bottom:3px;">~*~ KEVIN\'S HOMEPAGE ~*~</div>' +
+      '<div class="bw-marq-box" style="font-size:4px;color:#aaa;margin-bottom:4px;"><span>welcome to my page!! i made it myself. sign my guestbook... wait i dont have one. sign the town guestbook and write kevin</span></div>' +
+      '<div class="bw-construction" style="margin-bottom:5px;">&#9888; UNDER CONSTRUCTION &#9888;</div>' +
+      '<div style="font-size:4px;text-align:left;line-height:2;border:1px solid #444;padding:4px;margin-bottom:4px;">' +
+        '<div style="color:#ffd866;font-size:5px;margin-bottom:2px;"><span class="bw-spin">&#9733;</span> about me</div>' +
+        '<div style="color:#bbb;">i am kevin. i like fish and the number 7.<br>my favorite pixel is the one in the middle.<br>i edit the fish wiki sometimes (14,302 times).</div>' +
+      '</div>' +
+      '<div style="font-size:4px;text-align:left;line-height:2.2;border:1px solid #444;padding:4px;margin-bottom:4px;">' +
+        '<div style="color:#ffd866;font-size:5px;margin-bottom:2px;"><span class="bw-blink">NEW!</span> my favorite links</div>' +
+        '<a class="blink" data-href="tiny://fish" style="color:' + link + ';">fish wiki (i helped)</a><br>' +
+        '<a class="blink" data-href="tiny://videos" style="color:' + link + ';">cat video (10 hours)</a><br>' +
+        '<a class="blink" data-href="tiny://guestbook" style="color:' + link + ';">town guestbook (write kevin)</a>' +
+      '</div>' +
+      '<div style="font-size:4px;margin-bottom:4px;">' +
+        '<button data-kevin-music="1" style="font-family:\'Press Start 2P\',monospace;font-size:3px;padding:2px 4px;background:#222;border:1px solid #888;color:' + (playing ? '#7dff8a' : '#ccc') + ';cursor:pointer;">' +
+          (playing ? '&#9632; stop music' : '&#9654; play music') + '</button>' +
+        '<span style="font-size:3px;color:#777;margin-left:3px;">&#9835; cool_song_final2.mid</span>' +
+      '</div>' +
+      '<div style="font-size:4px;color:#888;margin-bottom:3px;">you are visitor ' + counterHtml(kVisits) + '</div>' +
+      '<div style="font-size:3px;color:#555;">made with TinyPad | last updated: yesterday (probably)</div>' +
+      webringBar('tiny://kevin') +
+    '</div>';
+  };
+
+  // ----- Prize page (spam landing) -----
+  var prizeClaimed = false;
+  pages['tiny://prize'] = function () {
+    var link = getLinkColor();
+    var html = '<div style="padding:8px 6px;text-align:center;">' +
+      '<div class="bw-blink" style="font-size:8px;color:#ffe066;margin-bottom:4px;">&#9733; CONGRATULATIONS &#9733;</div>' +
+      '<div style="font-size:5px;color:#fff;margin-bottom:3px;">You are the 1,000,000th visitor!!</div>' +
+      '<div style="font-size:3px;color:#888;margin-bottom:6px;">(this message is shown to every visitor)</div>';
+    if (prizeClaimed) {
+      html += '<div style="border:1px solid #7dff8a;padding:5px;font-size:4px;color:#7dff8a;margin-bottom:4px;">' +
+        'PRIZE CLAIMED: 1 (one) pixel<br><br>' +
+        '<div style="width:2px;height:2px;background:#fff;margin:0 auto;box-shadow:0 0 4px #fff;"></div><br>' +
+        'it is yours now. take good care of it.' +
+      '</div>';
+    } else {
+      html += '<button data-prize-claim="1" style="font-family:\'Press Start 2P\',monospace;font-size:5px;padding:4px 8px;' +
+        'background:#7a1fa0;border:2px solid #ffe066;color:#ffe066;cursor:pointer;margin-bottom:4px;">CLAIM PRIZE</button>' +
+        '<div style="font-size:3px;color:#666;">no purchase necessary. prize may be smaller than it appears.</div>';
+    }
+    html += '<div style="margin-top:6px;"><a class="blink" data-href="tiny://home" style="color:' + link + ';font-size:4px;">escape to safety</a></div></div>';
     return html;
   };
 
@@ -1813,33 +2146,190 @@
     { title: '3D Maze Record', url: 'tiny://news', desc: 'New maze speed record broken' },
     { title: 'Piano Music', url: 'tiny://home', desc: 'Play piano on TinyOS' },
     { title: 'Minesweeper Tips', url: 'tiny://home', desc: 'How to beat minesweeper' },
-    { title: 'GEKKO Advanced Tactics', url: 'tiny://videos', desc: 'FPS walkthrough: weapon strategy and wave tactics' }
+    { title: 'GEKKO Advanced Tactics', url: 'tiny://videos', desc: 'FPS walkthrough: weapon strategy and wave tactics' },
+    { title: 'TinyMail', url: 'tiny://mail', desc: 'Free webmail with a generous 640KB quota' },
+    { title: 'TinyMart', url: 'tiny://mart', desc: 'Online shopping: invisible pixels, mystery boxes and more' },
+    { title: 'Kevin\'s Homepage', url: 'tiny://kevin', desc: 'Personal homepage of Kevin. Under construction. Has music.' },
+    { title: 'Mystery Box', url: 'tiny://mart', desc: 'Contains a smaller mystery box. 99.99px' },
+    { title: 'How to stop falling off the map', url: 'tiny://videos', desc: 'GEKKO pilots guide: grapple early, grapple often' },
+    { title: 'Tiny Webring', url: 'tiny://kevin', desc: 'A ring of websites. It is small but it is round.' }
   ];
 
   // ----- 404 page -----
   function render404(url) {
     var accent = getAccentColor();
     var img = pxArt(art404, pal404, 3);
+    var quips = [
+      'These are not the pixels you are looking for.',
+      'This page is exactly 404 pixels away.',
+      'Maybe Kevin deleted it. He has been "tidying up".',
+      'The page exists, but it is too tiny to see.'
+    ];
+    var quip = quips[Math.floor(Math.random() * quips.length)];
     return '<div style="text-align:center;padding:14px 8px;">' +
       '<div style="margin-bottom:4px;">' + img + '</div>' +
       '<div style="font-size:12px;color:' + accent + ';margin-bottom:4px;">404</div>' +
       '<div style="font-size:5px;color:#888;margin-bottom:6px;">Page Not Found</div>' +
-      '<div style="font-size:4px;color:#666;margin-bottom:6px;">The page <span style="color:#ccc;">' + escapeHtml(url) + '</span> could not be found on this server.</div>' +
+      '<div style="font-size:4px;color:#666;margin-bottom:4px;">The page <span style="color:#ccc;">' + escapeHtml(url) + '</span> could not be found on this server.</div>' +
+      '<div style="font-size:3px;color:#777;margin-bottom:6px;">' + quip + '</div>' +
       '<a class="blink" data-href="tiny://home" style="color:' + getLinkColor() + ';font-size:4px;">Go to Home</a>' +
+      '<span style="color:#444;font-size:4px;margin:0 4px;">|</span>' +
+      '<a class="blink" data-href="tiny://search" style="color:' + getLinkColor() + ';font-size:4px;">Search instead</a>' +
     '</div>';
   }
 
-  // ----- Connection error page -----
+  // ----- Connection error page + offline cat runner (dino homage) -----
   function renderError(url) {
     var accent = getAccentColor();
-    var img = pxArt(artErr, palErr, 2);
-    return '<div style="text-align:center;padding:10px 8px;">' +
-      '<div style="margin-bottom:4px;">' + img + '</div>' +
-      '<div style="font-size:6px;color:' + accent + ';margin-bottom:4px;">Connection Failed</div>' +
-      '<div style="font-size:4px;color:#666;margin-bottom:6px;">Could not connect to <span style="color:#ccc;">' + escapeHtml(url) + '</span></div>' +
-      '<div style="font-size:3px;color:#555;margin-bottom:6px;">The TinyWeb can only access pages on the tiny:// protocol.</div>' +
-      '<a class="blink" data-href="tiny://home" style="color:' + getLinkColor() + ';font-size:4px;">Go to Home</a>' +
+    return '<div style="text-align:center;padding:8px 6px;">' +
+      '<div style="font-size:6px;color:' + accent + ';margin-bottom:3px;">Connection Failed</div>' +
+      '<div style="font-size:4px;color:#666;margin-bottom:2px;">Could not connect to <span style="color:#ccc;">' + escapeHtml(url) + '</span></div>' +
+      '<div style="font-size:3px;color:#555;margin-bottom:5px;">The TinyWeb only speaks tiny:// - the big internet is too big.</div>' +
+      '<canvas id="err-runner" width="220" height="64" style="width:100%;image-rendering:pixelated;background:#10101c;border:1px solid #333;cursor:pointer;"></canvas>' +
+      '<div style="font-size:3px;color:#777;margin-top:2px;">while you wait: <span style="color:#ccc;">SPACE</span> or <span style="color:#ccc;">TAP</span> to jump</div>' +
+      '<div style="margin-top:4px;"><a class="blink" data-href="tiny://home" style="color:' + getLinkColor() + ';font-size:4px;">Go to Home</a></div>' +
     '</div>';
+  }
+
+  // The offline minigame: a pixel cat hurdling crates and fish bones.
+  var errGame = null;
+  function stopErrGame() {
+    if (errGame) {
+      cancelAnimationFrame(errGame.raf);
+      document.removeEventListener('keydown', errGame.keyHandler);
+      errGame = null;
+    }
+  }
+  function startErrGame(cv) {
+    stopErrGame();
+    var ctx = cv.getContext('2d');
+    var W2 = cv.width, H2 = cv.height, GROUND = H2 - 12;
+    var g = {
+      state: 'idle', // idle | run | dead
+      catY: GROUND, catVy: 0, frame: 0,
+      obstacles: [], speed: 1.6, score: 0,
+      hi: lsGet('runner_hi', 0), nextGap: 80, t: 0, raf: 0
+    };
+    function jump() {
+      if (g.state === 'idle') { g.state = 'run'; g.obstacles = []; g.score = 0; g.speed = 1.6; }
+      else if (g.state === 'dead') { g.state = 'idle'; draw(); return; }
+      else if (g.catY >= GROUND - 0.5) { g.catVy = -4.6; }
+    }
+    g.keyHandler = function (e) {
+      if (e.code !== 'Space' && e.code !== 'ArrowUp') return;
+      // only when browser window focused and error page still shown
+      if (!document.body.contains(cv)) { stopErrGame(); return; }
+      var win = document.getElementById('window-browser');
+      if (win.classList.contains('closed') || win.classList.contains('minimized')) return;
+      e.preventDefault();
+      jump();
+    };
+    document.addEventListener('keydown', g.keyHandler);
+    cv.addEventListener('mousedown', function (e) { e.preventDefault(); jump(); });
+    cv.addEventListener('touchstart', function (e) { e.preventDefault(); jump(); }, { passive: false });
+
+    function drawCat(x, y, dead) {
+      // chunky 12x9 cat: body, head, ears, tail, legs (2-frame run)
+      ctx.fillStyle = dead ? '#aa6677' : '#d8d8e8';
+      ctx.fillRect(x, y - 6, 9, 4);            // body
+      ctx.fillRect(x + 7, y - 9, 5, 4);        // head
+      ctx.fillRect(x + 7, y - 11, 1, 2);       // ear
+      ctx.fillRect(x + 10, y - 11, 1, 2);      // ear
+      ctx.fillRect(x - 3, y - 8, 3, 1);        // tail
+      ctx.fillRect(x - 1, y - 7, 1, 1);
+      var legPhase = (g.frame >> 2) % 2;
+      if (g.state === 'run' && g.catY >= GROUND - 0.5) {
+        ctx.fillRect(x + (legPhase ? 1 : 3), y - 2, 1, 2);
+        ctx.fillRect(x + (legPhase ? 6 : 4), y - 2, 1, 2);
+      } else {
+        ctx.fillRect(x + 1, y - 2, 1, 2);
+        ctx.fillRect(x + 6, y - 2, 1, 2);
+      }
+      ctx.fillStyle = dead ? '#fff' : '#222';
+      ctx.fillRect(x + 10, y - 8, 1, 1);       // eye
+    }
+    function drawObstacle(o) {
+      if (o.kind === 0) { // crate
+        ctx.fillStyle = '#9a7c4e';
+        ctx.fillRect(o.x, GROUND - o.h, o.w, o.h);
+        ctx.fillStyle = '#6c5435';
+        ctx.fillRect(o.x + 1, GROUND - o.h + 1, o.w - 2, 1);
+      } else { // fish bones
+        ctx.fillStyle = '#c9d4e0';
+        ctx.fillRect(o.x, GROUND - 4, o.w, 1);
+        ctx.fillRect(o.x + 1, GROUND - 6, 1, 5);
+        ctx.fillRect(o.x + 3, GROUND - 6, 1, 5);
+        ctx.fillRect(o.x + o.w - 2, GROUND - 6, 2, 3); // head
+      }
+    }
+    function draw() {
+      ctx.fillStyle = '#10101c';
+      ctx.fillRect(0, 0, W2, H2);
+      // stars
+      ctx.fillStyle = '#2e2e4a';
+      for (var st = 0; st < 8; st++) ctx.fillRect(((st * 47 + 13) % W2), (st * 17 + 5) % (GROUND - 24), 1, 1);
+      // ground
+      ctx.fillStyle = '#555';
+      ctx.fillRect(0, GROUND + 1, W2, 1);
+      ctx.fillStyle = '#333';
+      for (var gx = (-(g.t * g.speed) % 8 + 8) % 8; gx < W2; gx += 8) ctx.fillRect(gx, GROUND + 4, 3, 1);
+      for (var i = 0; i < g.obstacles.length; i++) drawObstacle(g.obstacles[i]);
+      drawCat(20, g.catY, g.state === 'dead');
+      // score
+      ctx.fillStyle = '#888';
+      ctx.font = '7px monospace';
+      ctx.textAlign = 'right';
+      ctx.fillText('HI ' + String(g.hi).padStart(4, '0') + '  ' + String(Math.floor(g.score)).padStart(4, '0'), W2 - 3, 9);
+      ctx.textAlign = 'center';
+      if (g.state === 'idle') {
+        ctx.fillStyle = '#aaa';
+        ctx.fillText('NO CONNECTION', W2 / 2, 24);
+        ctx.fillStyle = '#666';
+        ctx.fillText('PRESS SPACE TO PLAY', W2 / 2, 34);
+      } else if (g.state === 'dead') {
+        ctx.fillStyle = '#ff8a8a';
+        ctx.fillText('GAME OVER', W2 / 2, 24);
+        ctx.fillStyle = '#666';
+        ctx.fillText('SPACE TO RETRY', W2 / 2, 34);
+      }
+    }
+    function tick() {
+      if (!document.body.contains(cv)) { stopErrGame(); return; }
+      g.raf = requestAnimationFrame(tick);
+      g.frame++;
+      if (g.state === 'run') {
+        g.t++;
+        g.score += 0.12;
+        g.speed = 1.6 + Math.min(1.8, g.score / 120);
+        // physics
+        g.catVy += 0.22;
+        g.catY += g.catVy;
+        if (g.catY > GROUND) { g.catY = GROUND; g.catVy = 0; }
+        // obstacles
+        g.nextGap -= g.speed;
+        if (g.nextGap <= 0) {
+          var kind = Math.random() < 0.5 ? 0 : 1;
+          g.obstacles.push({ x: W2 + 4, w: kind === 0 ? 7 : 9, h: 7 + Math.floor(Math.random() * 4), kind: kind });
+          g.nextGap = 55 + Math.random() * 70;
+        }
+        for (var i = g.obstacles.length - 1; i >= 0; i--) {
+          var o = g.obstacles[i];
+          o.x -= g.speed;
+          if (o.x + o.w < -4) { g.obstacles.splice(i, 1); continue; }
+          // collision (cat box: x 18..30, y catY-9..catY)
+          var oh = o.kind === 0 ? o.h : 6;
+          if (o.x < 30 && o.x + o.w > 19 && g.catY > GROUND - oh + 2) {
+            g.state = 'dead';
+            g.hi = Math.max(g.hi, Math.floor(g.score));
+            lsSet('runner_hi', g.hi);
+          }
+        }
+      }
+      draw();
+    }
+    errGame = g;
+    draw();
+    g.raf = requestAnimationFrame(tick);
   }
 
   function escapeHtml(str) {
@@ -1859,6 +2349,8 @@
 
     urlInput.value = url;
     isNavigating = true;
+    stopKevinMusic();
+    setStatus('Connecting to ' + url.replace(/^tiny:\/\//, '') + '...');
 
     // Show loading bar
     loadingBar.style.display = 'block';
@@ -1868,6 +2360,7 @@
     var loadInterval = setInterval(function () {
       progress += Math.random() * 30 + 10;
       if (progress > 90) progress = 90;
+      if (progress > 45) setStatus('Transferring data... (' + (2 + Math.floor(progress / 18)) + ' KB)');
       loadingBar.style.width = progress + '%';
     }, 60);
 
@@ -1885,15 +2378,20 @@
         var html;
         if (url.indexOf('tiny://') !== 0) {
           html = renderError(url);
+          setStatus('Server not found: the big internet does not fit in here');
         } else if (pages[url]) {
           html = pages[url]();
+          setStatus('Done');
         } else {
           html = render404(url);
+          setStatus('Done (404 Not Found)');
         }
 
         content.innerHTML = html;
         content.scrollTop = 0;
+        setFavicon(url);
         bindPageInteractions(url);
+        maybeShowCookieBanner();
 
         // Update window title
         var titleEl = document.querySelector('#window-browser .title-bar-text');
@@ -1924,7 +2422,11 @@
       'tiny://fish': 'Fish Wiki',
       'tiny://weather': 'TinyWeather',
       'tiny://guestbook': 'Guestbook',
-      'tiny://videos': 'TinyTube'
+      'tiny://videos': 'TinyTube',
+      'tiny://mail': 'TinyMail',
+      'tiny://mart': 'TinyMart',
+      'tiny://kevin': '~* KEVIN *~',
+      'tiny://prize': 'CONGRATULATIONS!!!'
     };
     return titles[url] || '';
   }
@@ -1936,12 +2438,35 @@
     fwdBtn.style.opacity = fwdBtn.disabled ? '0.3' : '1';
   }
 
+  // ----- Cookie banner (shown once, ever) -----
+  var cookieBannerShown = false;
+  function maybeShowCookieBanner() {
+    if (cookieBannerShown || lsGet('cookies_ok', false)) return;
+    cookieBannerShown = true;
+    var bar = document.createElement('div');
+    bar.style.cssText = 'flex-shrink:0;display:flex;align-items:center;gap:3px;padding:3px 4px;' +
+      'background:#2a2438;border-top:1px solid #555;font-family:"Press Start 2P",monospace;font-size:3px;color:#bbb;';
+    bar.innerHTML = '<span style="flex:1;">&#127850; This site uses tiny cookies (1px each, fat free) to remember how tiny you are.</span>';
+    var ok1 = document.createElement('button');
+    var ok2 = document.createElement('button');
+    [ok1, ok2].forEach(function (b, i) {
+      b.textContent = 'Accept';
+      b.style.cssText = 'font-family:"Press Start 2P",monospace;font-size:3px;padding:2px 3px;cursor:pointer;' +
+        'background:' + (i === 0 ? getAccentColor() : '#444') + ';border:1px solid #888;color:#fff;flex-shrink:0;';
+      b.addEventListener('click', function () { lsSet('cookies_ok', true); bar.remove(); });
+      bar.appendChild(b);
+    });
+    var body = document.getElementById('browser-body');
+    body.insertBefore(bar, statusBar);
+  }
+
   // ----- Bind interactions within pages -----
   function bindPageInteractions(url) {
-    // Stop any running video animation when navigating
+    // Stop any running video animation / offline game when navigating
     stopVideoAnim();
+    stopErrGame();
 
-    // Links
+    // Links (navigate + status-bar hover preview)
     var links = content.querySelectorAll('a.blink[data-href]');
     links.forEach(function (a) {
       a.style.cursor = 'pointer';
@@ -1950,7 +2475,95 @@
         e.preventDefault();
         navigate(this.getAttribute('data-href'));
       });
+      a.addEventListener('mouseenter', function () { setStatus(this.getAttribute('data-href')); });
+      a.addEventListener('mouseleave', function () { setStatus('Done'); });
     });
+
+    // Offline cat runner on the connection-error page
+    var runnerCv = document.getElementById('err-runner');
+    if (runnerCv) startErrGame(runnerCv);
+
+    // TinyMail: folders, open, back — re-render in place
+    if (url === 'tiny://mail') {
+      var refreshMail = function () {
+        content.innerHTML = pages['tiny://mail']();
+        bindPageInteractions('tiny://mail');
+      };
+      content.querySelectorAll('[data-mail-folder]').forEach(function (el) {
+        el.addEventListener('click', function () {
+          mailFolder = this.getAttribute('data-mail-folder');
+          mailOpen = -1;
+          refreshMail();
+        });
+      });
+      content.querySelectorAll('[data-mail-open]').forEach(function (el) {
+        el.addEventListener('click', function () {
+          mailOpen = parseInt(this.getAttribute('data-mail-open'), 10);
+          var read = lsGet('mail_read', {});
+          read[mailFolder + mailOpen] = true;
+          lsSet('mail_read', read);
+          refreshMail();
+        });
+      });
+      content.querySelectorAll('[data-mail-back]').forEach(function (el) {
+        el.addEventListener('click', function () { mailOpen = -1; refreshMail(); });
+      });
+    }
+
+    // TinyMart: cart + doomed checkout
+    if (url === 'tiny://mart') {
+      var refreshMart = function () {
+        content.innerHTML = pages['tiny://mart']();
+        bindPageInteractions('tiny://mart');
+      };
+      content.querySelectorAll('[data-mart-add]').forEach(function (el) {
+        el.addEventListener('click', function () {
+          cart.push(parseInt(this.getAttribute('data-mart-add'), 10));
+          martMsg = '';
+          refreshMart();
+        });
+      });
+      content.querySelectorAll('[data-mart-checkout]').forEach(function (el) {
+        el.addEventListener('click', function () {
+          martMsg = cart.length === 0 ?
+            'your cart is empty. the void thanks you.' :
+            'TinyPay declined: insufficient pixels (balance: 0.00px)';
+          refreshMart();
+        });
+      });
+    }
+
+    // Kevin: music toggle (no re-render — the counter must not double-count)
+    if (url === 'tiny://kevin') {
+      content.querySelectorAll('[data-kevin-music]').forEach(function (el) {
+        el.addEventListener('click', function () {
+          if (kevinAudio) {
+            stopKevinMusic();
+            this.innerHTML = '&#9654; play music';
+            this.style.color = '#ccc';
+          } else {
+            startKevinMusic();
+            if (kevinAudio) {
+              this.innerHTML = '&#9632; stop music';
+              this.style.color = '#7dff8a';
+            } else {
+              this.innerHTML = '&#128263; sound is muted';
+            }
+          }
+        });
+      });
+    }
+
+    // Prize claim
+    if (url === 'tiny://prize') {
+      content.querySelectorAll('[data-prize-claim]').forEach(function (el) {
+        el.addEventListener('click', function () {
+          prizeClaimed = true;
+          content.innerHTML = pages['tiny://prize']();
+          bindPageInteractions('tiny://prize');
+        });
+      });
+    }
 
     // Search page
     if (url === 'tiny://search') {
@@ -1966,10 +2579,29 @@
                    item.desc.toLowerCase().indexOf(q) !== -1;
           });
           var link = getLinkColor();
+          // "did you mean" for big-web nostalgia
+          var dym = '';
+          var dymMap = { google: 'TinySearch', youtube: 'TinyTube', amazon: 'TinyMart', gmail: 'TinyMail', twitter: 'Guestbook', facebook: 'Kevin\'s Homepage' };
+          var dymUrl = { google: 'tiny://search', youtube: 'tiny://videos', amazon: 'tiny://mart', gmail: 'tiny://mail', twitter: 'tiny://guestbook', facebook: 'tiny://kevin' };
+          for (var dk in dymMap) {
+            if (q.indexOf(dk) !== -1) {
+              dym = '<div style="color:#ffd866;margin-bottom:3px;">Did you mean: <a class="blink" data-href="' + dymUrl[dk] + '" style="color:' + link + ';cursor:pointer;text-decoration:underline;">' + dymMap[dk] + '</a>? (this is the tiny web)</div>';
+              break;
+            }
+          }
+          var elapsed = '<span style="color:#555;">(' + (0.0001 + Math.random() * 0.0009).toFixed(4) + ' seconds - the web is tiny)</span>';
           if (results.length === 0) {
-            searchResults.innerHTML = '<div style="color:#888;">No results for "' + escapeHtml(q) + '"</div>';
+            var jokes = [
+              'Try fewer pixels in your query.',
+              'The tiny web has limits. You found one.',
+              'Even Kevin\'s homepage does not match this.'
+            ];
+            searchResults.innerHTML = dym + '<div style="color:#888;">No results for "' + escapeHtml(q) + '" ' + elapsed + '<br><span style="color:#666;font-size:3px;">' + jokes[Math.floor(Math.random() * jokes.length)] + '</span></div>';
+            searchResults.querySelectorAll('a.blink[data-href]').forEach(function (a) {
+              a.addEventListener('click', function (e) { e.preventDefault(); navigate(this.getAttribute('data-href')); });
+            });
           } else {
-            var html = '<div style="color:#888;margin-bottom:3px;">' + results.length + ' result' + (results.length > 1 ? 's' : '') + '</div>';
+            var html = dym + '<div style="color:#888;margin-bottom:3px;">' + results.length + ' result' + (results.length > 1 ? 's' : '') + ' ' + elapsed + '</div>';
             results.forEach(function (r) {
               html += '<div style="margin-bottom:3px;">' +
                 '<a class="blink" data-href="' + r.url + '" style="color:' + link + ';cursor:pointer;text-decoration:underline;">' + r.title + '</a><br>' +
@@ -2105,6 +2737,11 @@
           var link = getLinkColor();
           var d = new Date();
           var dateStr = String(d.getMonth() + 1).padStart(2, '0') + '/' + String(d.getDate()).padStart(2, '0');
+          // persist (newest first, keep last 20)
+          var saved = lsGet('guestbook', []);
+          saved.unshift({ msg: msg, date: dateStr });
+          if (saved.length > 20) saved.length = 20;
+          lsSet('guestbook', saved);
           var avatar = pxArt(artAvatar1, { H: '#ffcc88', B: '#333', M: '#dd6666', S: getLinkColor() }, 2);
           var entry = document.createElement('div');
           entry.style.cssText = 'display:flex;gap:3px;border:1px solid #333;padding:2px 3px;margin-bottom:2px;align-items:center;';
