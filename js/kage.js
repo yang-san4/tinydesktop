@@ -685,6 +685,20 @@
     }
     if(player.dashCD>0)player.dashCD-=dt;
 
+    // Mantle assist after a grapple release
+    if(player.vaultT>0){
+      player.vaultT-=dt;
+      if(player.grounded||player.grappling)player.vaultT=0;
+      else{
+        var vxd=player.vaultX-player.x,vyd=player.vaultY-player.y;
+        var vl=Math.sqrt(vxd*vxd+vyd*vyd);
+        if(vl>0.05){
+          player.vx=vxd/vl*1.7;
+          player.vy=vyd/vl*1.7;
+        }
+      }
+    }
+
     // Jump / double jump
     if(player.jumpCD>0)player.jumpCD-=dt;
     if(player.grounded)player.coyote=COYOTE_T;
@@ -709,11 +723,17 @@
     if(player.grappling){
       var gx=player.grapX-player.x,gy=player.grapY-player.y,gz=player.grapZ-(player.z+1.0);
       var gd=Math.sqrt(gx*gx+gy*gy+gz*gz);
-      if(gd<1.2){player.grappling=false;player.vz=Math.max(player.vz,3.8);}
-      else{
+      if(gd<1.2){
+        releaseGrapple();
+      }else{
         player.vx=lerp(player.vx,gx/gd*GRAP_SPD,8*dt);
         player.vy=lerp(player.vy,gy/gd*GRAP_SPD,8*dt);
         player.vz=lerp(player.vz,gz/gd*GRAP_SPD,8*dt);
+        // stall watchdog: rope snagged on geometry — let go instead of hanging
+        if(gd>player.grapLastD-0.02)player.grapStall+=dt;
+        else player.grapStall=0;
+        player.grapLastD=gd;
+        if(player.grapStall>0.4)releaseGrapple();
       }
     }
 
@@ -741,7 +761,6 @@
         if(ox2<oy2){player.x+=dx2>0?ox2:-ox2;player.vx=0;}
         else{player.y+=dy2>0?oy2:-oy2;player.vy=0;}
         xyPushed=true;
-        if(player.grappling&&ox2>0.1&&oy2>0.1)player.grappling=false;
       }
     }
 
@@ -802,6 +821,27 @@
     }
   }
   var checkpoint=[0,-44,0];
+
+  // Grapple release: read the platform under the anchor and vault onto it.
+  // Handles anchors above roofs, wall lips that pin the climb, everything.
+  function releaseGrapple(){
+    player.grappling=false;
+    var pTop=groundTopAt(player.grapX,player.grapY,player.grapZ+0.6,0.5);
+    var dx=player.grapX-player.x,dy=player.grapY-player.y;
+    var dl=Math.sqrt(dx*dx+dy*dy);
+    if(pTop>-999){
+      var need=Math.max(0.3,pTop+0.45-player.z);
+      player.vz=Math.min(9,Math.sqrt(2*GRAVITY*need)+0.8);
+      if(dl>0.05){player.vx=dx/dl*1.7;player.vy=dy/dl*1.7;}
+      else{player.vx*=0.2;player.vy*=0.2;}
+      // mantle: keep nudging toward the ledge while airborne, so a slab
+      // side-face zeroing our velocity can't strand us a hair short
+      player.vaultT=0.8;player.vaultX=player.grapX;player.vaultY=player.grapY;
+    }else{
+      player.vx*=0.25;player.vy*=0.25;
+      player.vz=Math.max(player.vz*0.3,3.0);
+    }
+  }
 
   function damagePlayer(dmg,kx,ky){
     if(player.iFrames>0||player.dashT>0||gameState!=='playing')return;
@@ -1036,20 +1076,25 @@
   function tryGrapple(){
     if(gameState!=='playing'||!player.hasHook||grapCD>0)return;
     if(player.grappling){player.grappling=false;return;}
-    // nearest anchor within range, roughly toward camera facing
-    var best=null,bd=GRAP_RNG+0.001;
+    // best anchor: aimed at (3D direction vs camera), or almost directly overhead
+    var fa=cam.yaw,fp=cam.pitch;
+    var fwd=[Math.sin(fa)*Math.cos(fp),Math.cos(fa)*Math.cos(fp),Math.sin(fp)];
+    var best=null,bestScore=-1;
     for(var i=0;i<anchors.length;i++){
       var a=anchors[i];
-      var d=dist3d(a.x,a.y,a.z,player.x,player.y,player.z+1);
-      if(d>GRAP_RNG)continue;
-      var ang=Math.atan2(a.x-player.x,a.y-player.y);
-      var da=ang-cam.yaw;while(da>PI)da-=TAU;while(da<-PI)da+=TAU;
-      if(Math.abs(da)>1.1)continue;
-      if(d<bd){bd=d;best=a;}
+      var dx=a.x-player.x,dy=a.y-player.y,dz=a.z-(player.z+1);
+      var d=Math.sqrt(dx*dx+dy*dy+dz*dz);
+      if(d>GRAP_RNG||d<1.0)continue;
+      var dot=(dx*fwd[0]+dy*fwd[1]+dz*fwd[2])/d;
+      var overhead=Math.sqrt(dx*dx+dy*dy)<2.5&&dz>1.5;
+      if(dot<0.45&&!overhead)continue;
+      var score=dot+(overhead?0.5:0)-d*0.03;
+      if(score>bestScore){bestScore=score;best=a;}
     }
     if(best){
       player.grappling=true;
       player.grapX=best.x;player.grapY=best.y;player.grapZ=best.z;
+      player.grapLastD=999;player.grapStall=0;
       grapCD=1.5;
       playSound('grapple');
     }else{
@@ -1687,7 +1732,7 @@
     S(14,8,5.5,4,4,0.3,C_KAWARA,C_KAWARA_L);
     pickups.push({kind:'shubox',x:-14,y:8,z:6.1,t:0});
     // kaginawa anchors
-    anchor(-14,6.2,5.2);anchor(14,6.2,5.2);
+    anchor(-14,6.8,6.3);anchor(14,6.8,6.3);
     anchor(0,1,3.9);anchor(6,6.4,3.9);
     anchor(-9.5,1,3.6);anchor(9.5,1,3.6);
     // lanterns
@@ -1758,7 +1803,7 @@
     // golden shachihoko + anchors at tier corners
     D(-5,5.3,10.6,0.5,0.4,0.7,C_GOLD,C_GOLD,0.5);
     D(5,14.7,10.6,0.5,0.4,0.7,C_GOLD,C_GOLD,0.5);
-    anchor(-5.2,4.9,2.9);anchor(5.2,4.9,5.4);anchor(-4.4,5.2,7.9);anchor(5.0,11.5,9.6);
+    anchor(-5.0,5.2,3.0);anchor(4.3,5.6,5.5);anchor(-4.0,6.2,8.0);anchor(5.0,11.5,9.6);
     // front stone stairs (west face switchbacks)
     for(var s1=0;s1<5;s1++)S(-6.6,5.4+s1*0.9,s1*0.5,1.8,1.0,0.5,C_ROCK,C_STONE);
     S(-6.6,10.4,2.5,1.8,2.4,0.3,C_STONE,C_STONE); // landing on tier-1 eaves (west)
@@ -2630,7 +2675,7 @@
     [{x:-12,y:-9.6},{x:0,y:-11},{x:0,y:-4.5},{x:0,y:-1.8,kill:'samurai'},{x:0,y:2.5},{x:4.4,y:6.4,lever:true},{x:6,y:6.4},{x:10,y:6.4},{x:10,y:13},{x:0,y:16.5}],
     [{x:2.5,y:-15},{x:4.6,y:-4},{x:-6.6,y:5.0},{x:-6.6,y:9.2,z:2.3},{x:-6.3,y:10.4,z:2.8},{x:-4.6,y:10.6,z:2.8},
      {x:-4.6,y:13.8,z:2.8},{x:-2.4,y:14.2,z:4.9},{x:-3.6,y:10.0,z:5.3},{x:-3.7,y:6.2,z:5.3},
-     {x:-3.9,y:5.9,z:7.8,hook:true},{x:0,y:6.6,z:7.8},{x:3.7,y:6.8,z:7.8},{x:3.9,y:9.6,z:7.8},
+     {x:-4.0,y:6.2,z:7.8,hook:true},{x:0,y:6.6,z:7.8},{x:3.7,y:6.8,z:7.8},{x:3.9,y:9.6,z:7.8},
      {x:4.6,y:10,z:8.3},{x:5.5,y:11.4,z:9.3},{x:5.5,y:13.8,z:10.3},{x:3.6,y:13.4,z:10.6},
      {x:0,y:10.5,z:10.6,boss:true}]
   ];
@@ -2800,6 +2845,10 @@
     warp:function(x,y,z){player.x=x;player.y=y;player.z=z;player.vx=player.vy=player.vz=0;},
     give:function(){player.hasDouble=true;player.hasHook=true;player.shuriken=8;},
     zone:function(n){buildZone(n);},
+    lock:function(v){pointerLocked=!!v;},
+    aim:function(yaw,pitch){cam.yaw=yaw;cam.pitch=pitch;},
+    key:function(code,down){handleKey({code:code,preventDefault:function(){}},down);},
+    grap:function(){return{grappling:player.grappling,cd:grapCD,anchors:anchors.length};},
     hurtBoss:function(n){for(var i=0;i<enemies.length;i++)if(enemies[i].def.boss){enemies[i].hp-=n;if(enemies[i].hp<=0)killEnemy(enemies[i],false);}}
   };
 
