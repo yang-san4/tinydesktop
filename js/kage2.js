@@ -1958,11 +1958,67 @@
   var C_ROCK=[0.16,0.16,0.20,8];
 
   // ===== WORLD BUILDERS =====
+  // --- triangle layer: free-form quads, tris, sloped roofs (engine v3) ---
+  function faceN(p1,p2,p3){
+    var ux=p2[0]-p1[0],uy=p2[1]-p1[1],uz=p2[2]-p1[2];
+    var vx=p3[0]-p1[0],vy=p3[1]-p1[1],vz=p3[2]-p1[2];
+    var nx=uy*vz-uz*vy,ny=uz*vx-ux*vz,nz=ux*vy-uy*vx;
+    var l=Math.sqrt(nx*nx+ny*ny+nz*nz)||1;
+    return[nx/l,ny/l,nz/l];
+  }
+  function pushTri(arr,p1,p2,p3,n,col,em){
+    var m=col[3]||0,pts=[p1,p2,p3];
+    for(var i=0;i<3;i++){var p=pts[i];arr.push(p[0],p[1],p[2],n[0],n[1],n[2],col[0],col[1],col[2],em||0,m);}
+  }
+  function pushQuadN(arr,p1,p2,p3,p4,col,em){
+    pushQuad(arr,p1,p2,p3,p4,faceN(p1,p2,p3),col[0],col[1],col[2],em||0,col[3]||0);
+  }
+  function SCOL(cx,cy,z0,w,d,h){ // collision-only solid (invisible slope steps)
+    solids.push({x:cx,y:cy,z0:z0,top:z0+h,w:w,d:d});
+  }
+  // curved gable roof (sori): steep at the eaves, easing into the ridge
+  function gableRoof(cx,cy,z0,w,d,h,col,axis){
+    var colE=[col[0]*0.8,col[1]*0.8,col[2]*0.8,col[3]||0];
+    function P(u,v,z){return axis?[cx+v*d/2,cy+u*w/2,z]:[cx+u*w/2,cy+v*d/2,z];}
+    var zm=z0+h*0.55,zr=z0+h,vm=0.42;
+    pushQuadN(staticMesh,P(-1,-1,z0),P(1,-1,z0),P(1,-vm,zm),P(-1,-vm,zm),col,0);
+    pushQuadN(staticMesh,P(-1,-vm,zm),P(1,-vm,zm),P(1,0,zr),P(-1,0,zr),col,0);
+    pushQuadN(staticMesh,P(1,1,z0),P(-1,1,z0),P(-1,vm,zm),P(1,vm,zm),col,0);
+    pushQuadN(staticMesh,P(1,vm,zm),P(-1,vm,zm),P(-1,0,zr),P(1,0,zr),col,0);
+    for(var s=-1;s<=1;s+=2){
+      var e0=P(s,-1,z0),e1=P(s,-vm,zm),e2=P(s,0,zr),e3=P(s,vm,zm),e4=P(s,1,z0);
+      var n2=axis?[0,s,0]:[s,0,0];
+      pushTri(staticMesh,e0,e1,e2,n2,colE,0);
+      pushTri(staticMesh,e0,e2,e4,n2,colE,0);
+      pushTri(staticMesh,e2,e3,e4,n2,colE,0);
+    }
+    if(axis)D(cx,cy,zr-0.02,0.26,w*1.02,0.10,col,col);
+    else D(cx,cy,zr-0.02,w*1.02,0.26,0.10,col,col);
+  }
+  function pyramidRoof(cx,cy,z0,w,d,h,col){
+    var a=[cx,cy,z0+h];
+    var c1=[cx-w/2,cy-d/2,z0],c2=[cx+w/2,cy-d/2,z0],c3=[cx+w/2,cy+d/2,z0],c4=[cx-w/2,cy+d/2,z0];
+    pushTri(staticMesh,c1,c2,a,faceN(c1,c2,a),col,0);
+    pushTri(staticMesh,c2,c3,a,faceN(c2,c3,a),col,0);
+    pushTri(staticMesh,c3,c4,a,faceN(c3,c4,a),col,0);
+    pushTri(staticMesh,c4,c1,a,faceN(c4,c1,a),col,0);
+  }
+  // sloped tile band ringing a keep tier (rises from the eave edge to the wall)
+  function tierRoofBand(cx,cy,zTop,wOut,dOut,wIn,dIn,rise,col){
+    var zo=zTop+0.01,zi=zTop+rise;
+    var o=[[cx-wOut/2,cy-dOut/2,zo],[cx+wOut/2,cy-dOut/2,zo],[cx+wOut/2,cy+dOut/2,zo],[cx-wOut/2,cy+dOut/2,zo]];
+    var i2=[[cx-wIn/2,cy-dIn/2,zi],[cx+wIn/2,cy-dIn/2,zi],[cx+wIn/2,cy+dIn/2,zi],[cx-wIn/2,cy+dIn/2,zi]];
+    pushQuadN(staticMesh,o[0],o[1],i2[1],i2[0],col,0);
+    pushQuadN(staticMesh,o[1],o[2],i2[2],i2[1],col,0);
+    pushQuadN(staticMesh,o[2],o[3],i2[3],i2[2],col,0);
+    pushQuadN(staticMesh,o[3],o[0],i2[0],i2[3],col,0);
+  }
   function machiya(cx,cy,w,d,hWall){
     S(cx,cy,0,w,d,hWall,C_WALL,C_WOOD);
-    // overhanging roof slab (landable!) + ridge
+    // overhanging eave slab (landable) + curved gable above (walkable via hidden step)
     S(cx,cy,hWall,w+0.9,d+0.9,0.3,C_KAWARA,C_KAWARA);
-    D(cx,cy,hWall+0.3,w*0.55,d*0.55,0.22,C_KAWARA_L,C_KAWARA_L);
+    gableRoof(cx,cy,hWall+0.28,w+1.1,d+1.1,0.55+w*0.07,C_KAWARA,0);
+    SCOL(cx,cy,hWall+0.3,w+0.4,(d+1.1)*0.5,0.4);
     // dark doorway + shoji glow on one side
     W2(cx,cy-d/2,0.8,0.9,1.3,3,0.05,0.04,0.06,0);
     if(rng()<0.5)W2(cx,cy-d/2,0.9,0.7,0.7,3,C_ANDON[0]*0.85,C_ANDON[1]*0.85,C_ANDON[2]*0.85,0.35);
@@ -2014,15 +2070,21 @@
     S(x,y,0,2.2,1.1,0.9,C_WOOD,[0.30,0.22,0.15,2]);
     D(x-1.0,y-0.45,0,0.12,0.12,1.9,C_WOOD,C_WOOD);D(x+1.0,y-0.45,0,0.12,0.12,1.9,C_WOOD,C_WOOD);
     D(x-1.0,y+0.45,0,0.12,0.12,1.9,C_WOOD,C_WOOD);D(x+1.0,y+0.45,0,0.12,0.12,1.9,C_WOOD,C_WOOD);
-    D(x,y,1.9,2.6,1.5,0.12,[0.62,0.18,0.20],[0.70,0.24,0.24]);
+    gableRoof(x,y,1.9,2.6,1.5,0.4,[0.62,0.18,0.20,0],0);
     chochin(x+0.8,y-0.7,1.5);
   }
   function well(x,y){
     S(x,y,0,1.4,1.4,0.7,C_STONE,[0.06,0.08,0.12]);
     D(x-0.6,y,0.7,0.1,0.1,1.0,C_WOOD,C_WOOD);D(x+0.6,y,0.7,0.1,0.1,1.0,C_WOOD,C_WOOD);
     D(x,y,1.7,1.8,1.0,0.15,C_KAWARA,C_KAWARA_L);
+    pyramidRoof(x,y,1.85,2.0,1.2,0.5,C_KAWARA);
   }
-  function kura(x,y,w,d,h){S(x,y,0,w,d,h,C_WALL,C_KAWARA);S(x,y,h,w+0.8,d+0.8,0.3,C_KAWARA,C_KAWARA);}
+  function kura(x,y,w,d,h){
+    S(x,y,0,w,d,h,C_WALL,C_KAWARA);
+    S(x,y,h,w+0.8,d+0.8,0.3,C_KAWARA,C_KAWARA);
+    gableRoof(x,y,h+0.28,w+1.0,d+1.0,0.7,C_KAWARA,0);
+    SCOL(x,y,h+0.3,w+0.3,(d+1.0)*0.5,0.35);
+  }
   function yagura(x,y,h){
     S(x,y,0,2,2,h,C_WOOD,C_WOOD);
     S(x,y,h,3,3,0.25,C_KAWARA,C_KAWARA_L);
@@ -2109,6 +2171,7 @@
     torii(22,-12,2.6);
     S(22,-5,0,6,4,2.6,C_WALL,C_KAWARA);
     S(22,-5,2.6,7,5,0.3,C_KAWARA,C_KAWARA);
+    gableRoof(22,-5,2.88,7.4,5.4,1.1,C_KAWARA,0);
     chochin(20.5,-7.5,1.7);chochin(23.5,-7.5,1.7);
     jizo(19,-9,0);
     // sakura
@@ -2118,11 +2181,13 @@
     S(-21.5,29,0,25,1.6,2.8,C_WALL,C_KAWARA);
     S(15.5,29,0,37,1.6,2.8,C_WALL,C_KAWARA);
     S(-6,29,2.8,9,2.6,0.5,C_KAWARA,C_KAWARA_L);
+    gableRoof(-6,29,3.28,9.6,3.2,0.8,C_KAWARA,0);
     gateDoor(-6,29,0,6,0.7,2.8);
     S(1,27,0,4,0.3,2.0,C_WALL,C_WALL);
     S(-1,25.75,0,0.4,2.8,2.0,C_WALL,C_WALL);
     S(3,25.75,0,0.4,2.8,2.0,C_WALL,C_WALL);
     S(1,25.75,2.0,4.8,3.6,0.3,C_KAWARA,C_KAWARA);
+    gableRoof(1,25.75,2.28,5.2,4.0,0.7,C_KAWARA,0);
     levers.push({x:1,y:26.4,z:1.0,on:false,gateIdx:0});
     chochin(2.4,24.2,1.8);
     // street lanterns
@@ -2138,9 +2203,9 @@
     var kb=[[-6,-48],[-6,-40],[-6,-32],[-12,-22],[-1,-22],[12,-44],[12,-34],
             [22,-8],[-6,12],[-6,20],[10,14],[-22,-44],[18,3.2],[24,-4]];
     for(var k=0;k<kb.length;k++)pickups.push({kind:'koban',x:kb[k][0],y:kb[k][1],z:kb[k][0]===18?0.15:0.4,t:0});
-    pickups.push({kind:'koban',x:-13,y:-43,z:3.1,t:0});
-    pickups.push({kind:'koban',x:1,y:-35,z:3.1,t:0});
-    pickups.push({kind:'koban',x:17,y:-38,z:2.5,t:0});
+    pickups.push({kind:'koban',x:-13,y:-41.3,z:3.1,t:0});
+    pickups.push({kind:'koban',x:1,y:-33.3,z:3.1,t:0});
+    pickups.push({kind:'koban',x:17,y:-36.6,z:2.7,t:0});
     pickups.push({kind:'onigiri',x:4,y:-23.0,z:1.1,t:0});
     pickups.push({kind:'onigiri',x:16,y:18,z:0.4,t:0});
     jizo(3,-52,0);jizo(-22,-19,0);jizo(-2,12,0);
@@ -2192,18 +2257,21 @@
     // boathouse
     S(-14,-12,0,3,2,1.6,C_WOOD,C_KAWARA);
     S(-14,-12,1.6,3.8,2.8,0.25,C_KAWARA,C_KAWARA);
+    gableRoof(-14,-12,1.83,4.2,3.2,0.65,C_KAWARA,0);
     pickups.push({kind:'shubox',x:-14,y:-10.6,z:0.5,t:0});
     pickups.push({kind:'onigiri',x:-15.4,y:-10.6,z:0.4,t:0});
     // masugata enclosure: south wall + gate (key on the captain)
     S(-4.5,10,0,15,1.4,3,C_WALL,C_KAWARA);
     S(11.5,10,0,5,1.4,3,C_WALL,C_KAWARA);
     S(6,10,3,8,2.2,0.5,C_KAWARA,C_KAWARA_L);
+    gableRoof(6,10,3.48,8.6,2.8,0.8,C_KAWARA,0);
     gateDoor(6,10,0,6,0.7,3);
     S(-12,16,0,1.4,13.4,3,C_WALL,C_KAWARA);
     S(14,16,0,1.4,13.4,3,C_WALL,C_KAWARA);
     S(-8.85,22,0,7.7,1.4,3,C_WALL,C_KAWARA);
     S(7.85,22,0,13.7,1.4,3,C_WALL,C_KAWARA);
     S(-2,22,3,8,2.2,0.5,C_KAWARA,C_KAWARA_L);
+    gableRoof(-2,22,3.48,8.6,2.8,0.8,C_KAWARA,0);
     gateDoor(-2,22,0,6,0.7,3);
     levers.push({x:12,y:20,z:1.1,on:false,gateIdx:1});
     levers.push({x:-16,y:9,z:6.0,on:false,gateIdx:0}); // west tower lever: the quiet way in
@@ -2277,6 +2345,7 @@
     S(-15,24,0,24,1.2,2.6,C_WALL,C_KAWARA);
     S(15,24,0,24,1.2,2.6,C_WALL,C_KAWARA);
     S(0,24,2.6,7,2.4,0.5,C_KAWARA,C_KAWARA_L);
+    gableRoof(0,24,3.08,7.6,3.0,0.7,C_KAWARA,0);
     gateDoor(0,24,0,5,0.7,2.6);
     // goten palace shell
     S(0,3.2,0,26,1.6,0.45,C_WOOD,[0.30,0.22,0.15,2]); // engawa porch
@@ -2285,7 +2354,8 @@
     wallX(-12,-1.2,20,0,2.6,0.4);wallX(1.2,12,20,0,2.6,0.4);   // north + rear door
     wallY(-12,4,20,0,2.6,0.4);wallY(12,4,20,0,2.6,0.4);
     S(0,12,2.6,25,17.4,0.35,C_KAWARA,C_KAWARA);
-    D(0,12,2.95,12,6,0.5,C_KAWARA_L,C_KAWARA_L);
+    gableRoof(0,12,2.95,25.4,14.6,1.5,C_KAWARA,0); // long sweeping silhouette
+    SCOL(0,12,2.95,24,7.4,0.7);
     W2(-6,4,1.2,3,1.6,3,C_ANDON[0],C_ANDON[1],C_ANDON[2],0.5);
     W2(8,4,1.2,3,1.6,3,C_ANDON[0],C_ANDON[1],C_ANDON[2],0.45);
     // interior floor + partitions (central corridor, two rooms each side)
@@ -2329,7 +2399,7 @@
     spawnEnemy('ashigaru',-12,-14,0,{patrol:[[-14,-12],[-8,-18]]});
     spawnEnemy('ashigaru',12,-12,0,{patrol:[[8,-12],[16,-12]]});
     spawnEnemy('ashigaru',2,0,0,{patrol:[[6,0],[-2,0]]});
-    spawnEnemy('archer',-3,10,2.95,{facing:PI});
+    spawnEnemy('archer',-8,4.5,2.95,{facing:PI});
     spawnEnemy('ashigaru',0,7,0.45,{patrol:[[0,6],[0,18]]});
     spawnEnemy('elite',-6,16,0.45,{facing:-PI/2});
     spawnEnemy('elite',7,13,0.45,{patrol:[[4,13],[10,17]]});
@@ -2372,6 +2442,7 @@
     S(-7.25,8.5,5.7,1.3,14.8,0.4,C_KAWARA,C_KAWARA);
     S(-5.6,5.3,5.7,2.0,8.4,0.4,C_KAWARA,[0.32,0.24,0.16,2]);
     S(-5.6,14.95,5.7,2.0,1.9,0.4,C_KAWARA,[0.32,0.24,0.16,2]);
+    tierRoofBand(0,8.5,6.1,15.8,14.8,13.2,12.2,0.5,C_KAWARA);
     stairsY(-5.6,13.0,3,6,-1,1.8);
     S(-7,11.7,5.7,0.5,5.6,2.9,C_WALL,C_WALL); // shell wall continues above the 1F west face
     S(-5.3,15,5.7,4.8,0.5,2.9,C_WALL,C_WALL); // ...and above the 1F north face
@@ -2394,6 +2465,7 @@
     S(6.9,8.5,8.6,1.0,13.8,0.4,C_KAWARA,C_KAWARA);
     S(5.4,5.05,8.6,2.0,6.9,0.4,C_KAWARA,[0.32,0.24,0.16,2]);
     S(5.4,14.7,8.6,2.0,1.4,0.4,C_KAWARA,[0.32,0.24,0.16,2]);
+    tierRoofBand(0,8.5,9.0,14.8,13.8,12.0,11.0,0.5,C_KAWARA);
     stairsY(5.4,13.0,6.1,6,-1,1.8);
     S(6.4,11.7,8.6,0.5,5.6,2.9,C_WALL,C_WALL); // shell wall continues above the 2F east face
     S(5,14.4,8.6,4.8,0.5,2.9,C_WALL,C_WALL);  // ...and above the 2F north face
@@ -2415,6 +2487,7 @@
     S(-5.8,8.5,11.5,2.0,12.6,0.4,C_KAWARA,C_KAWARA);
     S(-3.8,5.85,11.5,2.0,7.3,0.4,C_KAWARA,C_TATAMI);
     S(-3.8,14.15,11.5,2.0,1.3,0.4,C_KAWARA,C_TATAMI);
+    tierRoofBand(0,8.5,11.9,13.6,12.6,10.8,9.8,0.5,C_KAWARA);
     stairsY(-3.8,12.5,9.0,6,-1,1.8);
     S(-3.8,13.8,11.5,3.4,0.5,3.0,C_WALL,C_WALL); // shell wall continues above the 3F north face
     // ===== 4F shell — GOZA-NO-MA, the throne room (floor 11.9) =====
@@ -2430,9 +2503,9 @@
     S(5.2,8.5,14.2,0.5,3,0.9,C_WALL,C_WALL);
     // roof + golden shachihoko
     S(0,8.5,15.1,13.5,12.5,0.5,C_KAWARA,C_KAWARA);
-    D(0,8.5,15.6,7,5,0.6,C_KAWARA_L,C_KAWARA_L);
-    D(-3,8.5,16.2,0.5,0.4,0.7,C_GOLD,C_GOLD,0.5);
-    D(3,8.5,16.2,0.5,0.4,0.7,C_GOLD,C_GOLD,0.5);
+    gableRoof(0,8.5,15.58,13.9,12.9,1.7,C_KAWARA,0);
+    D(-4.2,8.5,17.18,0.5,0.4,0.7,C_GOLD,C_GOLD,0.5);
+    D(4.2,8.5,17.18,0.5,0.4,0.7,C_GOLD,C_GOLD,0.5);
     // throne dais + pillars + braziers
     S(0,11.5,11.9,6,2.6,0.4,C_WOOD,C_TATAMI);
     D(0,12.9,12.3,5,0.15,1.6,C_GOLD,C_GOLD,0.3);
