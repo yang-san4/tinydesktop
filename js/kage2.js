@@ -508,7 +508,7 @@
     else pushQuad(staticMesh,[cx-hw,cy-e,cz-hh],[cx+hw,cy-e,cz-hh],[cx+hw,cy-e,cz+hh],[cx-hw,cy-e,cz+hh],[0,-1,0],r,g,b,em);
   }
   // ===== DYNAMIC MESH (player, enemies, pickups, props) =====
-  var DYN_CAP=96000;
+  var DYN_CAP=200000;
   var dynArr=new Float32Array(DYN_CAP);
   var dynLen=0;
   var dynBuf=gl.createBuffer();
@@ -2370,10 +2370,76 @@
       zoneFade=0;zoneFadeDir=0;
     }
   }
-  // ===== CHARACTER MODELS =====
+  // ===== CHARACTER MODELS (articulated box rigs) =====
   function locX(a,lx,ly){return lx*Math.cos(a)+ly*Math.sin(a);}
   function locY(a,lx,ly){return -lx*Math.sin(a)+ly*Math.cos(a);}
-  var C_NINJA=[0.16,0.19,0.30],C_SKIN=[0.85,0.70,0.58],C_SCARF=[0.80,0.16,0.18];
+  var C_NINJA=[0.16,0.19,0.30],C_NINJA_D=[0.11,0.13,0.22],C_SKIN=[0.85,0.70,0.58],C_SCARF=[0.80,0.16,0.18];
+  var C_LACQ=[0.10,0.09,0.09],C_KYAHAN=[0.50,0.45,0.36],C_STEEL=[0.80,0.82,0.90];
+
+  // tapered box: top face scaled by tsT, bottom by tsB (cones, helmets, skirts)
+  function dynBoxT(cx,cy,cz,hx,hy,hz,yaw,pitch,roll,col,em,tsT,tsB){
+    tsT=(tsT===undefined)?1:tsT;tsB=(tsB===undefined)?1:tsB;
+    var cy_=Math.cos(yaw),sy_=Math.sin(yaw);
+    var cp_=Math.cos(pitch||0),sp_=Math.sin(pitch||0);
+    var cr_=Math.cos(roll||0),sr_=Math.sin(roll||0);
+    var r00=cy_*cr_-sy_*sp_*sr_, r01=-sy_*cp_, r02=cy_*sr_+sy_*sp_*cr_;
+    var r10=sy_*cr_+cy_*sp_*sr_, r11=cy_*cp_,  r12=sy_*sr_-cy_*sp_*cr_;
+    var r20=-cp_*sr_,            r21=sp_,      r22=cp_*cr_;
+    function tf(x,y,z,o){
+      o[0]=cx+r00*x+r01*y+r02*z;
+      o[1]=cy+r10*x+r11*y+r12*z;
+      o[2]=cz+r20*x+r21*y+r22*z;
+    }
+    tf(-hx*tsB,-hy*tsB,-hz,_bc[0]);tf(hx*tsB,-hy*tsB,-hz,_bc[1]);tf(hx*tsB,hy*tsB,-hz,_bc[2]);tf(-hx*tsB,hy*tsB,-hz,_bc[3]);
+    tf(-hx*tsT,-hy*tsT,hz,_bc[4]);tf(hx*tsT,-hy*tsT,hz,_bc[5]);tf(hx*tsT,hy*tsT,hz,_bc[6]);tf(-hx*tsT,hy*tsT,hz,_bc[7]);
+    var r=col[0],g=col[1],b=col[2];
+    var nE=[r00,r10,r20],nW=[-r00,-r10,-r20];
+    var nN=[r01,r11,r21],nS=[-r01,-r11,-r21];
+    var nU=[r02,r12,r22],nD=[-r02,-r12,-r22];
+    dynQuad(_bc[4],_bc[5],_bc[6],_bc[7],nU,r,g,b,em);
+    dynQuad(_bc[3],_bc[2],_bc[1],_bc[0],nD,r*0.5,g*0.5,b*0.5,em);
+    dynQuad(_bc[1],_bc[2],_bc[6],_bc[5],nE,r,g,b,em);
+    dynQuad(_bc[3],_bc[0],_bc[4],_bc[7],nW,r,g,b,em);
+    dynQuad(_bc[2],_bc[3],_bc[7],_bc[6],nN,r,g,b,em);
+    dynQuad(_bc[0],_bc[1],_bc[5],_bc[4],nS,r,g,b,em);
+  }
+  // a limb segment hanging from a pivot, pitched forward by ang; leaves the end in _limbEnd
+  var _limbEnd=[0,0,0];
+  function limbSeg(px,py,pz,a,ang,len,thx,thy,col,em){
+    var f=Math.sin(ang)*len,d=-Math.cos(ang)*len;
+    dynBoxRot(px+locX(a,0,f/2),py+locY(a,0,f/2),pz+d/2,thx,thy,len/2,-a,ang,0,col,em||0);
+    _limbEnd[0]=px+locX(a,0,f);_limbEnd[1]=py+locY(a,0,f);_limbEnd[2]=pz+d;
+  }
+  // two articulated legs with knees + feet; ph drives the walk cycle
+  function legPair(x,y,hipZ,a,ph,amp,crouch,thT,thS,lenT,lenS,colT,colS,colF,lat){
+    for(var s2=-1;s2<=1;s2+=2){
+      var phl=ph+(s2>0?0:PI);
+      var tA=Math.sin(phl)*amp+crouch;
+      var kB=Math.max(0,Math.sin(phl-1.2))*amp*1.4+crouch*0.4;
+      limbSeg(x+locX(a,s2*lat,0),y+locY(a,s2*lat,0),hipZ,a,tA,lenT,thT,thT*1.05,colT);
+      limbSeg(_limbEnd[0],_limbEnd[1],_limbEnd[2],a,tA-kB,lenS,thS,thS,colS);
+      dynBoxRot(_limbEnd[0]+locX(a,0,0.05),_limbEnd[1]+locY(a,0,0.05),_limbEnd[2]+0.035,thS*1.15,0.10,0.035,-a,0,0,colF,0);
+    }
+  }
+  // two arms; returns nothing but stores hand positions in _handR/_handL
+  var _handR=[0,0,0],_handL=[0,0,0];
+  function armPair(x,y,shZ,a,lat,swing,rU,rF,lU,lF,thU,thF,lenU,lenF,colU,colF,skin){
+    limbSeg(x+locX(a,lat,0),y+locY(a,lat,0),shZ,a,rU,lenU,thU,thU,colU);
+    limbSeg(_limbEnd[0],_limbEnd[1],_limbEnd[2],a,rF,lenF,thF,thF,colF);
+    _handR[0]=_limbEnd[0];_handR[1]=_limbEnd[1];_handR[2]=_limbEnd[2];
+    if(skin)dynBoxRot(_handR[0],_handR[1],_handR[2],0.04,0.045,0.04,-a,0,0,skin,0);
+    limbSeg(x+locX(a,-lat,0),y+locY(a,-lat,0),shZ,a,lU,lenU,thU,thU,colU);
+    limbSeg(_limbEnd[0],_limbEnd[1],_limbEnd[2],a,lF,lenF,thF,thF,colF);
+    _handL[0]=_limbEnd[0];_handL[1]=_limbEnd[1];_handL[2]=_limbEnd[2];
+    if(skin)dynBoxRot(_handL[0],_handL[1],_handL[2],0.04,0.045,0.04,-a,0,0,skin,0);
+  }
+  // kusazuri: armored skirt plates flaring from the waist
+  function kusazuri(x,y,z,a,col,n,r,flare){
+    for(var i=0;i<n;i++){
+      var pa=a+(i/n)*TAU;
+      dynBoxT(x+locX(pa,0,r),y+locY(pa,0,r),z,0.085,0.028,0.085,-pa,flare,0,col,0,0.8,1.25);
+    }
+  }
 
   var dashTrailPos=[]; // afterimage history
   function drawNinjaCling(){
@@ -2391,7 +2457,7 @@
     // head turned to scan past the corner
     var ha=a+player.peek*0.8;
     var hx=x+tx*lean*0.9,hy=y+ty*lean*0.9;
-    dynBoxRot(hx,hy,z+1.27,0.14,0.14,0.15,yaw-player.peek*0.8,0,0,C_NINJA,0);
+    dynBoxT(hx,hy,z+1.27,0.14,0.14,0.15,yaw-player.peek*0.8,0,0,C_NINJA,0,0.86);
     dynBoxRot(hx+Math.sin(ha)*0.12,hy+Math.cos(ha)*0.12,z+1.30,0.10,0.03,0.045,yaw-player.peek*0.8,0,0,C_SKIN,0.05);
     // arms spread along the wall
     dynBoxRot(x+tx*0.30,y+ty*0.30,z+1.0,0.07,0.08,0.24,yaw,0,1.2,C_NINJA,0);
@@ -2407,46 +2473,68 @@
   function drawNinja(){
     if(player.cling){drawNinjaCling();return;}
     var x=player.x,y=player.y,z=player.z,a=player.facing,yaw=-a;
-    var sneak=keys.sneak&&player.grounded?0.18:0;
-    var run=Math.sin(player.runPhase);
+    var sneak=keys.sneak&&player.grounded?1:0;
     var moving=Math.abs(player.vx)+Math.abs(player.vy)>0.5;
-    var legSwing=moving?run*0.6:0;
-    var airPose=!player.grounded?0.4:0;
-    // legs
-    dynBoxRot(x+locX(a,0.10,0),y+locY(a,0.10,0),z+0.30,0.09,0.10,0.30,yaw,legSwing+airPose*0.5,0,C_NINJA,0);
-    dynBoxRot(x+locX(a,-0.10,0),y+locY(a,-0.10,0),z+0.30,0.09,0.10,0.30,yaw,-legSwing+airPose,0,C_NINJA,0);
-    // torso (dips when sneaking)
-    var tz=z+0.85-sneak;
-    dynBoxRot(x,y,tz,0.20,0.14,0.30,yaw,moving?0.12:0+sneak*0.8,0,C_NINJA,0);
-    // sash
-    dynBoxRot(x,y,tz-0.12,0.21,0.15,0.05,yaw,0,0,[0.45,0.10,0.12],0.1);
-    // head + eye slit
-    dynBoxRot(x,y,tz+0.42,0.14,0.14,0.15,yaw,0,0,C_NINJA,0);
-    dynBoxRot(x+locX(a,0,0.12),y+locY(a,0,0.12),tz+0.45,0.12,0.03,0.045,yaw,0,0,C_SKIN,0.05);
-    // arms: right arm swings the sword during attacks
-    var armR=0,armSwing=moving?-run*0.5:0;
-    if(player.atkPhase===1)armR=-1.4;
-    else if(player.atkPhase===2)armR=0.9;
-    else if(player.atkPhase===3)armR=0.4;
-    dynBoxRot(x+locX(a,0.26,0),y+locY(a,0.26,0),tz+0.10,0.07,0.08,0.26,yaw,armR||armSwing,0,C_NINJA,0);
-    dynBoxRot(x+locX(a,-0.26,0),y+locY(a,-0.26,0),tz+0.10,0.07,0.08,0.26,yaw,-armSwing*0.7,0,C_NINJA,0);
-    // katana: on back when idle, in hand mid-swing
-    if(player.atkPhase>0){
-      var swingRoll=player.atkPhase===2?(player.combo%2?1.1:-1.1):(player.combo%2?-0.9:0.9);
-      dynBoxRot(x+locX(a,0.2,0.5),y+locY(a,0.2,0.5),tz+0.25,0.03,0.5,0.03,yaw,0.3,swingRoll,[0.85,0.88,0.95],0.35);
+    var ph=player.runPhase;
+    var amp=moving?0.62:0;
+    var air=!player.grounded;
+    var crouchZ=sneak*0.14+player.landDip*0.08;
+    var hipZ=z+0.64-crouchZ;
+    var lean=(moving?0.14:0)+sneak*0.30;
+    if(air){
+      // tucked jump
+      limbSeg(x+locX(a,0.09,0),y+locY(a,0.09,0),hipZ,a,0.7,0.30,0.068,0.075,C_NINJA);
+      limbSeg(_limbEnd[0],_limbEnd[1],_limbEnd[2],a,-0.4,0.26,0.055,0.06,C_NINJA_D);
+      limbSeg(x+locX(a,-0.09,0),y+locY(a,-0.09,0),hipZ,a,1.0,0.30,0.068,0.075,C_NINJA);
+      limbSeg(_limbEnd[0],_limbEnd[1],_limbEnd[2],a,-0.2,0.26,0.055,0.06,C_NINJA_D);
     }else{
-      dynBoxRot(x+locX(a,0,-0.17),y+locY(a,0,-0.17),tz+0.3,0.04,0.04,0.5,yaw,0,0.6,[0.25,0.25,0.32],0);
+      legPair(x,y,hipZ,a,ph,amp,sneak*0.45,0.068,0.055,0.30,0.27,C_NINJA,C_NINJA_D,C_NINJA_D,0.09);
     }
-    // scarf: 3 trailing segments
-    for(var sc=0;sc<3;sc++){
-      var lag=sc*0.16+0.12;
-      var flow=Math.sin(player.scarfT*1.6-sc*1.4)*0.12;
-      var sx=x+locX(a,flow,-lag-0.1);
-      var sy=y+locY(a,flow,-lag-0.1);
-      var szz=tz+0.40-sc*0.05+Math.sin(player.scarfT*2-sc*1.2)*0.04;
-      dynBoxRot(sx,sy,szz,0.07-sc*0.012,0.10,0.035,yaw,0,flow*2,C_SCARF,0.12);
+    // hips + obi + knot
+    dynBoxRot(x,y,hipZ+0.03,0.150,0.105,0.065,yaw,lean*0.4,0,C_NINJA_D,0);
+    dynBoxRot(x,y,hipZ+0.115,0.160,0.115,0.034,yaw,lean*0.5,0,[0.45,0.10,0.12],0.08);
+    dynBoxRot(x+locX(a,0,-0.12),y+locY(a,0,-0.12),hipZ+0.11,0.05,0.04,0.05,yaw,0,0,[0.45,0.10,0.12],0.05);
+    // torso (tapers up into the shoulders) + chest wrap
+    var chestZ=hipZ+0.30;
+    dynBoxT(x,y,chestZ,0.142,0.098,0.165,yaw,lean,0,C_NINJA,0,1.25,0.92);
+    dynBoxRot(x+locX(a,0,0.082),y+locY(a,0,0.082),chestZ+0.05,0.112,0.03,0.10,yaw,lean,0,C_NINJA_D,0);
+    // arms (right arm carries the swing)
+    var shZ=chestZ+0.155,shLat=0.205;
+    var armSw=moving?Math.sin(ph+PI)*0.5:0;
+    var rU=armSw*0.8+0.12,rF=armSw*0.6+0.35;
+    if(player.atkPhase===1){rU=-2.3;rF=-2.0;}
+    else if(player.atkPhase===2){rU=1.5;rF=1.7;}
+    else if(player.atkPhase===3){rU=0.7;rF=1.0;}
+    armPair(x,y,shZ,a,shLat,armSw,rU,rF,-armSw*0.8+0.12,-armSw*0.5+0.35,
+      0.048,0.040,0.20,0.18,C_NINJA,C_NINJA,C_SKIN);
+    // shoulder pads
+    dynBoxT(x+locX(a,shLat,0),y+locY(a,shLat,0),shZ+0.045,0.068,0.075,0.034,yaw,0,0.25,C_NINJA_D,0,0.78);
+    dynBoxT(x+locX(a,-shLat,0),y+locY(a,-shLat,0),shZ+0.045,0.068,0.075,0.034,yaw,0,-0.25,C_NINJA_D,0,0.78);
+    // neck, hooded head, eye band + eyes, hood fold
+    var hdZ=chestZ+0.295;
+    dynBoxRot(x,y,hdZ-0.075,0.045,0.045,0.04,yaw,0,0,C_SKIN,0);
+    dynBoxT(x,y,hdZ+0.06,0.112,0.118,0.112,yaw,lean*0.3,0,C_NINJA,0,0.84);
+    dynBoxT(x+locX(a,0,-0.065),y+locY(a,0,-0.065),hdZ+0.155,0.07,0.08,0.05,yaw,-0.5,0,C_NINJA_D,0,0.45);
+    dynBoxRot(x+locX(a,0,0.103),y+locY(a,0,0.103),hdZ+0.08,0.092,0.022,0.036,yaw,0,0,C_SKIN,0.04);
+    dynBoxRot(x+locX(a,0.043,0.116),y+locY(a,0.043,0.116),hdZ+0.08,0.02,0.012,0.018,yaw,0,0,[0.05,0.05,0.07],0);
+    dynBoxRot(x+locX(a,-0.043,0.116),y+locY(a,-0.043,0.116),hdZ+0.08,0.02,0.012,0.018,yaw,0,0,[0.05,0.05,0.07],0);
+    // katana: in the right hand mid-swing, otherwise slung across the back
+    if(player.atkPhase>0){
+      var swingRoll=player.atkPhase===2?(player.combo%2?1.2:-1.2):(player.combo%2?-0.9:0.9);
+      dynBoxRot(_handR[0]+locX(a,0,0.26),_handR[1]+locY(a,0,0.26),_handR[2]+0.05,0.018,0.30,0.018,yaw,0.2,swingRoll,C_STEEL,0.4);
+      dynBoxRot(_handR[0],_handR[1],_handR[2]+0.01,0.024,0.07,0.024,yaw,0.2,swingRoll,C_LACQ,0);
     }
-    // dash afterimages
+    dynBoxRot(x+locX(a,0.06,-0.155),y+locY(a,0.06,-0.155),chestZ+0.10,0.034,0.034,0.29,yaw,0.5,0.95,C_LACQ,0);
+    dynBoxRot(x+locX(a,-0.10,-0.19),y+locY(a,-0.10,-0.19),chestZ+0.26,0.027,0.027,0.085,yaw,0.5,0.95,[0.55,0.50,0.42],0.05);
+    // scarf: four trailing segments
+    for(var sc=0;sc<4;sc++){
+      var lag=sc*0.13+0.10;
+      var flow=Math.sin(player.scarfT*1.6-sc*1.3)*0.14;
+      var sx=x+locX(a,flow,-lag-0.08);
+      var sy=y+locY(a,flow,-lag-0.08);
+      var szz=hdZ-0.02-sc*0.045+Math.sin(player.scarfT*2-sc*1.2)*0.05;
+      dynBoxRot(sx,sy,szz,0.06-sc*0.009,0.085,0.026,yaw,0.15,flow*2.2,C_SCARF,0.10);
+    }
     if(player.dashT>0){
       dashTrailPos.unshift([x,y,z]);
       if(dashTrailPos.length>6)dashTrailPos.length=6;
@@ -2459,85 +2547,161 @@
     else if(e.susp>0.15){col=[0.95,0.8,0.2];em=0.8;}
     else{col=[0.05,0.05,0.05];em=0;}
     var a=e.facing;
-    dynBoxRot(hx+locX(a,0.06,0.13),hy+locY(a,0.06,0.13),hz,0.03,0.02,0.03,yaw,0,0,col,em);
-    dynBoxRot(hx+locX(a,-0.06,0.13),hy+locY(a,-0.06,0.13),hz,0.03,0.02,0.03,yaw,0,0,col,em);
+    dynBoxRot(hx+locX(a,0.05,0.115),hy+locY(a,0.05,0.115),hz,0.022,0.014,0.022,yaw,0,0,col,em);
+    dynBoxRot(hx+locX(a,-0.05,0.115),hy+locY(a,-0.05,0.115),hz,0.022,0.014,0.022,yaw,0,0,col,em);
   }
   function drawEnemy(e){
     var x=e.x,y=e.y,z=e.z,a=e.facing,yaw=-a;
     var d=e.def;
     var col=e.flash>0?[1,1,1]:d.col;
-    var bob=Math.sin(e.bob)*0.02;
+    var colD=[col[0]*0.7,col[1]*0.7,col[2]*0.7];
+    var bob=Math.sin(e.bob)*0.018;
     var telegraph=e.atkPhase===1||(d.boss&&e.bossAtk===1&&e.atkAnimT>0);
+    // walk cycle driven by actual ground covered
+    var mv=dist2d(x,y,e._lx===undefined?x:e._lx,e._ly===undefined?y:e._ly);
+    e._lx=x;e._ly=y;
+    e.walkPh=(e.walkPh||0)+mv*6.5;
+    e._amp=lerp(e._amp||0,mv>0.0008?0.5:0,0.18);
+    var ph=e.walkPh,amp=e._amp;
+    var armSw=amp>0.05?Math.sin(ph+PI)*amp*0.8:0;
+
     if(e.kind==='ashigaru'){
-      dynBoxRot(x+locX(a,0.10,0),y+locY(a,0.10,0),z+0.32,0.09,0.10,0.32,yaw,0,0,col,0);
-      dynBoxRot(x+locX(a,-0.10,0),y+locY(a,-0.10,0),z+0.32,0.09,0.10,0.32,yaw,0,0,col,0);
-      dynBoxRot(x,y,z+0.95+bob,0.22,0.16,0.32,yaw,0,0,col,0);
-      dynBoxRot(x,y,z+1.02+bob,0.24,0.18,0.10,yaw,0,0,[0.30,0.22,0.16],0); // do (chest)
-      dynBoxRot(x,y,z+1.42,0.13,0.13,0.14,yaw,0,0,C_SKIN,0);
-      // jingasa hat (2 tiers)
-      dynBoxRot(x,y,z+1.56,0.24,0.24,0.05,yaw,0,0,[0.24,0.20,0.14],0);
-      dynBoxRot(x,y,z+1.62,0.13,0.13,0.05,yaw,0,0,[0.30,0.25,0.18],0);
-      alertEyes(e,x,y,z+1.44,yaw);
-      // spear: shouldered when calm, leveled when alerted; glows on windup
-      var spearPitch=e.alerted?0.15:-1.2;
-      var sx2=x+locX(a,0.30,0.1),sy2=y+locY(a,0.30,0.1);
-      dynBoxRot(sx2,sy2,z+1.1,0.03,0.85,0.03,yaw,spearPitch,0,C_WOOD,0);
-      dynBoxRot(sx2+locX(a,0,Math.cos(spearPitch)*0.85),sy2+locY(a,0,Math.cos(spearPitch)*0.85),
-        z+1.1+Math.sin(-spearPitch)*-0.85,0.04,0.14,0.04,yaw,spearPitch,0,
-        telegraph?[1,0.4,0.2]:[0.8,0.82,0.9],telegraph?0.9:0.15);
-      // carried lantern
+      var hipZ=z+0.72;
+      legPair(x,y,hipZ,a,ph,amp,0,0.072,0.058,0.34,0.30,col,C_KYAHAN,[0.35,0.30,0.22],0.095);
+      kusazuri(x,y,hipZ+0.02,a,[0.24,0.18,0.12],4,0.13,0.30);
+      // do (chest armor) over the uniform
+      dynBoxT(x,y,hipZ+0.21+bob,0.165,0.115,0.12,yaw,0,0,col,0,1.05,0.92);
+      dynBoxT(x,y,hipZ+0.33+bob,0.185,0.135,0.105,yaw,0,0,[0.28,0.21,0.14],0,1.0,0.9);
+      dynBoxRot(x+locX(a,0,0.105),y+locY(a,0,0.105),hipZ+0.33+bob,0.13,0.025,0.07,yaw,0,0,[0.34,0.26,0.18],0); // breastplate band
+      // arms: spear leveled when alerted
+      var shZ2=hipZ+0.44+bob;
+      var rU2=e.alerted?1.25:(armSw+0.15),rF2=e.alerted?1.5:(armSw*0.6+0.4);
+      armPair(x,y,shZ2,a,0.20,armSw,rU2,rF2,e.alerted?0.9:(-armSw+0.15),e.alerted?1.3:(-armSw*0.6+0.4),
+        0.046,0.04,0.20,0.18,col,col,C_SKIN);
+      // neck + head + hachimaki + jingasa cone
+      var hdZ2=hipZ+0.66;
+      dynBoxRot(x,y,hdZ2-0.06,0.04,0.04,0.035,yaw,0,0,C_SKIN,0);
+      dynBoxRot(x,y,hdZ2+0.045,0.105,0.105,0.095,yaw,0,0,C_SKIN,0);
+      dynBoxRot(x+locX(a,0,0.02),y+locY(a,0,0.02),hdZ2+0.105,0.108,0.108,0.018,yaw,0,0,[0.75,0.72,0.65],0);
+      dynBoxT(x,y,hdZ2+0.20,0.275,0.275,0.085,yaw,0,0,[0.25,0.21,0.14],0,0.16);
+      dynBoxRot(x,y,hdZ2+0.30,0.028,0.028,0.022,yaw,0,0,[0.32,0.27,0.18],0);
+      alertEyes(e,x,y,hdZ2+0.05,yaw);
+      // yari: rests upright at the shoulder when calm, leveled from the hand when alerted
+      var spearPitch,sx2,sy2,sz2;
+      if(e.alerted){spearPitch=1.40;sx2=_handR[0];sy2=_handR[1];sz2=_handR[2]+0.02;}
+      else{spearPitch=-0.14;sx2=x+locX(a,0.21,-0.03);sy2=y+locY(a,0.21,-0.03);sz2=z+0.92;}
+      dynBoxRot(sx2,sy2,sz2,0.024,0.024,0.85,yaw,spearPitch,0,[0.32,0.22,0.12],0);
+      var tipD=0.92;
+      dynBoxT(sx2+locX(a,0,Math.sin(spearPitch)*tipD),sy2+locY(a,0,Math.sin(spearPitch)*tipD),
+        sz2+Math.cos(spearPitch)*tipD,0.035,0.035,0.10,yaw,spearPitch,0,
+        telegraph?[1,0.4,0.2]:C_STEEL,telegraph?0.9:0.18,0.1);
       if(e.lantern){
-        var lx2=x+locX(a,-0.34,0.15),ly2=y+locY(a,-0.34,0.15);
-        dynBoxRot(lx2,ly2,z+1.0+Math.sin(e.bob*2)*0.03,0.10,0.10,0.13,yaw,0,0,C_CHOCHIN,1);
+        var lx2=_handL[0],ly2=_handL[1];
+        dynBoxRot(lx2,ly2,_handL[2]-0.10+Math.sin(e.bob*2)*0.03,0.09,0.09,0.12,yaw,0,0,C_CHOCHIN,1);
+        dynBoxRot(lx2,ly2,_handL[2]-0.005,0.012,0.012,0.10,yaw,0,0,[0.3,0.22,0.14],0);
       }
     }else if(e.kind==='archer'){
-      dynBoxRot(x+locX(a,0.08,0),y+locY(a,0.08,0),z+0.30,0.08,0.09,0.30,yaw,0,0,col,0);
-      dynBoxRot(x+locX(a,-0.08,0),y+locY(a,-0.08,0),z+0.30,0.08,0.09,0.30,yaw,0,0,col,0);
-      dynBoxRot(x,y,z+0.92+bob,0.18,0.13,0.30,yaw,0,0,col,0);
-      dynBoxRot(x,y,z+1.38,0.12,0.12,0.13,yaw,0,0,C_SKIN,0);
-      dynBoxRot(x,y,z+1.52,0.14,0.14,0.04,yaw,0,0,[0.2,0.18,0.14],0);
-      alertEyes(e,x,y,z+1.40,yaw);
-      // long bow + quiver
-      dynBoxRot(x+locX(a,0.26,0.12),y+locY(a,0.26,0.12),z+1.0,0.025,0.025,0.65,yaw,0,0.15,[0.35,0.24,0.14],0);
-      dynBoxRot(x+locX(a,-0.2,-0.16),y+locY(a,-0.2,-0.16),z+1.1,0.06,0.06,0.25,yaw,0.5,0,C_WOOD,0);
+      var hipZ3=z+0.70;
+      legPair(x,y,hipZ3,a,ph,amp,0,0.062,0.05,0.33,0.29,col,C_KYAHAN,[0.35,0.30,0.22],0.085);
+      dynBoxRot(x,y,hipZ3+0.05,0.13,0.095,0.05,yaw,0,0,[0.30,0.24,0.16],0); // obi
+      dynBoxT(x,y,hipZ3+0.24+bob,0.15,0.105,0.17,yaw,0.06,0,col,0,1.12,0.9);
+      // muneate (chest guard)
+      dynBoxRot(x+locX(a,0,0.085),y+locY(a,0,0.085),hipZ3+0.30+bob,0.105,0.025,0.11,yaw,0.06,0,[0.20,0.15,0.10],0);
+      var shZ3=hipZ3+0.42+bob;
+      // alerted: left arm extends the bow, right draws
+      var lU3=e.alerted?1.5:(-armSw+0.12),lF3=e.alerted?1.55:(-armSw*0.6+0.35);
+      var rU3=e.alerted?1.1:(armSw+0.12),rF3=e.alerted?2.0:(armSw*0.6+0.35);
+      armPair(x,y,shZ3,a,0.185,armSw,rU3,rF3,lU3,lF3,0.042,0.036,0.19,0.17,col,col,C_SKIN);
+      var hdZ3=hipZ3+0.63;
+      dynBoxRot(x,y,hdZ3-0.055,0.038,0.038,0.032,yaw,0,0,C_SKIN,0);
+      dynBoxRot(x,y,hdZ3+0.045,0.10,0.10,0.092,yaw,0,0,C_SKIN,0);
+      dynBoxRot(x,y,hdZ3+0.125,0.105,0.105,0.022,yaw,0,0,[0.2,0.18,0.14],0); // skull cap
+      alertEyes(e,x,y,hdZ3+0.05,yaw);
+      // yumi (tall bow) in the left hand: grip + two curved limbs + string
+      var bx=_handL[0],by=_handL[1],bz=_handL[2];
+      dynBoxRot(bx,by,bz,0.018,0.026,0.09,yaw,0,0,[0.35,0.24,0.14],0);
+      dynBoxRot(bx+locX(a,0,0.05),by+locY(a,0,0.05),bz+0.27,0.014,0.014,0.20,yaw,0.30,0,[0.35,0.24,0.14],0);
+      dynBoxRot(bx+locX(a,0,0.05),by+locY(a,0,0.05),bz-0.27,0.014,0.014,0.20,yaw,-0.30,0,[0.35,0.24,0.14],0);
+      dynBoxRot(bx+locX(a,0,0.115),by+locY(a,0,0.115),bz,0.005,0.005,0.40,yaw,0,0,[0.8,0.78,0.7],0.1);
+      // quiver with two arrows
+      var qx=x+locX(a,-0.16,-0.14),qy=y+locY(a,-0.16,-0.14);
+      dynBoxRot(qx,qy,hipZ3+0.36,0.05,0.05,0.16,yaw,0.35,0,[0.28,0.20,0.12],0);
+      dynBoxRot(qx,qy,hipZ3+0.56,0.008,0.008,0.10,yaw,0.35,0,[0.6,0.55,0.45],0);
+      dynBoxRot(qx+locX(a,0.03,0),qy+locY(a,0.03,0),hipZ3+0.60,0.022,0.022,0.025,yaw,0.35,0,[0.85,0.85,0.9],0.1);
     }else if(e.kind==='samurai'||e.kind==='elite'){
-      dynBoxRot(x+locX(a,0.12,0),y+locY(a,0.12,0),z+0.36,0.11,0.12,0.36,yaw,0,0,col,0);
-      dynBoxRot(x+locX(a,-0.12,0),y+locY(a,-0.12,0),z+0.36,0.11,0.12,0.36,yaw,0,0,col,0);
-      dynBoxRot(x,y,z+1.05+bob,0.26,0.19,0.36,yaw,0,0,col,0);
-      // shoulder plates
-      dynBoxRot(x+locX(a,0.30,0),y+locY(a,0.30,0),z+1.30,0.10,0.14,0.08,yaw,0,0.4,col,0);
-      dynBoxRot(x+locX(a,-0.30,0),y+locY(a,-0.30,0),z+1.30,0.10,0.14,0.08,yaw,0,-0.4,col,0);
-      dynBoxRot(x,y,z+1.58,0.14,0.14,0.16,yaw,0,0,[0.12,0.10,0.10],0);
-      // gold maedate crest
-      dynBoxRot(x+locX(a,0,0.1),y+locY(a,0,0.1),z+1.80,0.10,0.02,0.10,yaw,0,0,C_GOLD,e.kind==='samurai'?0.6:0.3);
-      alertEyes(e,x,y,z+1.60,yaw);
-      // katana: raised on windup
-      var kPitch=e.atkPhase===1?-1.2:(e.atkPhase===2?0.5:0.15);
-      dynBoxRot(x+locX(a,0.34,0.2),y+locY(a,0.34,0.2),z+1.25,0.03,0.45,0.03,yaw,kPitch,0,
-        telegraph?[1,0.4,0.2]:[0.8,0.82,0.9],telegraph?0.9:0.2);
+      var hipZ4=z+0.80;
+      legPair(x,y,hipZ4,a,ph,amp,0,0.082,0.066,0.36,0.32,colD,C_LACQ,C_LACQ,0.105);
+      kusazuri(x,y,hipZ4+0.03,a,colD,5,0.155,0.34);
+      // do with lacing bands
+      dynBoxT(x,y,hipZ4+0.24+bob,0.205,0.15,0.20,yaw,0,0,col,0,1.06,0.88);
+      dynBoxRot(x+locX(a,0,0.135),y+locY(a,0,0.135),hipZ4+0.20+bob,0.15,0.022,0.025,yaw,0,0,C_GOLD,0.12);
+      dynBoxRot(x+locX(a,0,0.14),y+locY(a,0,0.14),hipZ4+0.30+bob,0.155,0.022,0.025,yaw,0,0,C_GOLD,0.12);
+      var shZ4=hipZ4+0.46+bob;
+      var kRaise=e.atkPhase===1?-2.2:(e.atkPhase===2?1.3:0);
+      var rU4=e.atkPhase>0?kRaise:(e.alerted?0.5:(armSw+0.1));
+      var rF4=e.atkPhase>0?kRaise*0.9:(e.alerted?0.9:(armSw*0.6+0.3));
+      armPair(x,y,shZ4,a,0.245,armSw,rU4,rF4,
+        e.alerted?0.45:(-armSw+0.1),e.alerted?0.85:(-armSw*0.6+0.3),
+        0.055,0.05,0.21,0.19,col,C_LACQ,C_SKIN);
+      // sode (big shoulder plates)
+      dynBoxT(x+locX(a,0.27,0),y+locY(a,0.27,0),shZ4-0.02,0.085,0.115,0.085,yaw,0,0.55,colD,0,0.75,1.15);
+      dynBoxT(x+locX(a,-0.27,0),y+locY(a,-0.27,0),shZ4-0.02,0.085,0.115,0.085,yaw,0,-0.55,colD,0,0.75,1.15);
+      // head: menpo mask + kabuto bowl + shikoro + maedate
+      var hdZ4=hipZ4+0.70;
+      dynBoxRot(x,y,hdZ4-0.06,0.045,0.045,0.035,yaw,0,0,C_SKIN,0);
+      dynBoxRot(x,y,hdZ4+0.05,0.105,0.108,0.10,yaw,0,0,C_SKIN,0);
+      dynBoxRot(x+locX(a,0,0.075),y+locY(a,0,0.075),hdZ4+0.005,0.085,0.04,0.05,yaw,0,0,C_LACQ,0); // menpo
+      dynBoxT(x,y,hdZ4+0.175,0.135,0.14,0.07,yaw,0,0,C_LACQ,0,0.62);
+      dynBoxT(x+locX(a,0,-0.045),y+locY(a,0,-0.045),hdZ4+0.10,0.115,0.10,0.045,yaw,0.25,0,C_LACQ,0,0.8,1.45); // shikoro
+      dynBoxRot(x+locX(a,0,0.105),y+locY(a,0,0.105),hdZ4+0.225,0.085,0.015,0.075,yaw,-0.15,0,C_GOLD,e.kind==='samurai'?0.55:0.3); // maedate
+      alertEyes(e,x,y,hdZ4+0.06,yaw);
+      // katana follows the right hand
+      var kPitch=e.atkPhase===1?-2.0:(e.atkPhase===2?1.1:0.35);
+      dynBoxRot(_handR[0]+locX(a,0,Math.sin(kPitch)*0.26),_handR[1]+locY(a,0,Math.sin(kPitch)*0.26),
+        _handR[2]+Math.cos(kPitch)*0.26+0.02,0.02,0.02,0.30,yaw,kPitch,0,
+        telegraph?[1,0.4,0.2]:C_STEEL,telegraph?0.9:0.2);
     }else if(e.kind==='tono'){
       var ph2=e.phase===2;
-      dynBoxRot(x+locX(a,0.14,0),y+locY(a,0.14,0),z+0.42,0.13,0.14,0.42,yaw,0,0,col,0);
-      dynBoxRot(x+locX(a,-0.14,0),y+locY(a,-0.14,0),z+0.42,0.13,0.14,0.42,yaw,0,0,col,0);
-      dynBoxRot(x,y,z+1.25+bob,0.30,0.22,0.45,yaw,0,0,col,0);
-      // jinbaori (gold coat, phase 1 only)
-      if(!ph2)dynBoxRot(x+locX(a,0,-0.16),y+locY(a,0,-0.16),z+1.15,0.32,0.08,0.5,yaw,0.1,0,C_GOLD,0.35);
-      dynBoxRot(x+locX(a,0.34,0),y+locY(a,0.34,0),z+1.55,0.11,0.15,0.09,yaw,0,0.4,col,0);
-      dynBoxRot(x+locX(a,-0.34,0),y+locY(a,-0.34,0),z+1.55,0.11,0.15,0.09,yaw,0,-0.4,col,0);
-      dynBoxRot(x,y,z+1.90,0.16,0.16,0.18,yaw,0,0,[0.08,0.08,0.10],0);
-      // crescent maedate
-      dynBoxRot(x+locX(a,0,0.12),y+locY(a,0,0.12),z+2.16,0.18,0.02,0.05,yaw,0,0,[0.95,0.80,0.35],ph2?1:0.8);
-      dynBoxRot(x+locX(a,0,0.12),y+locY(a,0,0.12),z+2.22,0.06,0.02,0.08,yaw,0,0,[0.95,0.80,0.35],ph2?1:0.8);
-      // eyes burn red in fury
+      var hipZ5=z+0.92;
+      // wide hakama flares over the legs
+      dynBoxT(x+locX(a,0.14,0),y+locY(a,0.14,0),z+0.48,0.135,0.135,0.46,yaw,Math.sin(ph)*amp*0.5,0,C_LACQ,0,0.62,1.15);
+      dynBoxT(x+locX(a,-0.14,0),y+locY(a,-0.14,0),z+0.48,0.135,0.135,0.46,yaw,-Math.sin(ph)*amp*0.5,0,C_LACQ,0,0.62,1.15);
+      dynBoxRot(x+locX(a,0.13,0.04),y+locY(a,0.13,0.04),z+0.03,0.085,0.13,0.035,yaw,0,0,[0.2,0.18,0.16],0);
+      dynBoxRot(x+locX(a,-0.13,0.04),y+locY(a,-0.13,0.04),z+0.03,0.085,0.13,0.035,yaw,0,0,[0.2,0.18,0.16],0);
+      // obi + do
+      dynBoxRot(x,y,hipZ5+0.05,0.215,0.16,0.06,yaw,0,0,[0.35,0.28,0.14],0.08);
+      dynBoxT(x,y,hipZ5+0.28+bob,0.235,0.17,0.22,yaw,0,0,col,0,1.08,0.9);
+      // jinbaori (gold war coat, phase 1) — chest trim + flowing back panel
+      if(!ph2){
+        dynBoxRot(x+locX(a,0,0.155),y+locY(a,0,0.155),hipZ5+0.30+bob,0.17,0.025,0.18,yaw,0,0,C_GOLD,0.3);
+        dynBoxT(x+locX(a,0,-0.20),y+locY(a,0,-0.20),hipZ5+0.05,0.20,0.05,0.34,yaw,-0.12,0,C_GOLD,0.25,0.85,1.2);
+      }
+      var shZ5=hipZ5+0.50+bob;
+      var bRaise=e.bossAtk===1?-2.2:0;
+      armPair(x,y,shZ5,a,0.30,armSw,
+        e.bossAtk===1?bRaise:0.35,e.bossAtk===1?bRaise*0.9:0.7,
+        0.30,0.65,0.062,0.055,0.23,0.21,col,C_LACQ,C_SKIN);
+      dynBoxT(x+locX(a,0.32,0),y+locY(a,0.32,0),shZ5,0.10,0.13,0.09,yaw,0,0.5,col,0,0.75,1.2);
+      dynBoxT(x+locX(a,-0.32,0),y+locY(a,-0.32,0),shZ5,0.10,0.13,0.09,yaw,0,-0.5,col,0,0.75,1.2);
+      // head + great kabuto + crescent
+      var hdZ5=hipZ5+0.78;
+      dynBoxRot(x,y,hdZ5-0.06,0.05,0.05,0.04,yaw,0,0,C_SKIN,0);
+      dynBoxRot(x,y,hdZ5+0.06,0.115,0.115,0.105,yaw,0,0,C_SKIN,0);
+      dynBoxRot(x+locX(a,0,0.08),y+locY(a,0,0.08),hdZ5+0.005,0.09,0.04,0.05,yaw,0,0,C_LACQ,0);
+      dynBoxT(x,y,hdZ5+0.20,0.15,0.155,0.08,yaw,0,0,[0.08,0.08,0.10],0,0.6);
+      dynBoxT(x+locX(a,0,-0.05),y+locY(a,0,-0.05),hdZ5+0.115,0.125,0.11,0.05,yaw,0.25,0,[0.08,0.08,0.10],0,0.8,1.5);
+      dynBoxRot(x+locX(a,0,0.13),y+locY(a,0,0.13),hdZ5+0.27,0.16,0.018,0.05,yaw,0,0,[0.95,0.80,0.35],ph2?1:0.8);
+      dynBoxRot(x+locX(a,0,0.13),y+locY(a,0,0.13),hdZ5+0.33,0.055,0.018,0.07,yaw,0,0,[0.95,0.80,0.35],ph2?1:0.8);
       if(ph2){
-        dynBoxRot(x+locX(a,0.07,0.15),y+locY(a,0.07,0.15),z+1.92,0.035,0.02,0.035,yaw,0,0,[1,0.1,0.1],1);
-        dynBoxRot(x+locX(a,-0.07,0.15),y+locY(a,-0.07,0.15),z+1.92,0.035,0.02,0.035,yaw,0,0,[1,0.1,0.1],1);
+        dynBoxRot(x+locX(a,0.06,0.13),y+locY(a,0.06,0.13),hdZ5+0.07,0.03,0.018,0.03,yaw,0,0,[1,0.1,0.1],1);
+        dynBoxRot(x+locX(a,-0.06,0.13),y+locY(a,-0.06,0.13),hdZ5+0.07,0.03,0.018,0.03,yaw,0,0,[1,0.1,0.1],1);
       }
       // odachi: glows red through the iai telegraph
       var tg=e.bossAtk===1;
-      var bPitch=tg?-1.3:0.2;
-      dynBoxRot(x+locX(a,0.42,0.2),y+locY(a,0.42,0.2),z+1.5,0.04,0.7,0.04,yaw,bPitch,0,
-        tg?[1,0.35,0.18]:[0.85,0.88,0.95],tg?1:0.3);
+      var bPitch=tg?-2.1:0.5;
+      dynBoxRot(_handR[0]+locX(a,0,Math.sin(bPitch)*0.38),_handR[1]+locY(a,0,Math.sin(bPitch)*0.38),
+        _handR[2]+Math.cos(bPitch)*0.38+0.02,0.026,0.026,0.42,yaw,bPitch,0,
+        tg?[1,0.35,0.18]:C_STEEL,tg?1:0.3);
     }
   }
   function drawCorpse(co){
