@@ -1921,6 +1921,29 @@ body {
   border-color: #d04050;
 }
 
+/* ===== KAGE II Icon ===== */
+.di-kage2 {
+  background: #0c0a20;
+  border-color: #e8d2a0;
+}
+
+.di-kage2::after {
+  content: '\2726\2726';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  font-size: 7px;
+  letter-spacing: 1px;
+  color: #e8d2a0;
+  line-height: 1;
+}
+
+.tb-kage2 {
+  background: #0c0a20;
+  border-color: #e8d2a0;
+}
+
 /* ===== GEKKO Classic Icon ===== */
 .di-fpsc {
   background: var(--body-deep);
@@ -1973,6 +1996,20 @@ body {
 }
 
 #kage-canvas {
+  display: block;
+  width: 100%;
+  image-rendering: pixelated;
+  image-rendering: crisp-edges;
+}
+
+/* ===== KAGE II Window ===== */
+#kage2-body {
+  padding: 0;
+  background: #000;
+  line-height: 0;
+}
+
+#kage2-canvas {
   display: block;
   width: 100%;
   image-rendering: pixelated;
