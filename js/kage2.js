@@ -217,33 +217,47 @@
 
   var VS_WORLD=
     'attribute vec3 aPos;attribute vec3 aNrm;attribute vec4 aCol;\n'+
-    'uniform mat4 uVP;uniform vec3 uSunDir;uniform vec3 uSunCol;\n'+
-    'uniform vec3 uAmbUp;uniform vec3 uAmbDn;uniform vec3 uCam;\n'+
-    'uniform vec4 uLPos[4];uniform vec4 uLCol[4];\n'+
-    'varying vec4 vCol;varying float vFog;\n'+
+    'uniform mat4 uVP;\n'+
+    'varying vec3 vPos;varying vec3 vNrm;varying vec4 vCol;\n'+
     'void main(){\n'+
-    '  vec4 cp=uVP*vec4(aPos,1.0);gl_Position=cp;\n'+
-    '  float em=aCol.a;\n'+
-    '  vec3 n=aNrm;\n'+
-    '  float sun=max(dot(n,uSunDir),0.0);\n'+
-    '  vec3 amb=mix(uAmbDn,uAmbUp,n.z*0.5+0.5);\n'+
-    '  vec3 lit=aCol.rgb*(amb+uSunCol*sun);\n'+
-    '  for(int i=0;i<4;i++){\n'+
-    '    vec3 ld=uLPos[i].xyz-aPos;float d=length(ld);\n'+
-    '    float att=max(0.0,1.0-d/max(uLPos[i].w,0.001))*uLCol[i].a;\n'+
-    '    float nd=max(dot(n,ld/max(d,0.001)),0.0);\n'+
-    '    lit+=aCol.rgb*uLCol[i].rgb*att*att*nd;\n'+
-    '  }\n'+
-    '  vec3 col=mix(lit,aCol.rgb,em);\n'+
-    '  vCol=vec4(col,1.0);\n'+
-    '  float dist=distance(aPos,uCam);\n'+
-    '  vFog=clamp((dist-'+FOG_START.toFixed(1)+')/('+(FOG_END-FOG_START).toFixed(1)+'),0.0,1.0)*(1.0-em*0.5);\n'+
+    '  gl_Position=uVP*vec4(aPos,1.0);\n'+
+    '  vPos=aPos;vNrm=aNrm;vCol=aCol;\n'+
     '}';
+  // per-pixel: hemispheric ambient + moonlight + sheen + 6 point lights,
+  // world-space pixel grain, height-weighted fog (mist hugs the ground)
   var FS_WORLD=
     'precision mediump float;\n'+
-    'varying vec4 vCol;varying float vFog;\n'+
-    'uniform vec3 uFogC;\n'+
-    'void main(){gl_FragColor=vec4(mix(vCol.rgb,uFogC,vFog),vCol.a);}';
+    'varying vec3 vPos;varying vec3 vNrm;varying vec4 vCol;\n'+
+    'uniform vec3 uSunDir;uniform vec3 uSunCol;\n'+
+    'uniform vec3 uAmbUp;uniform vec3 uAmbDn;\n'+
+    'uniform vec3 uCam;uniform vec3 uFogC;\n'+
+    'uniform vec4 uLPos[6];uniform vec4 uLCol[6];\n'+
+    'float hash3(vec3 p){return fract(sin(dot(p,vec3(127.1,311.7,74.7)))*43758.5453);}\n'+
+    'void main(){\n'+
+    '  vec3 n=normalize(vNrm);\n'+
+    '  float em=vCol.a;\n'+
+    '  float grain=hash3(floor(vPos*7.0))*0.10-0.05;\n'+
+    '  vec3 alb=vCol.rgb*(1.0+grain*(1.0-em));\n'+
+    '  float sun=max(dot(n,uSunDir),0.0);\n'+
+    '  vec3 amb=mix(uAmbDn,uAmbUp,n.z*0.5+0.5);\n'+
+    '  vec3 lit=alb*(amb+uSunCol*sun);\n'+
+    '  vec3 vdir=normalize(uCam-vPos);\n'+
+    '  float spec=pow(max(dot(reflect(-uSunDir,n),vdir),0.0),18.0)*0.16*(0.4+0.6*max(n.z,0.0));\n'+
+    '  lit+=uSunCol*spec;\n'+
+    '  for(int i=0;i<6;i++){\n'+
+    '    vec3 ld=uLPos[i].xyz-vPos;float d=length(ld);\n'+
+    '    float att=max(0.0,1.0-d/max(uLPos[i].w,0.001))*uLCol[i].a;\n'+
+    '    float nd=max(dot(n,ld/max(d,0.001)),0.0);\n'+
+    '    lit+=alb*uLCol[i].rgb*att*att*nd;\n'+
+    '  }\n'+
+    '  vec3 col=mix(lit,vCol.rgb,em);\n'+
+    '  col=col/(1.0+0.22*max(col-vec3(0.75),vec3(0.0)));\n'+
+    '  float dist=distance(vPos,uCam);\n'+
+    '  float fog=clamp((dist-'+FOG_START.toFixed(1)+')/('+(FOG_END-FOG_START).toFixed(1)+'),0.0,1.0);\n'+
+    '  fog*=mix(1.0,0.55,clamp(vPos.z*0.10,0.0,1.0));\n'+
+    '  fog*=(1.0-em*0.5);\n'+
+    '  gl_FragColor=vec4(mix(col,uFogC,fog),1.0);\n'+
+    '}';
   var VS_BLEND=
     'attribute vec3 aPos;attribute vec4 aCol;\n'+
     'uniform mat4 uVP;uniform vec3 uCam;\n'+
@@ -264,6 +278,8 @@
     'precision mediump float;varying vec2 vUV;\n'+
     'uniform mat4 uInvVP;uniform vec3 uSunDir;uniform float uTime;\n'+
     'float hash(vec2 p){return fract(sin(dot(p,vec2(127.1,311.7)))*43758.5453);}\n'+
+    'float vnoise(vec2 p){vec2 i=floor(p),f=fract(p);f=f*f*(3.0-2.0*f);\n'+
+    '  return mix(mix(hash(i),hash(i+vec2(1.0,0.0)),f.x),mix(hash(i+vec2(0.0,1.0)),hash(i+vec2(1.0,1.0)),f.x),f.y);}\n'+
     'void main(){\n'+
     '  vec4 wp=uInvVP*vec4(vUV,1.0,1.0);\n'+
     '  vec3 dir=normalize(wp.xyz/wp.w);\n'+
@@ -275,17 +291,31 @@
     '  if(h>0.0){col=mix(hor,top,pow(clamp(h*1.5,0.0,1.0),0.65));}\n'+
     '  else{col=mix(hor,bot,clamp(-h*3.0,0.0,1.0));}\n'+
     '  float md=max(dot(dir,uSunDir),0.0);\n'+
-    '  col+=vec3(0.95,0.95,0.85)*smoothstep(0.9994,0.9996,md);\n'+      // moon disc
-    '  col+=vec3(0.5,0.55,0.75)*pow(md,260.0)*0.8;\n'+                  // bright rim
-    '  col+=vec3(0.25,0.3,0.5)*pow(md,18.0)*0.30;\n'+                   // halo
     '  if(h>0.05){\n'+
     '    vec2 sp=dir.xy/(0.001+dir.z)*16.0;\n'+
     '    float st=step(0.997,hash(floor(sp)));\n'+
     '    float tw=0.55+0.45*sin(uTime*2.0+hash(floor(sp)+7.0)*40.0);\n'+
     '    col+=vec3(st)*tw*clamp((h-0.05)*2.4,0.0,0.9);\n'+
     '  }\n'+
+    '  col+=vec3(0.95,0.95,0.85)*smoothstep(0.9985,0.9990,md);\n'+      // full moon, larger
+    '  col+=vec3(0.55,0.60,0.80)*pow(md,140.0)*0.8;\n'+
+    '  col+=vec3(0.25,0.3,0.5)*pow(md,10.0)*0.38;\n'+
+    '  if(h>0.02){\n'+                                                   // drifting night clouds
+    '    vec2 cp=dir.xy/(0.18+dir.z)*1.4+vec2(uTime*0.009,uTime*0.004);\n'+
+    '    float cn=vnoise(cp)*0.62+vnoise(cp*2.3+7.0)*0.38;\n'+
+    '    float cl=smoothstep(0.52,0.80,cn)*clamp(h*4.0,0.0,1.0);\n'+
+    '    vec3 cc=mix(vec3(0.06,0.08,0.17),vec3(0.30,0.34,0.50),clamp(pow(md,5.0)*0.9+0.18,0.0,1.0));\n'+
+    '    col=mix(col,cc,cl*0.85);\n'+
+    '  }\n'+
+    '  if(h<0.16&&h>-0.06){\n'+                                          // far mountain ridges
+    '    float az=atan(dir.y,dir.x);\n'+
+    '    float ridge=0.040+0.050*vnoise(vec2(az*2.5,3.7))+0.018*sin(az*9.0);\n'+
+    '    float m=smoothstep(ridge,ridge-0.025,h);\n'+
+    '    col=mix(col,vec3(0.040,0.050,0.110),m*0.95);\n'+
+    '  }\n'+
     '  gl_FragColor=vec4(col,1.0);\n'+
     '}';
+
 
   var progWorld=mkProgram(VS_WORLD,FS_WORLD);
   var progBlend=mkProgram(VS_BLEND,FS_BLEND);
@@ -325,6 +355,90 @@
   gl.bindBuffer(gl.ARRAY_BUFFER,skyBuf);
   gl.bufferData(gl.ARRAY_BUFFER,new Float32Array([-1,-1, 1,-1, -1,1, 1,-1, 1,1, -1,1]),gl.STATIC_DRAW);
 
+  // ===== POST: bloom + cinematic grade (scene renders to an FBO first) =====
+  var VS_POST='attribute vec2 aPos;varying vec2 vUV;void main(){vUV=aPos*0.5+0.5;gl_Position=vec4(aPos,0.0,1.0);}';
+  var FS_BRIGHT='precision mediump float;varying vec2 vUV;uniform sampler2D uTex;'+
+    'void main(){vec3 c=texture2D(uTex,vUV).rgb;'+
+    'float l=dot(c,vec3(0.299,0.587,0.114));'+
+    'gl_FragColor=vec4(c*smoothstep(0.62,0.92,l)*1.0,1.0);}';
+  var FS_BLUR='precision mediump float;varying vec2 vUV;uniform sampler2D uTex;uniform vec2 uDir;'+
+    'void main(){vec3 a=vec3(0.0);'+
+    'a+=texture2D(uTex,vUV-uDir*2.0).rgb*0.12;'+
+    'a+=texture2D(uTex,vUV-uDir).rgb*0.23;'+
+    'a+=texture2D(uTex,vUV).rgb*0.30;'+
+    'a+=texture2D(uTex,vUV+uDir).rgb*0.23;'+
+    'a+=texture2D(uTex,vUV+uDir*2.0).rgb*0.12;'+
+    'gl_FragColor=vec4(a,1.0);}';
+  var FS_FINAL='precision mediump float;varying vec2 vUV;uniform sampler2D uTex;uniform sampler2D uBloom;'+
+    'void main(){vec3 c=texture2D(uTex,vUV).rgb+texture2D(uBloom,vUV).rgb*0.75;'+
+    'float l=dot(c,vec3(0.299,0.587,0.114));'+
+    'c=mix(c,c*c*(3.0-2.0*c),0.22);'+
+    'c+=vec3(0.012,0.018,0.045)*(1.0-l);'+
+    'c+=vec3(0.050,0.024,0.0)*l*l;'+
+    'gl_FragColor=vec4(c,1.0);}';
+  var progBright=mkProgram(VS_POST,FS_BRIGHT);
+  var progBlur=mkProgram(VS_POST,FS_BLUR);
+  var progFinal=mkProgram(VS_POST,FS_FINAL);
+  function mkFBO(w,h){
+    var tex=gl.createTexture();
+    gl.bindTexture(gl.TEXTURE_2D,tex);
+    gl.texImage2D(gl.TEXTURE_2D,0,gl.RGBA,w,h,0,gl.RGBA,gl.UNSIGNED_BYTE,null);
+    gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_MIN_FILTER,gl.LINEAR);
+    gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_MAG_FILTER,gl.LINEAR);
+    gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_WRAP_S,gl.CLAMP_TO_EDGE);
+    gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_WRAP_T,gl.CLAMP_TO_EDGE);
+    var fb=gl.createFramebuffer();
+    gl.bindFramebuffer(gl.FRAMEBUFFER,fb);
+    gl.framebufferTexture2D(gl.FRAMEBUFFER,gl.COLOR_ATTACHMENT0,gl.TEXTURE_2D,tex,0);
+    return{fb:fb,tex:tex,w:w,h:h};
+  }
+  var fboScene=mkFBO(W,H);
+  var _rbDepth=gl.createRenderbuffer();
+  gl.bindRenderbuffer(gl.RENDERBUFFER,_rbDepth);
+  gl.renderbufferStorage(gl.RENDERBUFFER,gl.DEPTH_COMPONENT16,W,H);
+  gl.bindFramebuffer(gl.FRAMEBUFFER,fboScene.fb);
+  gl.framebufferRenderbuffer(gl.FRAMEBUFFER,gl.DEPTH_ATTACHMENT,gl.RENDERBUFFER,_rbDepth);
+  var fboBloomA=mkFBO(200,150),fboBloomB=mkFBO(200,150);
+  gl.bindFramebuffer(gl.FRAMEBUFFER,null);
+  var locBr={aPos:gl.getAttribLocation(progBright,'aPos'),uTex:gl.getUniformLocation(progBright,'uTex')};
+  var locBl={aPos:gl.getAttribLocation(progBlur,'aPos'),uTex:gl.getUniformLocation(progBlur,'uTex'),uDir:gl.getUniformLocation(progBlur,'uDir')};
+  var locF={aPos:gl.getAttribLocation(progFinal,'aPos'),uTex:gl.getUniformLocation(progFinal,'uTex'),uBloom:gl.getUniformLocation(progFinal,'uBloom')};
+  function fsQuad(loc){
+    gl.bindBuffer(gl.ARRAY_BUFFER,skyBuf);
+    gl.enableVertexAttribArray(loc);
+    gl.vertexAttribPointer(loc,2,gl.FLOAT,false,8,0);
+    gl.drawArrays(gl.TRIANGLES,0,6);
+    gl.disableVertexAttribArray(loc);
+  }
+  function postProcess(){
+    gl.disable(gl.DEPTH_TEST);
+    gl.bindFramebuffer(gl.FRAMEBUFFER,fboBloomA.fb);
+    gl.viewport(0,0,fboBloomA.w,fboBloomA.h);
+    gl.useProgram(progBright);
+    gl.activeTexture(gl.TEXTURE0);gl.bindTexture(gl.TEXTURE_2D,fboScene.tex);
+    gl.uniform1i(locBr.uTex,0);
+    fsQuad(locBr.aPos);
+    gl.bindFramebuffer(gl.FRAMEBUFFER,fboBloomB.fb);
+    gl.useProgram(progBlur);
+    gl.bindTexture(gl.TEXTURE_2D,fboBloomA.tex);
+    gl.uniform1i(locBl.uTex,0);
+    gl.uniform2f(locBl.uDir,1.0/fboBloomA.w,0);
+    fsQuad(locBl.aPos);
+    gl.bindFramebuffer(gl.FRAMEBUFFER,fboBloomA.fb);
+    gl.bindTexture(gl.TEXTURE_2D,fboBloomB.tex);
+    gl.uniform2f(locBl.uDir,0,1.0/fboBloomA.h);
+    fsQuad(locBl.aPos);
+    gl.bindFramebuffer(gl.FRAMEBUFFER,null);
+    gl.viewport(0,0,W,H);
+    gl.useProgram(progFinal);
+    gl.activeTexture(gl.TEXTURE0);gl.bindTexture(gl.TEXTURE_2D,fboScene.tex);
+    gl.activeTexture(gl.TEXTURE1);gl.bindTexture(gl.TEXTURE_2D,fboBloomA.tex);
+    gl.uniform1i(locF.uTex,0);gl.uniform1i(locF.uBloom,1);
+    fsQuad(locF.aPos);
+    gl.activeTexture(gl.TEXTURE0);
+    gl.enable(gl.DEPTH_TEST);
+  }
+
   // ===== DYNAMIC LIGHTS =====
   var lights=[];
   function addLight(x,y,z,radius,r,g,b,intensity,life){
@@ -336,14 +450,15 @@
       if(lights[i].life<=0)lights.splice(i,1);
     }
   }
-  var _lpos=new Float32Array(16),_lcol=new Float32Array(16);
+  var MAXL=6;
+  var _lpos=new Float32Array(MAXL*4),_lcol=new Float32Array(MAXL*4);
   function packLights(px,py){
     // nearest-to-player lanterns matter most; sort by distance-weighted intensity
     var ls=lights.slice().sort(function(a,b){
       var da=dist2d(a.x,a.y,px,py),db=dist2d(b.x,b.y,px,py);
       return (da-a.it*6)-(db-b.it*6);
     });
-    for(var i=0;i<4;i++){
+    for(var i=0;i<MAXL;i++){
       var L=ls[i];
       if(L){
         var k=L.maxLife>8888?1:(L.life/L.maxLife); // persistent lights don't decay
@@ -534,6 +649,7 @@
   var screenShake=0,dmgFlash=0,healFlash=0,hitStop=0,slowMo=0,fovKick=0;
   var aimMode=false; // kaginawa aim stance (first-person)
   var killMsgT=0,killMsgTxt='';
+  var letterboxT=0,bossIntroT=0;
   var koban=0,kills=0,stealthKills=0,gameTime=0;
   var curZone=0; // 0 town, 1 gate, 2 keep
   var bossActive=false;
@@ -1249,6 +1365,10 @@
   var squeaks=[];   // uguisubari boards {x,y,z,w,d,cd}
   var exitGate=null; // {x,y,zMin..} region triggering zone transition
   var hintTrigs=[];  // one-shot tutorial hints {y, msg}
+  var fireflies=[];  // ambient glow motes around water and blossoms
+  function fireflyCluster(x,y,r,n,z){
+    for(var i=0;i<n;i++)fireflies.push({cx:x,cy:y,r:r,z:(z||0.5)+rng()*1.2,ph:rng()*TAU,sp:0.3+rng()*0.5});
+  }
   function updateHintTrigs(){
     for(var i=hintTrigs.length-1;i>=0;i--){
       if(player.y>hintTrigs[i].y){showHint(hintTrigs[i].msg);hintTrigs.splice(i,1);}
@@ -1604,6 +1724,7 @@
       // wakes when player reaches the arena (not through the floor)
       if(dist2d(e.x,e.y,player.x,player.y)<7&&Math.abs(player.z-e.z)<3){
         bossActive=true;
+        bossIntroT=2.2;slowMo=Math.max(slowMo,2.0);player.iFrames=2.5;
         playSound('roar');
         musicAlert=9999; // boss music stays
         showHint('THE LORD — strike from behind for heavy damage');
@@ -1704,7 +1825,7 @@
     D(cx,cy,hWall+0.3,w*0.55,d*0.55,0.22,C_KAWARA_L,C_KAWARA_L);
     // dark doorway + shoji glow on one side
     W2(cx,cy-d/2,0.8,0.9,1.3,3,0.05,0.04,0.06,0);
-    if(rng()<0.5)W2(cx,cy-d/2,0.9,0.7,0.7,3,C_ANDON[0],C_ANDON[1],C_ANDON[2],0.5);
+    if(rng()<0.5)W2(cx,cy-d/2,0.9,0.7,0.7,3,C_ANDON[0]*0.85,C_ANDON[1]*0.85,C_ANDON[2]*0.85,0.35);
   }
   function chochin(x,y,z){
     lanterns.push({x:x,y:y,z:z,lit:true,id:lanterns.length});
@@ -1794,7 +1915,7 @@
     pickups.length=0;levers.length=0;gates.length=0;jizos.length=0;
     lanterns.length=0;anchors.length=0;lights.length=0;squeaks.length=0;
     shurikens.length=0;particles.length=0;slashTrails.length=0;floatTexts.length=0;
-    exitGate=null;hintTrigs.length=0;
+    exitGate=null;hintTrigs.length=0;fireflies.length=0;
   }
   function announceZone(n){
     zoneAnnounceT=2.4;
@@ -1895,6 +2016,7 @@
     spawnEnemy('ashigaru',-6,2,0,{patrol:[[-6,-2],[-6,10]],lantern:true});
     spawnEnemy('ashigaru',-6,18,0,{patrol:[[-6,14],[-6,24]]});
     spawnEnemy('ashigaru',1,25.2,0,{facing:PI});
+    fireflyCluster(12,2,7,8);fireflyCluster(-20,-33,3,5);fireflyCluster(24,-44,3,4);fireflyCluster(-18,12,3,4);
     hintTrigs.push({y:-31,msg:'C: WALL CLING — hide flat, slide to a corner to peek'});
     checkpoint=[3,-52,0];
     player.x=0;player.y=-53;player.z=0.5;
@@ -1986,6 +2108,7 @@
     spawnEnemy('ashigaru',0,13,0,{patrol:[[-8,13],[10,13]]});
     spawnEnemy('ashigaru',0,18,0,{patrol:[[0,16],[0,20]]});
     spawnEnemy('elite',-2,19,0,{facing:PI});
+    fireflyCluster(-19,0.5,4,6);fireflyCluster(20,-16,3,4);fireflyCluster(22,14,3,4);
     hintTrigs.push({y:-10,msg:'ARCHERS WATCH THE BRIDGES — the west stones are quieter'});
     checkpoint=[2,-26,0];
     player.x=0;player.y=-28;player.z=0.5;
@@ -2072,6 +2195,7 @@
     spawnEnemy('elite',7,13,0.45,{patrol:[[4,13],[10,17]]});
     spawnEnemy('ashigaru',0,22,0,{patrol:[[-6,22],[6,22]]});
     spawnEnemy('ashigaru',-18,3,0,{patrol:[[-18,0],[-18,6]]});
+    fireflyCluster(-17,-15,5,9);fireflyCluster(12,-14,4,5);fireflyCluster(-24,16,3,4);
     hintTrigs.push({y:0,msg:'NIGHTINGALE FLOORS SING — cross them slowly (SHIFT)'});
     checkpoint=[5,-22,0];
     player.x=0;player.y=-24;player.z=0.5;
@@ -2206,6 +2330,7 @@
     spawnEnemy('samurai',0,8,9,{patrol:[[-3,6],[3,11]]});
     spawnEnemy('tono',0,11.5,12.3,{facing:PI});
     bossActive=false;
+    fireflyCluster(-16,-16,3,5);fireflyCluster(16,-14,3,5);fireflyCluster(-20,-4,3,4);
     hintTrigs.push({y:-2,msg:'THE KEEP — take the stairs within, or scale the eaves without'});
     checkpoint=[4,-18,0];
     player.x=0;player.y=-20;player.z=0.5;
@@ -2444,9 +2569,10 @@
       dynBoxRot(lv.x,lv.y,lv.z,0.06,0.06,0.4,0,lv.on?1.1:-0.5,0,[0.6,0.62,0.7],0.2);
       dynBoxRot(lv.x,lv.y,lv.z-0.35,0.18,0.18,0.12,0,0,0,C_ROCK,0);
     }
-    // lanterns (paper glows when lit)
+    // lanterns (paper glows when lit; hidden when the camera backs into one)
     for(var ln=0;ln<lanterns.length;ln++){
       var la=lanterns[ln];
+      if(dist3d(la.x,la.y,la.z,cam.x,cam.y,cam.z)<1.4)continue;
       var sway=Math.sin(_time*1.3+la.id)*0.04;
       dynBoxRot(la.x+sway,la.y,la.z+0.16,0.02,0.02,0.12,0,0,0,C_WOOD,0);
       dynBoxRot(la.x+sway,la.y,la.z,0.11,0.11,0.15,0,0,0,
@@ -2537,6 +2663,14 @@
       lookY+=pty*player.peek*1.6+player.clingNy*0.35;
       lookZ=player.z+1.2;
     }
+    if(bossIntroT>0){
+      var _bi=null;
+      for(var bi2=0;bi2<enemies.length;bi2++)if(enemies[bi2].def.boss)_bi=enemies[bi2];
+      if(_bi){
+        var bk=Math.min(1,bossIntroT/2.2)*0.65;
+        lookX=lerp(lookX,_bi.x,bk);lookY=lerp(lookY,_bi.y,bk);lookZ=lerp(lookZ,_bi.z+1.6,bk);
+      }
+    }
     var cp=clamp(cam.pitch,-1.05,aimMode?1.0:0.55);
     var fx=Math.sin(cam.yaw)*Math.cos(cp),fy=Math.cos(cam.yaw)*Math.cos(cp),fz=Math.sin(cp);
     var aimD=aimMode?0.28:cam.dist;
@@ -2558,6 +2692,7 @@
              _camRight[2]*fwd[0]-_camRight[0]*fwd[2],
              _camRight[0]*fwd[1]-_camRight[1]*fwd[0] ];
 
+    gl.bindFramebuffer(gl.FRAMEBUFFER,fboScene.fb);
     gl.viewport(0,0,W,H);
     gl.clearColor(FOG_C[0],FOG_C[1],FOG_C[2],1);
     gl.clear(gl.COLOR_BUFFER_BIT|gl.DEPTH_BUFFER_BIT);
@@ -2661,6 +2796,15 @@
       var psz=0.05+0.025*Math.sin(_time*4+pl2.ph);
       blBillboard(pl2.x,pl2.y,pl2.z,psz,0.95,0.62,0.72,0.5);
     }
+    for(var ff=0;ff<fireflies.length;ff++){
+      var fl2=fireflies[ff];
+      var fx2=fl2.cx+Math.cos(_time*fl2.sp+fl2.ph)*fl2.r+Math.sin(_time*0.7+fl2.ph*2)*0.6;
+      var fy2=fl2.cy+Math.sin(_time*fl2.sp*0.8+fl2.ph)*fl2.r;
+      if(dist2d(fx2,fy2,player.x,player.y)>30)continue;
+      var fz2=fl2.z+Math.sin(_time*1.3+fl2.ph)*0.3;
+      var fa2=0.30+0.28*Math.sin(_time*2.2+fl2.ph*3);
+      blBillboard(fx2,fy2,fz2,0.035,0.85,0.95,0.45,Math.max(0,fa2));
+    }
     if(player.grappling){
       blBeam(player.x,player.y,player.z+1.0,player.grapX,player.grapY,player.grapZ,0.02,0.75,0.7,0.55,0.8);
     }
@@ -2679,6 +2823,7 @@
     }
     gl.depthMask(true);
     gl.disable(gl.BLEND);
+    postProcess();
   }
   // ===== HUD =====
   function renderHUD(){
@@ -2865,12 +3010,47 @@
       hud.fillStyle='rgba(232,210,160,'+Math.min(1,hintT)+')';
       hud.fillText(hintMsg,W/2,H-33);
     }
+    // cinematic letterbox
+    if(letterboxT>0.02){
+      var lbh=24*letterboxT;
+      hud.fillStyle='#000';
+      hud.fillRect(0,0,W,lbh);
+      hud.fillRect(0,H-lbh,W,lbh);
+    }
+    // boss title card
+    if(bossIntroT>0){
+      var ba=Math.min(1,(2.2-bossIntroT)*2.2)*Math.min(1,bossIntroT*2.2);
+      hud.font='15px monospace';hud.textAlign='center';hud.textBaseline='middle';
+      hud.fillStyle='rgba(0,0,0,'+ba*0.6+')';
+      hud.fillText('— 殿 THE LORD —',W/2+1,H*0.76+1);
+      hud.fillStyle='rgba(232,210,160,'+ba+')';
+      hud.fillText('— 殿 THE LORD —',W/2,H*0.76);
+    }
+    drawGrain();
     // zone fade
     if(zoneFade>0){
       hud.fillStyle='rgba(2,2,8,'+Math.min(1,zoneFade)+')';
       hud.fillRect(0,0,W,H);
     }
     if(debugMode)renderDebugHUD();
+  }
+  // subtle animated film grain over the frame
+  var _grainC=null;
+  function drawGrain(){
+    if(!_grainC){
+      _grainC=document.createElement('canvas');
+      _grainC.width=128;_grainC.height=96;
+      var g=_grainC.getContext('2d');
+      var id=g.createImageData(128,96);
+      for(var i=0;i<id.data.length;i+=4){
+        var v=128+(Math.random()*70-35)|0;
+        id.data[i]=id.data[i+1]=id.data[i+2]=v;id.data[i+3]=255;
+      }
+      g.putImageData(id,0,0);
+    }
+    hud.globalAlpha=0.05;
+    hud.drawImage(_grainC,(Math.random()*16)|0,(Math.random()*12)|0,112,84,0,0,W,H);
+    hud.globalAlpha=1;
   }
   function renderDebugHUD(){
     var lines=[
@@ -3382,6 +3562,9 @@
     if(sekkenFlash>0)sekkenFlash=Math.max(0,sekkenFlash-rawDt);
     if(fovKick>0)fovKick=Math.max(0,fovKick-5*rawDt);
     if(hintT>0)hintT-=rawDt;
+    if(bossIntroT>0)bossIntroT=Math.max(0,bossIntroT-rawDt);
+    var lbWant=(gameState==='playing'&&(zoneAnnounceT>0||bossIntroT>0||aimMode))?1:0;
+    letterboxT+=(lbWant-letterboxT)*Math.min(1,6*rawDt);
 
     scheduleMusic();
     renderScene();
@@ -3409,6 +3592,8 @@
     key:function(code,down){handleKey({code:code,preventDefault:function(){}},down);},
     grap:function(){return{grappling:player.grappling,cd:grapCD,anchors:anchors.length};},
     cling:function(){toggleCling();},
+    cam:function(){return{x:cam.x,y:cam.y,z:cam.z,yaw:cam.yaw,pitch:cam.pitch,px:player.x,py:player.y,pz:player.z,peek:player.peek};},
+    nuke:function(){for(var i=0;i<enemies.length;i++)if(!enemies[i].def.boss)enemies[i].dead=true;},
     ai:function(v){aiMode=!!v;if(aiMode){aiInit();debugMode=true;}else{keys.w=keys.a=keys.s=keys.d=keys.sp=false;mouseDown=false;}},
     hurtBoss:function(n){for(var i=0;i<enemies.length;i++)if(enemies[i].def.boss){enemies[i].hp-=n;if(enemies[i].hp<=0)killEnemy(enemies[i],false);}}
   };
