@@ -68,7 +68,7 @@
     '.kg2-stats{font-size:5px;color:#c8c0d8;margin-top:10px;line-height:2}.kg2-stats b{color:#e8d2a0}';
   document.head.appendChild(_ovCss);
   function _mkScr(){var d=document.createElement('div');d.className='kg2-scr';_ov.appendChild(d);return d;}
-  function _pcControls(){return '<div class="kg2-cr"><div class="kg2-ci"><span class="kg2-key">W</span><span class="kg2-key">A</span><span class="kg2-key">S</span><span class="kg2-key">D</span> MOVE</div><div class="kg2-ci"><span class="kg2-key" style="font-size:4px">MOUSE</span> CAMERA</div></div><div class="kg2-cr"><div class="kg2-ci"><span class="kg2-key" style="font-size:4px">CLICK</span> SLASH</div><div class="kg2-ci"><span class="kg2-key" style="font-size:4px">RCLICK/F</span> SHURIKEN</div><div class="kg2-ci"><span class="kg2-key" style="font-size:4px">SPACE</span> JUMP</div></div><div class="kg2-cr"><div class="kg2-ci"><span class="kg2-key">C</span> WALL CLING</div><div class="kg2-ci"><span class="kg2-key">Q</span> DASH</div><div class="kg2-ci"><span class="kg2-key">E</span> AIM HOOK</div><div class="kg2-ci"><span class="kg2-key" style="font-size:4px">ESC</span> PAUSE</div></div>';}
+  function _pcControls(){return '<div class="kg2-cr"><div class="kg2-ci"><span class="kg2-key">W</span><span class="kg2-key">A</span><span class="kg2-key">S</span><span class="kg2-key">D</span> MOVE</div><div class="kg2-ci"><span class="kg2-key" style="font-size:4px">MOUSE</span> CAMERA</div></div><div class="kg2-cr"><div class="kg2-ci"><span class="kg2-key" style="font-size:4px">CLICK</span> SLASH</div><div class="kg2-ci"><span class="kg2-key" style="font-size:4px">RCLICK/F</span> SHURIKEN</div><div class="kg2-ci"><span class="kg2-key" style="font-size:4px">SPACE</span> JUMP</div></div><div class="kg2-cr"><div class="kg2-ci"><span class="kg2-key" style="font-size:4px">SHIFT</span> SNEAK/CLING</div><div class="kg2-ci"><span class="kg2-key" style="font-size:4px">2x DIR</span> DODGE</div><div class="kg2-ci"><span class="kg2-key">E</span> AIM HOOK</div><div class="kg2-ci"><span class="kg2-key" style="font-size:4px">ESC</span> PAUSE</div></div>';}
   function _mobControls(){return '<div class="kg2-cr"><div class="kg2-ci">KAGE needs a keyboard and mouse.</div></div><div class="kg2-cr"><div class="kg2-ci">Visit again from a desktop, ninja.</div></div>';}
   var _scrTitle=_mkScr();
   _scrTitle.innerHTML='<div class="kg2-logo"><div class="kg2-logo-t">KAGE <span style="color:#d04050">II</span></div><div class="kg2-logo-sep"></div><div class="kg2-logo-sub">THE LORD\'S KEEP &mdash; LEAVE NO TRACE</div></div><div style="flex:1 0 14px;max-height:28px"></div><div class="kg2-blink" style="font-size:8px;color:#fff"></div><div style="flex:1 0 10px;max-height:20px"></div><div style="opacity:.6"></div>';
@@ -782,7 +782,8 @@
   var aiMode=false,aiTimer=0,aiState='route',aiWpIdx=0,aiStuck=0,aiLastX=0,aiLastY=0,aiAtkT=0;
   var aiClingT=0,aiClingTry=0;
   var aiProgWp=-1,aiBestWpd=1e9,aiNoProgT=0;
-  var keys={w:false,a:false,s:false,d:false,sp:false,sneak:false};
+  var keys={w:false,a:false,s:false,d:false,sp:false,sneak:false,shift:false};
+  var tapTimes={w:-1,a:-1,s:-1,d:-1};
   var mouseDown=false;
   var spJustPressed=false;
   var screenShake=0,dmgFlash=0,healFlash=0,hitStop=0,slowMo=0,fovKick=0;
@@ -798,6 +799,9 @@
   var JUMP_VEL=6.8,COYOTE_T=0.12;
   var DASH_SPD=11,DASH_T=0.18,DASH_CD=1.0;
   var CLING_SPD=1.7; // wall-hug slide speed
+  var ROLL_T=0.5,ROLL_SPD=7.6,ROLL_CD=0.75;      // crouch roll
+  var CLING_STEP_SPD=9.0,CLING_STEP_T=0.18;       // quick step while clung
+  var DTAP=0.28;                                  // double-tap window (s)
   var GRAP_SPD=16,GRAP_RNG=16;
   var GRAVITY_K=18; // design value
 
@@ -813,6 +817,7 @@
     shuriken:5,maxShuriken:8,
     hasDouble:true,hasHook:true,      // full kit from the start
     cling:false,clingNx:0,clingNy:1,clingSolid:null,peek:0,clingRel:0,
+    rollT:0,rollDir:'w',rollDx:0,rollDy:0,rollSpin:0,clingStepT:0,clingStepDir:1,
     runPhase:0,scarfT:0,fellFrom:0,landDip:0
   };
   // Camera (orbit behind player)
@@ -824,6 +829,7 @@
     player.grounded=false;player.jumpCount=0;player.coyote=0;player.jumpCD=0;
     player.dashCD=0;player.dashT=0;player.grappling=false;
     player.cling=false;player.peek=0;player.clingSolid=null;
+    player.rollT=0;player.clingStepT=0;
     player.atkPhase=0;player.atkT=0;player.combo=0;
     player.shuriken=5;
     cam.yaw=0;cam.pitch=-0.18;
@@ -936,11 +942,11 @@
     if(!player.grounded){player.vx*=Math.max(0,1-0.5*dt);player.vy*=Math.max(0,1-0.5*dt);}
     var hspd=Math.sqrt(player.vx*player.vx+player.vy*player.vy);
     var cap=(keys.sneak&&player.grounded?SNEAK_SPD:WALK_SPD)*(player.grounded?1:1.1);
-    if(player.dashT<=0&&!player.grappling&&hspd>cap){
+    if(player.dashT<=0&&player.rollT<=0&&!player.grappling&&hspd>cap){
       player.vx*=cap/hspd;player.vy*=cap/hspd;
     }
     // Body turns toward movement (the third-person feel)
-    if(ml>0.01&&player.dashT<=0&&!attacking){
+    if(ml>0.01&&player.dashT<=0&&player.rollT<=0&&!attacking){
       var want=Math.atan2(mx,my);
       player.facing=angLerp(player.facing,want,Math.min(1,14*dt));
     }
@@ -954,6 +960,12 @@
       player.vz=0;
     }
     if(player.dashCD>0)player.dashCD-=dt;
+
+    // Roll (crouch dodge): drives velocity like a dash, with a tumble
+    if(player.rollT>0){
+      player.rollT-=dt;player.rollSpin+=dt;
+      player.vx=player.rollDx*ROLL_SPD;player.vy=player.rollDy*ROLL_SPD;player.vz=0;
+    }
 
     // Mantle assist after a grapple release
     if(player.vaultT>0){
@@ -1148,15 +1160,14 @@
     }
     return null;
   }
-  function toggleCling(){
-    if(gameState!=='playing')return;
-    if(player.cling){releaseCling();return;}
-    if(player.grappling||player.dashT>0||player.atkPhase>0||aimMode)return;
+  function enterCling(){
+    if(player.grappling||player.dashT>0||player.rollT>0||player.atkPhase>0||aimMode)return false;
     var w=findClingWall();
-    if(!w){playSound('grapfail');return;}
+    if(!w)return false;
     player.cling=true;
     player.clingNx=w.nx;player.clingNy=w.ny;player.clingSolid=w.solid;
-    player.peek=0;player.clingRel=0;
+    player.peek=0;player.clingRel=0;player.rollT=0;player.clingStepT=0;
+    keys.sneak=false;
     var s=w.solid;
     if(w.nx>0)player.x=s.x+s.w/2+PLAYER_R+0.06;
     else if(w.nx<0)player.x=s.x-s.w/2-PLAYER_R-0.06;
@@ -1165,9 +1176,22 @@
     player.vx=player.vy=player.vz=0;
     player.facing=Math.atan2(w.nx,w.ny); // back against the wall
     playSound('cling');
+    return true;
+  }
+  function toggleCling(){ // AI + test hook
+    if(gameState!=='playing')return;
+    if(player.cling){releaseCling();return;}
+    if(!enterCling())playSound('grapfail');
+  }
+  // Shift: cling if a wall is right there, otherwise it is just a crouch
+  function onShiftPress(){
+    if(gameState!=='playing')return;
+    if(player.cling){releaseCling();return;}
+    enterCling(); // silent no-op when there is no wall
   }
   function releaseCling(){
-    player.cling=false;player.peek=0;player.clingSolid=null;
+    player.cling=false;player.peek=0;player.clingSolid=null;player.clingStepT=0;
+    keys.sneak=keys.shift;
     playSound('aimoff');
   }
   function wallBehindAt(x,y){
@@ -1186,6 +1210,17 @@
     var tx=-player.clingNy,ty=player.clingNx;
     var lat=mx*tx+my*ty;
     var away=mx*player.clingNx+my*player.clingNy;
+    // quick lateral step (double-tap along the wall)
+    if(player.clingStepT>0){
+      player.clingStepT-=dt;
+      var ss=CLING_STEP_SPD*dt*player.clingStepDir;
+      var sx=player.x+tx*ss,sy=player.y+ty*ss;
+      if(wallBehindAt(sx,sy)&&!pointInSolid(sx+tx*player.clingStepDir*PLAYER_R,sy+ty*player.clingStepDir*PLAYER_R,player.z+0.7,0)&&groundTopAt(sx,sy,player.z+0.3,PLAYER_R*0.7)>-900){
+        player.x=sx;player.y=sy;player.runPhase+=dt*8;
+      }else player.clingStepT=0;
+      player.vx=player.vy=0;
+      return;
+    }
     if(away>0.55)player.clingRel+=dt;else player.clingRel=0;
     if(player.clingRel>0.18){releaseCling();return;}
     if(spJustPressed){ // hop off the wall
@@ -1239,7 +1274,7 @@
   }
   function killPlayer(why){
     aimMode=false;
-    player.cling=false;player.peek=0;
+    player.cling=false;player.peek=0;player.rollT=0;player.clingStepT=0;
     gameState='dead';stateTimer=1.2;
     stopMusic();
     playSound('die');
@@ -2659,33 +2694,78 @@
   function drawNinjaCling(){
     var nx=player.clingNx,ny=player.clingNy;
     var a=Math.atan2(nx,ny),yaw=-a; // facing out from the wall
-    var x=player.x-nx*0.10,y=player.y-ny*0.10,z=player.z;
     var tx=-ny,ty=nx;
+    var x=player.x-nx*0.06,y=player.y-ny*0.06,z=player.z;
     var lean=player.peek*0.35;
-    // legs pressed together, knees soft
-    dynBoxRot(x+tx*0.09,y+ty*0.09,z+0.30,0.09,0.10,0.30,yaw,0.12,0,C_NINJA,0);
-    dynBoxRot(x-tx*0.09,y-ty*0.09,z+0.30,0.09,0.10,0.30,yaw,0.12,0,C_NINJA,0);
-    // torso flattened, leaning toward the peek side
-    dynBoxRot(x+tx*lean*0.4,y+ty*lean*0.4,z+0.85,0.21,0.10,0.30,yaw,-0.12,lean,C_NINJA,0);
-    dynBoxRot(x,y,z+0.73,0.22,0.11,0.05,yaw,0,0,[0.45,0.10,0.12],0.1);
-    // head turned to scan past the corner
-    var ha=a+player.peek*0.8;
-    var hx=x+tx*lean*0.9,hy=y+ty*lean*0.9;
-    dynBoxT(hx,hy,z+1.27,0.14,0.14,0.15,yaw-player.peek*0.8,0,0,C_NINJA,0,0.86);
-    dynBoxRot(hx+Math.sin(ha)*0.12,hy+Math.cos(ha)*0.12,z+1.30,0.10,0.03,0.045,yaw-player.peek*0.8,0,0,C_SKIN,0.05);
-    // arms spread along the wall
-    dynBoxRot(x+tx*0.30,y+ty*0.30,z+1.0,0.07,0.08,0.24,yaw,0,1.2,C_NINJA,0);
-    dynBoxRot(x-tx*0.30,y-ty*0.30,z+1.0,0.07,0.08,0.24,yaw,0,-1.2,C_NINJA,0);
-    // katana on the back
-    dynBoxRot(x-nx*0.06,y-ny*0.06,z+0.95,0.04,0.04,0.5,yaw,0,0.6,[0.25,0.25,0.32],0);
-    // scarf hangs flat
-    for(var sc=0;sc<3;sc++){
-      var szz=z+1.18-sc*0.09+Math.sin(player.scarfT*1.6-sc)*0.02;
-      dynBoxRot(x-tx*(0.05+sc*0.05),y-ty*(0.05+sc*0.05),szz,0.07-sc*0.012,0.05,0.035,yaw,0,0,C_SCARF,0.12);
+    var hipZ=z+0.62;
+    // legs pressed together, knees eased off the wall
+    limbSeg(x+tx*0.07,y+ty*0.07,hipZ,a,0.28,0.30,0.068,0.075,C_NINJA);
+    limbSeg(_limbEnd[0],_limbEnd[1],_limbEnd[2],a,-0.34,0.27,0.055,0.06,C_NINJA_D);
+    dynBoxRot(_limbEnd[0]+locX(a,0,0.05),_limbEnd[1]+locY(a,0,0.05),_limbEnd[2]+0.035,0.06,0.10,0.035,yaw,0,0,C_NINJA_D,0);
+    limbSeg(x-tx*0.07,y-ty*0.07,hipZ,a,0.28,0.30,0.068,0.075,C_NINJA);
+    limbSeg(_limbEnd[0],_limbEnd[1],_limbEnd[2],a,-0.34,0.27,0.055,0.06,C_NINJA_D);
+    dynBoxRot(_limbEnd[0]+locX(a,0,0.05),_limbEnd[1]+locY(a,0,0.05),_limbEnd[2]+0.035,0.06,0.10,0.035,yaw,0,0,C_NINJA_D,0);
+    // hips + obi + knot
+    dynBoxRot(x,y,hipZ+0.03,0.150,0.095,0.065,yaw,-0.08,0,C_NINJA_D,0);
+    dynBoxRot(x,y,hipZ+0.115,0.160,0.105,0.034,yaw,-0.08,0,[0.45,0.10,0.12],0.08);
+    dynBoxRot(x+locX(a,0,-0.10),y+locY(a,0,-0.10),hipZ+0.11,0.05,0.04,0.05,yaw,0,0,[0.45,0.10,0.12],0.05);
+    // torso flattened against the wall, leaning into the peek
+    var chestZ=hipZ+0.30;
+    dynBoxT(x+tx*lean*0.4,y+ty*lean*0.4,chestZ,0.150,0.085,0.165,yaw,-0.12,lean,C_NINJA,0,1.22,0.92);
+    dynBoxRot(x+tx*lean*0.4+locX(a,0,0.072),y+ty*lean*0.4+locY(a,0,0.072),chestZ+0.05,0.112,0.028,0.10,yaw,-0.12,lean,C_NINJA_D,0);
+    // arms spread wide along the wall face (upper + forearm + hand)
+    var shZ=chestZ+0.15;
+    for(var s2=-1;s2<=1;s2+=2){
+      dynBoxRot(x+tx*s2*0.27,y+ty*s2*0.27,shZ-0.01,0.046,0.05,0.115,yaw,0,s2*1.30,C_NINJA,0);
+      dynBoxRot(x+tx*s2*0.45,y+ty*s2*0.45,shZ-0.055,0.040,0.046,0.10,yaw,0,s2*1.48,C_NINJA,0);
+      dynBoxRot(x+tx*s2*0.555,y+ty*s2*0.555,shZ-0.075,0.038,0.042,0.038,yaw,0,s2*1.48,C_SKIN,0);
     }
+    // shoulder pads
+    dynBoxT(x+tx*0.205,y+ty*0.205,shZ+0.05,0.066,0.072,0.032,yaw,0,0.45,C_NINJA_D,0,0.78);
+    dynBoxT(x-tx*0.205,y-ty*0.205,shZ+0.05,0.066,0.072,0.032,yaw,0,-0.45,C_NINJA_D,0,0.78);
+    // head turned to scan past the corner
+    var hdZ=chestZ+0.295;
+    var hYaw=yaw-player.peek*0.8,hA=a+player.peek*0.8;
+    var hx=x+tx*lean*0.9,hy=y+ty*lean*0.9;
+    dynBoxRot(hx,hy,hdZ-0.075,0.045,0.045,0.04,yaw,0,0,C_SKIN,0);
+    dynBoxT(hx,hy,hdZ+0.06,0.112,0.118,0.112,hYaw,0,0,C_NINJA,0,0.84);
+    dynBoxT(hx-Math.sin(hA)*0.065,hy-Math.cos(hA)*0.065,hdZ+0.155,0.07,0.08,0.05,hYaw,-0.5,0,C_NINJA_D,0,0.45);
+    dynBoxRot(hx+Math.sin(hA)*0.103,hy+Math.cos(hA)*0.103,hdZ+0.08,0.092,0.022,0.036,hYaw,0,0,C_SKIN,0.04);
+    dynBoxRot(hx+Math.sin(hA)*0.116+Math.cos(hA)*0.043,hy+Math.cos(hA)*0.116-Math.sin(hA)*0.043,hdZ+0.08,0.02,0.012,0.018,hYaw,0,0,[0.05,0.05,0.07],0);
+    dynBoxRot(hx+Math.sin(hA)*0.116-Math.cos(hA)*0.043,hy+Math.cos(hA)*0.116+Math.sin(hA)*0.043,hdZ+0.08,0.02,0.012,0.018,hYaw,0,0,[0.05,0.05,0.07],0);
+    // saya lies flat along the wall behind the shoulder
+    dynBoxRot(x-nx*0.10+tx*0.05,y-ny*0.10+ty*0.05,chestZ+0.12,0.034,0.034,0.29,yaw,0,1.05,C_LACQ,0);
+    // scarf hangs flat against the wall, away from the peek side
+    for(var sc=0;sc<3;sc++){
+      var szz=hdZ-0.02-sc*0.06+Math.sin(player.scarfT*1.6-sc)*0.02;
+      dynBoxRot(x-tx*(0.06+sc*0.05)-nx*0.06,y-ty*(0.06+sc*0.05)-ny*0.06,szz,0.055-sc*0.009,0.05,0.03,yaw,0,0,C_SCARF,0.10);
+    }
+  }
+  function drawNinjaRoll(){
+    var x=player.x,y=player.y,a=player.facing,yaw=-a;
+    var side=(player.rollDir==='a'||player.rollDir==='d');
+    var dirSign=(player.rollDir==='s'||player.rollDir==='a')?-1:1;
+    var sp=(player.rollSpin/ROLL_T)*TAU*dirSign;
+    var cz=player.z+0.46,cs=Math.cos(sp),sn=Math.sin(sp);
+    function place(f,t,u,hx,hy,hz,col,em){
+      var f2,t2,u2;
+      if(side){t2=t*cs-u*sn;u2=t*sn+u*cs;f2=f;}
+      else{f2=f*cs-u*sn;u2=f*sn+u*cs;t2=t;}
+      dynBoxT(x+locX(a,t2,f2),y+locY(a,t2,f2),cz+u2,hx,hy,hz,yaw,side?0:sp,side?sp:0,col,em||0,1,1);
+    }
+    place(0,0,0,0.155,0.135,0.16,C_NINJA,0);
+    place(0,0,-0.16,0.135,0.12,0.075,[0.45,0.10,0.12],0.06);
+    place(0.17,0,0.05,0.105,0.11,0.10,C_NINJA,0);
+    place(0.15,0.10,-0.13,0.07,0.06,0.10,C_NINJA_D,0);
+    place(0.15,-0.10,-0.13,0.07,0.06,0.10,C_NINJA_D,0);
+    place(0.04,0.14,-0.02,0.05,0.055,0.09,C_NINJA,0);
+    place(0.04,-0.14,-0.02,0.05,0.055,0.09,C_NINJA,0);
+    for(var sc=0;sc<3;sc++)place(-0.18-sc*0.12,0,0.08,0.05-sc*0.01,0.07,0.025,C_SCARF,0.10);
+    dashTrailPos.unshift([x,y,player.z]);if(dashTrailPos.length>5)dashTrailPos.length=5;
   }
   function drawNinja(){
     if(player.cling){drawNinjaCling();return;}
+    if(player.rollT>0){drawNinjaRoll();return;}
     var x=player.x,y=player.y,z=player.z,a=player.facing,yaw=-a;
     var sneak=keys.sneak&&player.grounded?1:0;
     var moving=Math.abs(player.vx)+Math.abs(player.vy)>0.5;
@@ -3593,21 +3673,73 @@
     }
   }
   // ===== ACTIONS =====
-  function tryDash(){
-    if(player.dashCD>0||gameState!=='playing')return;
-    if(player.cling)releaseCling();
-    player.dashT=DASH_T;player.dashCD=DASH_CD;
+  // camera-relative unit vector for a direction key
+  function dirVecFor(dir){
+    var ca=cam.yaw,mx=0,my=0;
+    if(dir==='w'){mx=Math.sin(ca);my=Math.cos(ca);}
+    else if(dir==='s'){mx=-Math.sin(ca);my=-Math.cos(ca);}
+    else if(dir==='a'){mx=-Math.cos(ca);my=Math.sin(ca);}
+    else{mx=Math.cos(ca);my=-Math.sin(ca);}
+    return [mx,my];
+  }
+  function dirFromKeys(){
     var mx=0,my=0,ca=cam.yaw;
     if(keys.w){mx+=Math.sin(ca);my+=Math.cos(ca);}
     if(keys.s){mx-=Math.sin(ca);my-=Math.cos(ca);}
     if(keys.a){mx-=Math.cos(ca);my+=Math.sin(ca);}
     if(keys.d){mx+=Math.cos(ca);my-=Math.sin(ca);}
     var ml=Math.sqrt(mx*mx+my*my);
-    if(ml<0.1){mx=Math.sin(player.facing);my=Math.cos(player.facing);ml=1;}
-    player.dashDx=mx/ml;player.dashDy=my/ml;
+    if(ml<0.1){mx=Math.sin(player.facing);my=Math.cos(player.facing);}
+    return [mx,my];
+  }
+  function tryDashDir(dx,dy){
+    if(player.dashCD>0||gameState!=='playing')return;
+    if(player.cling)releaseCling();
+    player.rollT=0;
+    player.dashT=DASH_T;player.dashCD=DASH_CD;
+    var ml=Math.sqrt(dx*dx+dy*dy)||1;
+    player.dashDx=dx/ml;player.dashDy=dy/ml;
     player.facing=Math.atan2(player.dashDx,player.dashDy);
     fovKick=1;
     playSound('dash');
+  }
+  function tryDash(){ var d=dirFromKeys(); tryDashDir(d[0],d[1]); } // AI / fallback
+  // crouch roll: 前転/後転 (somersault) or 側転 (cartwheel), with i-frames
+  function tryRoll(dir){
+    if(player.dashCD>0||player.rollT>0||player.atkPhase>0||player.grappling||gameState!=='playing'||!player.grounded)return;
+    var d=dirVecFor(dir);
+    player.rollT=ROLL_T;player.dashCD=ROLL_CD;
+    player.rollDir=dir;player.rollDx=d[0];player.rollDy=d[1];player.rollSpin=0;
+    player.iFrames=Math.max(player.iFrames,ROLL_T*0.85);
+    player.facing=Math.atan2(d[0],d[1]);
+    fovKick=0.6;playSound('dash');
+  }
+  // step sideways along the wall, or kick off it — never into the wall
+  function clingStep(dir){
+    if(player.clingStepT>0)return;
+    var d=dirVecFor(dir);
+    var dot=d[0]*player.clingNx+d[1]*player.clingNy; // away from wall = positive
+    if(dot<-0.35)return; // cannot step toward the wall
+    if(dot>0.45){ releaseCling(); tryDashDir(d[0],d[1]); return; } // kick off
+    var tx=-player.clingNy,ty=player.clingNx;
+    var lat=d[0]*tx+d[1]*ty;
+    player.clingStepDir=lat>0?1:-1;
+    player.clingStepT=CLING_STEP_T;
+    player.iFrames=Math.max(player.iFrames,CLING_STEP_T);
+    playSound('dash');
+  }
+  // double-tap router: cling step / crouch roll / dash
+  function onDoubleTap(dir){
+    if(gameState!=='playing')return;
+    if(player.cling){clingStep(dir);return;}
+    if(keys.sneak&&player.grounded){tryRoll(dir);return;}
+    var d=dirVecFor(dir);
+    tryDashDir(d[0],d[1]);
+  }
+  function onDirTap(dir){
+    var t=_time;
+    if(tapTimes[dir]>0&&t-tapTimes[dir]<DTAP){tapTimes[dir]=-1;onDoubleTap(dir);}
+    else tapTimes[dir]=t;
   }
 
   // ===== GAME FLOW =====
@@ -3619,7 +3751,7 @@
     zoneFade=0;zoneFadeDir=0;
     buildZone(0);
     gameState='playing';
-    showHint('SHIFT: SNEAK / C: WALL CLING / E: KAGINAWA / Q: DASH');
+    showHint('SHIFT: SNEAK (CLING NEAR A WALL) - DOUBLE-TAP A DIRECTION TO DODGE');
     startMusic();
     if(!isMobileKg)canvas.requestPointerLock();
     updateOverlay();
@@ -3629,7 +3761,7 @@
     player.x=checkpoint[0];player.y=checkpoint[1];player.z=checkpoint[2]+0.5;
     player.vx=player.vy=player.vz=0;
     player.grappling=false;player.dashT=0;player.atkPhase=0;player.combo=0;
-    player.cling=false;player.peek=0;player.clingSolid=null;
+    player.cling=false;player.peek=0;player.clingSolid=null;player.rollT=0;player.clingStepT=0;
     if(aiMode){aiWpIdx=aiNearestWp();aiStuck=0;aiTimer=0;aiProgWp=-1;aiBestWpd=1e9;aiNoProgT=0;}
     player.iFrames=2;
     koban=Math.floor(koban/2);
@@ -3644,14 +3776,18 @@
   // ===== INPUT =====
   function handleKey(e,down){
     switch(e.code){
-      case'KeyW':keys.w=down;break;case'KeyA':keys.a=down;break;
-      case'KeyS':keys.s=down;break;case'KeyD':keys.d=down;break;
-      case'ShiftLeft':case'ShiftRight':keys.sneak=down;break;
+      case'KeyW':if(down&&!keys.w)onDirTap('w');keys.w=down;break;
+      case'KeyA':if(down&&!keys.a)onDirTap('a');keys.a=down;break;
+      case'KeyS':if(down&&!keys.s)onDirTap('s');keys.s=down;break;
+      case'KeyD':if(down&&!keys.d)onDirTap('d');keys.d=down;break;
+      case'ShiftLeft':case'ShiftRight':
+        if(down){if(!keys.shift){keys.shift=true;onShiftPress();}}
+        else keys.shift=false;
+        keys.sneak=keys.shift&&!player.cling;
+        break;
       case'Space':if(down&&!keys.sp)spJustPressed=true;keys.sp=down;if(down)e.preventDefault();break;
-      case'KeyQ':if(down)tryDash();break;
       case'KeyE':if(down)toggleAim();break;
       case'KeyF':if(down)tryShuriken();break;
-      case'KeyC':if(down)toggleCling();break;
       case'Escape':
         if(down&&gameState==='playing'){
           if(aimMode){aimMode=false;playSound('aimoff');break;}
@@ -3691,7 +3827,7 @@
   canvas.addEventListener('contextmenu',function(e){e.preventDefault();});
   document.addEventListener('pointerlockchange',function(){
     pointerLocked=document.pointerLockElement===canvas;
-    if(!pointerLocked){keys.w=keys.a=keys.s=keys.d=keys.sp=keys.sneak=false;mouseDown=false;}
+    if(!pointerLocked){keys.w=keys.a=keys.s=keys.d=keys.sp=keys.sneak=keys.shift=false;tapTimes.w=tapTimes.a=tapTimes.s=tapTimes.d=-1;mouseDown=false;}
   });
 
   // ===== WINDOW STATE =====
@@ -3975,7 +4111,8 @@
         kills:kills,stealthKills:stealthKills,alerts:alertCount,koban:koban,
         gameState:gameState,enemies:enemies.length,bossHp:boss?boss.hp:-1,aiWp:aiWpIdx,aiState:aiState,
         hasDouble:player.hasDouble,hasHook:player.hasHook,solids:solids.length,
-        cling:player.cling,peek:player.peek,squeaks:squeaks.length};
+        cling:player.cling,peek:player.peek,squeaks:squeaks.length,
+        dashT:player.dashT,rollT:player.rollT,rollDir:player.rollDir,sneak:keys.sneak,clingStepT:player.clingStepT};
     },
     warp:function(x,y,z){player.x=x;player.y=y;player.z=z;player.vx=player.vy=player.vz=0;},
     give:function(){player.hasDouble=true;player.hasHook=true;player.shuriken=8;},
