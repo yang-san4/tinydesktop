@@ -294,73 +294,151 @@
   }
 
   // ==================================================
-  //  OS X Aqua (Aurora / Space)
+  //  OS X Aqua (Aurora over mountains + lake reflection)
   // ==================================================
   function drawOSX() {
     srand(303);
+    var horizon = 50; // waterline
 
-    // Dark space background gradient
-    for (var y = 0; y < H; y++) {
-      var t = y / H;
-      var r = Math.floor(10 + t * 20);
-      var g = Math.floor(20 + t * 40);
-      var b = Math.floor(50 + t * 50);
+    // ----- Night sky gradient (deep navy -> lighter blue near horizon) -----
+    for (var y = 0; y < horizon; y++) {
+      var t = y / horizon;
+      var r = Math.floor(8 + t * 16);
+      var g = Math.floor(12 + t * 28);
+      var b = Math.floor(34 + t * 40);
       hline(0, y, W, 'rgb(' + r + ',' + g + ',' + b + ')');
     }
 
-    // Stars scattered across upper area
-    for (var i = 0; i < 40; i++) {
+    // ----- Stars (varied brightness, sky only) -----
+    var stars = [];
+    for (var i = 0; i < 55; i++) {
       var sx = Math.floor(rand() * W);
-      var sy = Math.floor(rand() * H * 0.7);
-      var bright = 160 + Math.floor(rand() * 95);
-      px(sx, sy, 'rgb(' + bright + ',' + bright + ',' + (bright + 20) + ')');
-    }
-
-    // Aurora wave 1 (blue-purple)
-    for (var x = 0; x < W; x++) {
-      var wave = Math.sin(x * 0.06) * 8 + Math.sin(x * 0.12 + 1) * 4;
-      var cy = 30 + wave;
-      for (var dy = -4; dy <= 4; dy++) {
-        var iy = Math.round(cy + dy);
-        if (iy < 0 || iy >= H) continue;
-        var dist = Math.abs(dy) / 4;
-        var alpha = (1 - dist) * 0.5;
-        var cr = Math.floor(80 + (1 - dist) * 60);
-        var cg = Math.floor(120 + (1 - dist) * 60);
-        var cb = Math.floor(200 + (1 - dist) * 55);
-        ctx.fillStyle = 'rgba(' + cr + ',' + cg + ',' + cb + ',' + alpha + ')';
-        ctx.fillRect(x, iy, 1, 1);
+      var sy = Math.floor(rand() * (horizon - 4));
+      var bn = rand();
+      stars.push({ x: sx, y: sy, bright: bn });
+      if (bn > 0.86) {
+        // bright sparkle star (cross glow)
+        px(sx, sy, 'rgb(235,243,255)');
+        px(sx - 1, sy, 'rgba(235,243,255,0.45)');
+        px(sx + 1, sy, 'rgba(235,243,255,0.45)');
+        px(sx, sy - 1, 'rgba(235,243,255,0.45)');
+        px(sx, sy + 1, 'rgba(235,243,255,0.45)');
+      } else {
+        var br = 150 + Math.floor(bn * 95);
+        px(sx, sy, 'rgb(' + br + ',' + br + ',' + (br + 15) + ')');
       }
     }
 
-    // Aurora wave 2 (cyan-teal, offset)
-    for (var x = 0; x < W; x++) {
-      var wave2 = Math.sin(x * 0.05 + 2) * 6 + Math.cos(x * 0.1) * 3;
-      var cy2 = 42 + wave2;
-      for (var dy = -3; dy <= 3; dy++) {
-        var iy = Math.round(cy2 + dy);
-        if (iy < 0 || iy >= H) continue;
-        var dist = Math.abs(dy) / 3;
-        var alpha = (1 - dist) * 0.35;
-        var cr = Math.floor(40 + (1 - dist) * 40);
-        var cg = Math.floor(160 + (1 - dist) * 60);
-        var cb = Math.floor(210 + (1 - dist) * 45);
-        ctx.fillStyle = 'rgba(' + cr + ',' + cg + ',' + cb + ',' + alpha + ')';
-        ctx.fillRect(x, iy, 1, 1);
-      }
+    // ----- Shooting star (fading diagonal trail) -----
+    for (var s = 0; s < 8; s++) {
+      ctx.fillStyle = 'rgba(220,240,255,' + (0.75 - s * 0.09).toFixed(2) + ')';
+      ctx.fillRect(16 + s, 7 + s, 1, 1);
     }
 
-    // Bright center glow
-    for (var x = 35; x < 75; x++) {
-      for (var dy = -2; dy <= 2; dy++) {
-        var gy = 35 + dy + Math.round(Math.sin(x * 0.08) * 3);
-        if (gy < 0 || gy >= H) continue;
-        var xd = Math.abs(x - 55) / 20;
-        var yd = Math.abs(dy) / 2;
-        var ga = Math.max(0, (1 - xd) * (1 - yd) * 0.3);
-        ctx.fillStyle = 'rgba(200, 230, 255,' + ga + ')';
-        ctx.fillRect(x, gy, 1, 1);
+    // ----- Aurora bands (multi-layer green -> cyan -> purple) -----
+    var bands = [
+      { cy: 22, f1: 0.060, a1: 7, f2: 0.130, a2: 3, ph: 0, th: 5, col: [90, 220, 150], alpha: 0.50 },
+      { cy: 30, f1: 0.050, a1: 6, f2: 0.110, a2: 3, ph: 2, th: 4, col: [70, 198, 218], alpha: 0.42 },
+      { cy: 38, f1: 0.045, a1: 5, f2: 0.100, a2: 2, ph: 4, th: 4, col: [150, 120, 232], alpha: 0.36 }
+    ];
+    function auroraPass(reflect) {
+      for (var bi = 0; bi < bands.length; bi++) {
+        var bd = bands[bi];
+        for (var x = 0; x < W; x++) {
+          var wave = Math.sin(x * bd.f1 + bd.ph) * bd.a1 + Math.sin(x * bd.f2 + bd.ph + 1) * bd.a2;
+          var cy = bd.cy + wave;
+          // Vertical curtain streaks: some columns brighter
+          var streak = 0.72 + 0.28 * Math.sin(x * 0.5 + bi * 1.7);
+          for (var dy = -bd.th; dy <= bd.th; dy++) {
+            var iy = Math.round(cy + dy);
+            if (iy < 0 || iy >= horizon) continue;
+            var dist = Math.abs(dy) / bd.th;
+            var alpha = (1 - dist) * bd.alpha * streak;
+            if (alpha <= 0.01) continue;
+            var cs = bd.col[0] + ',' + bd.col[1] + ',' + bd.col[2];
+            if (!reflect) {
+              ctx.fillStyle = 'rgba(' + cs + ',' + alpha.toFixed(3) + ')';
+              ctx.fillRect(x, iy, 1, 1);
+            } else {
+              var ry = 2 * horizon - iy; // mirror across waterline
+              if (ry > horizon && ry < H && ((ry + x) % 3) !== 0) {
+                ctx.fillStyle = 'rgba(' + cs + ',' + (alpha * 0.38).toFixed(3) + ')';
+                ctx.fillRect(x, ry, 1, 1);
+              }
+            }
+          }
+        }
       }
+    }
+    auroraPass(false);
+
+    // ----- Mountain ridges (layered silhouettes), back to front -----
+    function ridgePath(pts, baseY) {
+      ctx.beginPath();
+      ctx.moveTo(pts[0][0], pts[0][1]);
+      for (var i = 1; i < pts.length; i++) ctx.lineTo(pts[i][0], pts[i][1]);
+      ctx.lineTo(pts[pts.length - 1][0], baseY);
+      ctx.lineTo(pts[0][0], baseY);
+      ctx.closePath();
+    }
+    var farRidge = [[0, 46], [10, 40], [20, 43], [32, 37], [44, 42], [56, 38], [68, 43], [80, 39], [92, 44], [104, 40], [110, 45]];
+    var midRidge = [[0, 49], [14, 44], [26, 47], [40, 43], [54, 47], [66, 44], [80, 48], [94, 45], [110, 48]];
+    var nearRidge = [[0, 50], [18, 47], [34, 50], [50, 46], [66, 49], [84, 47], [100, 50], [110, 49]];
+    // Far (hazy, lighter cool blue)
+    ctx.fillStyle = '#2a3a5c'; ridgePath(farRidge, horizon); ctx.fill();
+    // Mid
+    ctx.fillStyle = '#1e2a48'; ridgePath(midRidge, horizon); ctx.fill();
+    // Near (darkest)
+    ctx.fillStyle = '#141d30'; ridgePath(nearRidge, horizon); ctx.fill();
+    // Snow/aurora-lit highlights on far peaks
+    px(32, 37, '#5a6e90'); px(56, 38, '#5a6e90'); px(80, 39, '#506488');
+
+    // ----- Water (gradient, darker toward bottom) -----
+    for (var wy = horizon; wy < H; wy++) {
+      var wt = (wy - horizon) / (H - horizon);
+      var wr = Math.floor(20 - wt * 14);
+      var wg = Math.floor(34 - wt * 22);
+      var wb = Math.floor(58 - wt * 32);
+      hline(0, wy, W, 'rgb(' + wr + ',' + wg + ',' + wb + ')');
+    }
+    // Horizon glow line (aurora light catching the water edge)
+    hline(0, horizon - 1, W, 'rgba(120,210,200,0.22)');
+    hline(0, horizon, W, 'rgba(90,180,200,0.16)');
+
+    // ----- Reflections in the water -----
+    // Mountain reflections (mirrored, dim)
+    function ridgeReflect(pts, col) {
+      var mpts = pts.map(function (p) { return [p[0], 2 * horizon - p[1]]; });
+      ctx.save();
+      ctx.globalAlpha = 0.45;
+      ctx.fillStyle = col;
+      ctx.beginPath();
+      ctx.moveTo(mpts[0][0], horizon);
+      for (var i = 0; i < mpts.length; i++) ctx.lineTo(mpts[i][0], mpts[i][1]);
+      ctx.lineTo(mpts[mpts.length - 1][0], horizon);
+      ctx.closePath();
+      ctx.fill();
+      ctx.restore();
+    }
+    ridgeReflect(nearRidge, '#141d30');
+    ridgeReflect(midRidge, '#1e2a48');
+    // Aurora reflection
+    auroraPass(true);
+    // Star reflections (only those whose mirror lands in the water)
+    for (var si = 0; si < stars.length; si++) {
+      var st = stars[si];
+      var sry = 2 * horizon - st.y;
+      if (sry > horizon && sry < H) {
+        var sa = st.bright > 0.86 ? 0.3 : 0.16;
+        ctx.fillStyle = 'rgba(210,228,255,' + sa + ')';
+        ctx.fillRect(st.x, sry, 1, 1);
+      }
+    }
+    // Ripple lines over the whole water to break up reflections
+    for (var ri = 0; ri < 9; ri++) {
+      var ryy = horizon + 2 + Math.floor(rand() * (H - horizon - 2));
+      var rxx = Math.floor(rand() * (W - 10));
+      hline(rxx, ryy, 4 + Math.floor(rand() * 7), 'rgba(40,70,100,0.30)');
     }
   }
 
