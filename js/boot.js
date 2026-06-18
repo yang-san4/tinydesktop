@@ -14,25 +14,25 @@
   startMenu.style.visibility = 'hidden';
 
   var lines = [
-    { text: 'TinyBIOS v1.0 (C) 2026 TinyOS Corp.', delay: 300 },
-    { text: '', delay: 100 },
-    { text: 'CPU: TinyChip 8-bit @ 4.77 MHz ........ OK', delay: 400 },
-    { text: 'RAM: Testing 640 KB', delay: 200, typing: true },
-    { text: ' ..................... 640 KB OK', delay: 600 },
-    { text: 'FPU: Not detected', delay: 200 },
-    { text: '', delay: 100 },
-    { text: 'Detecting devices:', delay: 300 },
-    { text: '  Display .... CRT 440x330 (4-bit color)', delay: 250 },
-    { text: '  Keyboard ... PS/2 detected', delay: 200 },
-    { text: '  Mouse ...... Serial 2-button', delay: 200 },
-    { text: '  Sound ...... PC Speaker (beep)', delay: 200 },
-    { text: '  Storage .... Floppy 1.44 MB', delay: 250 },
-    { text: '', delay: 100 },
-    { text: 'Loading TinyOS...', delay: 400 },
-    { text: '', delay: 100 },
+    { text: 'TinyBIOS v1.0 (C) 2026 TinyOS Corp.', delay: 150 },
+    { text: '', delay: 50 },
+    { text: 'CPU: TinyChip 8-bit @ 4.77 MHz ........ OK', delay: 200 },
+    { text: 'RAM: Testing 640 KB', delay: 100, typing: true },
+    { text: ' ..................... 640 KB OK', delay: 300 },
+    { text: 'FPU: Not detected', delay: 100 },
+    { text: '', delay: 50 },
+    { text: 'Detecting devices:', delay: 150 },
+    { text: '  Display .... CRT 440x330 (4-bit color)', delay: 120 },
+    { text: '  Keyboard ... PS/2 detected', delay: 100 },
+    { text: '  Mouse ...... Serial 2-button', delay: 100 },
+    { text: '  Sound ...... PC Speaker (beep)', delay: 100 },
+    { text: '  Storage .... Floppy 1.44 MB', delay: 120 },
+    { text: '', delay: 50 },
+    { text: 'Loading TinyOS...', delay: 200 },
+    { text: '', delay: 50 },
     { text: 'PROGRESS', delay: 0, isProgress: true },
-    { text: '', delay: 200 },
-    { text: 'Starting desktop...', delay: 500 }
+    { text: '', delay: 100 },
+    { text: 'Starting desktop...', delay: 250 }
   ];
 
   var outputEl = bootEl.querySelector('.boot-output');
@@ -55,16 +55,16 @@
 
     var pct = 0;
     var interval = setInterval(function () {
-      pct += Math.random() * 15 + 5;
+      pct += Math.random() * 20 + 12;
       if (pct >= 100) {
         pct = 100;
         fill.style.width = '100%';
         clearInterval(interval);
-        setTimeout(callback, 200);
+        setTimeout(callback, 120);
       } else {
         fill.style.width = pct + '%';
       }
-    }, 80);
+    }, 50);
   }
 
   function processLine() {
@@ -102,10 +102,10 @@
       if (window._tinyNotifyBoot) window._tinyNotifyBoot();
       setTimeout(function () {
         bootEl.style.display = 'none';
-      }, 600);
-    }, 200);
+      }, 400);
+    }, 120);
   }
 
   // Start boot sequence after a brief delay
-  setTimeout(processLine, 400);
+  setTimeout(processLine, 200);
 })();
