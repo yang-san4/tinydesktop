@@ -2090,6 +2090,19 @@
     D(x,y,1.8,2.4,2.4,1.0,[0.85,0.60,0.70],[0.95,0.72,0.80],0.25);
     D(x,y,2.6,1.6,1.6,0.6,[0.95,0.72,0.80],[0.98,0.80,0.86],0.3);
   }
+  // dark cedar (sugi): tapered conifer. deco=true → backdrop only (no collision)
+  function sugi(x,y,h,deco){
+    var th=0.30,g0=[0.07,0.16,0.10],g1=[0.11,0.22,0.14];
+    if(deco)D(x,y,0,th,th,h,C_WOOD,C_WOOD);else S(x,y,0,th,th,h,C_WOOD,C_WOOD);
+    D(x,y,h*0.38,2.0,2.0,h*0.32,g0,g1,0);
+    D(x,y,h*0.62,1.45,1.45,h*0.28,g0,g1,0);
+    D(x,y,h*0.82,0.85,0.85,h*0.30,g1,g1,0);
+  }
+  // earthwork rampart (dorui): dirt bank with a mossy cap — the town's natural edge
+  function dorui(cx,cy,z0,w,d,h){
+    S(cx,cy,z0,w,d,h,C_DIRT,[0.14,0.22,0.13]);
+    D(cx,cy,z0+h,w+0.5,d+0.5,0.25,[0.12,0.19,0.11],[0.16,0.26,0.16]);
+  }
   // --- interior / town construction kit ---
   function wallX(x0,x1,y,z0,h,th,col,top){S((x0+x1)/2,y,z0,Math.abs(x1-x0),th||0.4,h,col||C_WALL,top||col||C_WALL);}
   function wallY(x,y0,y1,z0,h,th,col,top){S(x,(y0+y1)/2,z0,th||0.4,Math.abs(y1-y0),h,col||C_WALL,top||col||C_WALL);}
@@ -2169,8 +2182,13 @@
     S(0,-27,-1,68,58,1,C_DIRT,C_DIRT);
     D(0,5.5,-0.85,68,7,0.05,C_WATER,C_WATER,0.12);
     S(0,20.5,-1,68,23,1,C_DIRT,C_DIRT);
+    // SOUTH EXTENSION: the lower town doubles the explorable ground
+    S(0,-86,-1,80,60,1,C_DIRT,C_DIRT);
+    D(14,-86,0.02,3,60,0.02,C_STONE,C_STONE);   // east N-S lane
+    D(0,-86,0.025,70,4,0.02,C_STONE,C_STONE);    // market cross street
+    D(0,-108,0.025,60,4,0.02,C_STONE,C_STONE);   // south cross street
     // streets
-    D(-6,-27,0.02,3.6,58,0.02,C_STONE,C_STONE);
+    D(-6,-57,0.02,3.6,118,0.02,C_STONE,C_STONE);
     D(-6,20.5,0.02,3.6,23,0.02,C_STONE,C_STONE);
     D(-2,-22,0.025,40,4,0.02,C_STONE,C_STONE);
     D(12,-35,0.02,3,26,0.02,C_STONE,C_STONE);
@@ -2244,6 +2262,76 @@
     pickups.push({kind:'onigiri',x:4,y:-23.0,z:1.1,t:0});
     pickups.push({kind:'onigiri',x:16,y:18,z:0.4,t:0});
     jizo(3,-52,0);jizo(-22,-19,0);jizo(-2,12,0);
+    // ===== SOUTH EXTENSION: lower-town districts =====
+    // machiya rows along the main road
+    machiya(-15,-62,5,3.5,2.2);machiya(-15,-69,5,3.5,2.0);machiya(-15,-76,5,3.5,2.4);
+    machiya(-15,-95,5,3.5,2.0);machiya(-15,-102,5,3.5,2.2);
+    machiya(3,-61,5,3.5,2.0);machiya(3,-68,5,3.5,2.4);machiya(3,-75,5,3.5,2.0);
+    machiya(3,-96,5,3.5,2.2);machiya(3,-103,5,3.5,1.8);
+    machiya(20,-64,4,3,2.0);machiya(20,-72,4,3,2.4);machiya(20,-94,4,3,1.8);machiya(20,-102,4,3,2.2);
+    machiya(-26,-66,4,3,2.2);machiya(-26,-74,4,3,1.8);machiya(-28,-98,4,3,2.4);
+    // roof-route barrels + kaginawa anchors
+    barrel(-12,-67.8,0);barrel(0,-74.6,0);barrel(18,-70.6,0);barrel(-24,-72.8,0);
+    anchor(-15,-68,3.4);anchor(3,-67,3.4);anchor(20,-72,3.2);anchor(-26,-72,3.0);
+    // lower market (back-alley stalls) — a second cling-and-peek corner
+    yatai(-12,-88);yatai(-5,-90);yatai(2,-87);yatai(8,-90);
+    crateStack(-10,-86);barrel(-2,-92,0);barrel(6,-85,0);crateStack(10,-93);
+    wallX(-24,-12,-94,0,1.9,0.5);
+    well(-20,-88);well(12,-100);
+    // storehouse yard + watchtower (southwest)
+    kura(-30,-86,3.5,3,2.4);yagura(-32,-100,4.5);
+    pickups.push({kind:'shubox',x:-30,y:-84.2,z:0.4,t:0});
+    pickups.push({kind:'koban',x:-32,y:-100,z:4.85,t:0});
+    pickups.push({kind:'onigiri',x:-32.4,y:-99.4,z:4.85,t:0});
+    anchor(-32,-100.6,4.7);
+    // shrine by the south rampart (southeast)
+    torii(26,-90,2.6);
+    S(26,-98,0,6,4,2.6,C_WALL,C_KAWARA);
+    S(26,-98,2.6,7,5,0.3,C_KAWARA,C_KAWARA);
+    gableRoof(26,-98,2.88,7.4,5.4,1.1,C_KAWARA,0);
+    chochin(24.5,-95.5,1.7);chochin(27.5,-95.5,1.7);
+    jizo(23,-94,0);jizo(0,-112,0);jizo(-26,-104,0);
+    // sakura
+    sakuraTree(-22,-62);sakuraTree(22,-78);sakuraTree(30,-105);sakuraTree(-30,-108);
+    sakuraTree(16,-110);sakuraTree(-10,-110);
+    // south rampart wall + corner towers (the town's edge)
+    S(0,-114,0,80,1.6,2.8,C_WALL,C_KAWARA);
+    yagura(-34,-110,4.5);yagura(32,-110,4.5);
+    // street lanterns
+    chochin(-7.9,-62,1.6);chochin(-4.1,-72,1.6);chochin(-7.9,-82,1.6);
+    chochin(-4.1,-100,1.6);chochin(-7.9,-110,1.6);
+    chochin(13,-66,1.6);chochin(15,-96,1.6);chochin(12,-108,1.6);
+    // koban trail leading north toward the canal + gate
+    var kbs=[[-6,-110],[-6,-100],[-6,-90],[-6,-80],[-6,-70],[-6,-62],
+             [14,-104],[14,-92],[14,-70],[20,-100],[-20,-88],[12,-100],[26,-90],[-28,-66]];
+    for(var ks=0;ks<kbs.length;ks++)pickups.push({kind:'koban',x:kbs[ks][0],y:kbs[ks][1],z:0.4,t:0});
+    pickups.push({kind:'koban',x:-15,y:-67.3,z:3.1,t:0});
+    pickups.push({kind:'koban',x:3,y:-66.3,z:3.1,t:0});
+    pickups.push({kind:'onigiri',x:2,y:-87,z:1.1,t:0});
+    pickups.push({kind:'onigiri',x:-15,y:-100,z:0.4,t:0});
+    fireflyCluster(-22,-62,3,4);fireflyCluster(26,-98,3,5);fireflyCluster(-30,-108,3,4);
+    // ===== PERIMETER: earthwork ramparts + cedar forest (no more void falls) =====
+    // east/west earthworks: tall enough not to be cleared from flat ground (h4.5)
+    dorui(-35.5,-12,0,3,90,4.5);  // west, along the original-width banks  (y[-57,33])
+    dorui( 35.5,-12,0,3,90,4.5);  // east
+    dorui(-41.5,-86,0,3,62,4.5);  // west, along the wider lower town      (y[-117,-55])
+    dorui( 41.5,-86,0,3,62,4.5);  // east
+    // backdrop cedar forest beyond the earthworks (decoration only)
+    for(var fy=-117;fy<=31;fy+=4.0){
+      var wx=(fy<-55?-44:-38);   // step out to match the wider lower town
+      var ex=(fy<-55? 44: 38);
+      sugi(wx-(rng()*1.4),fy+(rng()-0.5)*2.2,5.5+rng()*3.5,true);
+      sugi(wx-3.4-(rng()*1.6),fy+2+(rng()-0.5)*2.2,5.5+rng()*3.5,true);
+      sugi(ex+(rng()*1.4),fy+(rng()-0.5)*2.2,5.5+rng()*3.5,true);
+      sugi(ex+3.4+(rng()*1.6),fy+2+(rng()-0.5)*2.2,5.5+rng()*3.5,true);
+    }
+    // forest behind the south rampart
+    for(var fx=-44;fx<=44;fx+=4.0){
+      sugi(fx+(rng()-0.5)*1.8,-119-(rng()*1.4),5.5+rng()*3.5,true);
+      sugi(fx+2+(rng()-0.5)*1.8,-122.5-(rng()*1.6),5.5+rng()*3.5,true);
+    }
+    // a few cedars inside the town as cover (solid trunks)
+    sugi(-31,-70,7.5);sugi(31,-92,7.0);sugi(-34,-95,6.5);sugi(30,-60,7.0);sugi(34,-78,6.5);
     // enemies
     spawnEnemy('ashigaru',-6,-46,0,{patrol:[[-6,-50],[-6,-40]]});
     spawnEnemy('ashigaru',-6,-30,0,{patrol:[[-6,-36],[-6,-26]],lantern:true});
@@ -2256,10 +2344,20 @@
     spawnEnemy('ashigaru',-6,2,0,{patrol:[[-6,-2],[-6,10]],lantern:true});
     spawnEnemy('ashigaru',-6,18,0,{patrol:[[-6,14],[-6,24]]});
     spawnEnemy('ashigaru',1,25.2,0,{facing:PI});
+    // south extension patrols
+    spawnEnemy('ashigaru',-6,-100,0,{patrol:[[-6,-108],[-6,-92]]});
+    spawnEnemy('ashigaru',-6,-78,0,{patrol:[[-6,-84],[-6,-66]],lantern:true});
+    spawnEnemy('ashigaru',-2,-88,0,{patrol:[[-12,-88],[8,-88]]});
+    spawnEnemy('ashigaru',14,-95,0,{patrol:[[14,-104],[14,-86]]});
+    spawnEnemy('ashigaru',-18,-94,0,{patrol:[[-22,-94],[-12,-94]]}); // behind the lower garden wall
+    spawnEnemy('ashigaru',26,-96,0,{facing:0});
+    spawnEnemy('archer',-32,-100,4.85,{facing:PI/2});
+    spawnEnemy('archer',32,-110,4.75,{facing:PI/2});
     fireflyCluster(12,2,7,8);fireflyCluster(-20,-33,3,5);fireflyCluster(24,-44,3,4);fireflyCluster(-18,12,3,4);
-    hintTrigs.push({y:-31,msg:'C: WALL CLING — hide flat, slide to a corner to peek'});
-    checkpoint=[3,-52,0];
-    player.x=0;player.y=-53;player.z=0.5;
+    hintTrigs.push({y:-31,msg:'SHIFT: WALL CLING — hide flat, slide to a corner to peek'});
+    hintTrigs.push({y:-104,msg:'SOTOMACHI — the lower town. Slip north to the canal and the gate'});
+    checkpoint=[-6,-110,0];
+    player.x=-6;player.y=-110;player.z=0.5;
     exitGate={y:31};
   }
 
@@ -3473,7 +3571,7 @@
     }else if(player.grounded&&!aimMode&&player.atkPhase===0&&!player.grappling&&findClingWall()){
       hud.font='5px monospace';hud.textAlign='center';
       hud.fillStyle='rgba(200,200,220,0.45)';
-      hud.fillText('C: WALL CLING',W/2,H-24);
+      hud.fillText('SHIFT: WALL CLING',W/2,H-24);
     }
     // hint
     if(hintT>0){
