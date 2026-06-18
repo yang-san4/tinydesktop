@@ -1,4 +1,4 @@
-// ===== GEKKO v2 — Sky City Arena FPS (WebGL Neon Engine) =====
+// ===== SKYHOLM — Floating Isles FPS (WebGL) | (formerly GEKKO) =====
 // v2 rewrite: WebGL renderer (low-res + pixelated upscale), unified
 // geometry (one box list drives both rendering and collision), dusk
 // synthwave palette, dynamic lights, 3D enemy meshes, richer audio.
@@ -36,7 +36,7 @@
   if (!gl) {
     var msg = document.createElement('div');
     msg.style.cssText = 'color:#f44;font-family:monospace;font-size:10px;padding:12px;';
-    msg.textContent = 'GEKKO v2 requires WebGL.';
+    msg.textContent = 'SKYHOLM requires WebGL.';
     _cw.appendChild(msg);
     return;
   }
@@ -51,42 +51,42 @@
     '@keyframes fpsSlideIn{0%{transform:translateY(-10px);opacity:0}100%{transform:translateY(0);opacity:1}}' +
     '.fps-scr{position:absolute;top:0;left:0;width:100%;height:100%;display:none;' +
     'flex-direction:column;align-items:center;justify-content:center;gap:0;' +
-    'font-family:"Press Start 2P",monospace;text-align:center;box-sizing:border-box;padding:4% 4%;background:rgba(8,5,18,0.55)}' +
+    'font-family:"Press Start 2P",monospace;text-align:center;box-sizing:border-box;padding:4% 4%;background:rgba(34,26,18,0.55)}' +
     '.fps-scr.on{display:flex}' +
     '.fps-blink{animation:fpsPulse 1.8s ease-in-out infinite}' +
-    '.fps-key{display:inline-block;border:1px solid rgba(0,229,255,0.45);padding:2px 4px;font-size:5px;border-radius:2px;margin:0 1px;background:rgba(0,229,255,0.06);color:#00e5ff;line-height:1;vertical-align:middle;font-family:"Press Start 2P",monospace}' +
+    '.fps-key{display:inline-block;border:1px solid rgba(200,155,90,0.45);padding:2px 4px;font-size:5px;border-radius:2px;margin:0 1px;background:rgba(200,155,90,0.06);color:#c89b5a;line-height:1;vertical-align:middle;font-family:"Press Start 2P",monospace}' +
     '.fps-si{display:inline-block;width:14px;height:14px;border:1px solid;border-radius:50%;vertical-align:middle;position:relative;box-sizing:border-box}' +
     '.fps-si::after{content:"";position:absolute;width:6px;height:6px;border-radius:50%;top:50%;left:50%;transform:translate(-50%,-50%);background:currentColor;opacity:.35}' +
     '.fps-bi{display:inline-block;width:10px;height:10px;border-radius:3px;border:1px solid;vertical-align:middle;box-sizing:border-box}' +
     '.fps-cr{display:flex;align-items:center;justify-content:center;gap:10px;margin:2px 0;flex-wrap:wrap}' +
-    '.fps-ci{display:flex;align-items:center;gap:4px;font-size:5px;color:#c8d8e8;white-space:nowrap}' +
-    '.fps-logo{background:rgba(8,5,18,0.92);border-top:2px solid #00e5ff;border-bottom:2px solid #ff0060;padding:12px 28px 10px;text-align:center}' +
-    '.fps-logo-t{font-size:18px;color:#00e5ff;text-shadow:0 0 8px #00e5ff80,0 0 18px #00e5ff40;letter-spacing:8px}' +
-    '.fps-logo-sep{width:50%;height:1px;background:linear-gradient(90deg,transparent,#ff006060,transparent);margin:8px auto 6px}' +
-    '.fps-logo-sub{font-size:4px;color:#ff0060;letter-spacing:2px;opacity:.65}' +
+    '.fps-ci{display:flex;align-items:center;gap:4px;font-size:5px;color:#e8dcc4;white-space:nowrap}' +
+    '.fps-logo{background:rgba(34,26,18,0.92);border-top:2px solid #c89b5a;border-bottom:2px solid #8a4a2a;padding:12px 28px 10px;text-align:center}' +
+    '.fps-logo-t{font-size:18px;color:#c89b5a;text-shadow:0 0 8px #c89b5a80,0 0 18px #c89b5a40;letter-spacing:8px}' +
+    '.fps-logo-sep{width:50%;height:1px;background:linear-gradient(90deg,transparent,#8a4a2a60,transparent);margin:8px auto 6px}' +
+    '.fps-logo-sub{font-size:4px;color:#8a4a2a;letter-spacing:2px;opacity:.65}' +
     '.fps-hud-hint{position:absolute;bottom:3px;right:4px;display:none;align-items:center;gap:3px;font-family:"Press Start 2P",monospace;font-size:4px;text-shadow:0 0 4px rgba(0,0,0,0.9)}.fps-hud-hint.on{display:flex}' +
-    '.fps-wave-title{font-size:14px;color:#00e5ff;text-shadow:0 0 10px #00e5ff;animation:fpsSlideIn 0.5s ease-out}' +
-    '.fps-wave-sub{font-size:6px;color:#ff0060;margin-top:6px;animation:fpsSlideIn 0.5s ease-out 0.2s both}' +
-    '.fps-wave-info{font-size:4px;color:#c8d8e8;margin-top:4px;opacity:.7;animation:fpsSlideIn 0.5s ease-out 0.4s both}' +
-    '.fps-stats{font-size:5px;color:#c8d8e8;margin-top:10px;line-height:2}.fps-stats b{color:#00e5ff}';
+    '.fps-wave-title{font-size:14px;color:#c89b5a;text-shadow:0 0 10px #c89b5a;animation:fpsSlideIn 0.5s ease-out}' +
+    '.fps-wave-sub{font-size:6px;color:#8a4a2a;margin-top:6px;animation:fpsSlideIn 0.5s ease-out 0.2s both}' +
+    '.fps-wave-info{font-size:4px;color:#e8dcc4;margin-top:4px;opacity:.7;animation:fpsSlideIn 0.5s ease-out 0.4s both}' +
+    '.fps-stats{font-size:5px;color:#e8dcc4;margin-top:10px;line-height:2}.fps-stats b{color:#c89b5a}';
   document.head.appendChild(_ovCss);
   function _mkScr(){var d=document.createElement('div');d.className='fps-scr';_ov.appendChild(d);return d;}
   function _pcControls(){return '<div class="fps-cr"><div class="fps-ci"><span class="fps-key">W</span><span class="fps-key">A</span><span class="fps-key">S</span><span class="fps-key">D</span> MOVE</div><div class="fps-ci"><span class="fps-key" style="font-size:4px">MOUSE</span> LOOK</div></div><div class="fps-cr"><div class="fps-ci"><span class="fps-key" style="font-size:4px">CLICK</span> SHOOT</div><div class="fps-ci"><span class="fps-key" style="font-size:4px">SPACE</span> JUMP/JET</div><div class="fps-ci"><span class="fps-key">Q</span> DASH</div><div class="fps-ci"><span class="fps-key">E</span> GRAPPLE</div></div><div class="fps-cr"><div class="fps-ci"><span class="fps-key">1</span><span class="fps-key">2</span><span class="fps-key">3</span> WEAPONS</div><div class="fps-ci"><span class="fps-key" style="font-size:4px">ESC</span> PAUSE</div></div>';}
-  function _mobControls(){return '<div class="fps-cr"><div class="fps-ci"><span class="fps-si" style="color:#00e5ff;border-color:rgba(0,229,255,0.45)"></span> MOVE</div><div class="fps-ci"><span class="fps-si" style="color:#ff0060;border-color:rgba(255,0,96,0.45)"></span> LOOK</div></div><div class="fps-cr"><div class="fps-ci"><span class="fps-bi" style="border-color:#ff3c3c;background:rgba(255,60,60,0.15)"></span> FIRE</div><div class="fps-ci"><span class="fps-bi" style="border-color:#00e5ff;background:rgba(0,229,255,0.15)"></span> JUMP</div><div class="fps-ci"><span class="fps-bi" style="border-color:#ff0060;background:rgba(255,0,96,0.15)"></span> DASH</div></div>';}
+  function _mobControls(){return '<div class="fps-cr"><div class="fps-ci"><span class="fps-si" style="color:#c89b5a;border-color:rgba(200,155,90,0.45)"></span> MOVE</div><div class="fps-ci"><span class="fps-si" style="color:#8a4a2a;border-color:rgba(138,74,42,0.45)"></span> LOOK</div></div><div class="fps-cr"><div class="fps-ci"><span class="fps-bi" style="border-color:#ff3c3c;background:rgba(255,60,60,0.15)"></span> FIRE</div><div class="fps-ci"><span class="fps-bi" style="border-color:#c89b5a;background:rgba(200,155,90,0.15)"></span> JUMP</div><div class="fps-ci"><span class="fps-bi" style="border-color:#8a4a2a;background:rgba(138,74,42,0.15)"></span> DASH</div></div>';}
   var _scrTitle=_mkScr();
-  _scrTitle.innerHTML='<div class="fps-logo"><div class="fps-logo-t">GEKKO</div><div class="fps-logo-sep"></div><div class="fps-logo-sub">SKY CITY ARENA &mdash; DUSKFALL</div></div><div style="flex:1 0 14px;max-height:28px"></div><div class="fps-blink" style="font-size:8px;color:#fff"></div><div style="flex:1 0 10px;max-height:20px"></div><div style="opacity:.6"></div>';
+  _scrTitle.innerHTML='<div class="fps-logo"><div class="fps-logo-t">SKYHOLM</div><div class="fps-logo-sep"></div><div class="fps-logo-sub">FLOATING ISLES</div></div><div style="flex:1 0 14px;max-height:28px"></div><div class="fps-blink" style="font-size:8px;color:#fff"></div><div style="flex:1 0 10px;max-height:20px"></div><div style="opacity:.6"></div>';
   var _titlePrompt=_scrTitle.children[2],_titleCtrls=_scrTitle.children[4];
   var _scrWave=_mkScr();_scrWave.style.background='rgba(10,5,20,0.5)';
   _scrWave.innerHTML='<div class="fps-wave-title"></div><div class="fps-wave-sub"></div><div class="fps-wave-info"></div>';
   var _waveTitle=_scrWave.children[0],_waveSub=_scrWave.children[1],_waveInfo=_scrWave.children[2];
   var _scrPause=_mkScr();
-  _scrPause.innerHTML='<div style="font-size:14px;color:#00e5ff;text-shadow:0 0 6px #00e5ff80">PAUSED</div><div class="fps-blink" style="font-size:7px;color:#fff;margin:14px 0 10px"></div><div style="display:flex;gap:8px;justify-content:center;margin-bottom:10px"></div><div style="opacity:.55"></div>';
+  _scrPause.innerHTML='<div style="font-size:14px;color:#c89b5a;text-shadow:0 0 6px #c89b5a80">PAUSED</div><div class="fps-blink" style="font-size:7px;color:#fff;margin:14px 0 10px"></div><div style="display:flex;gap:8px;justify-content:center;margin-bottom:10px"></div><div style="opacity:.55"></div>';
   var _pausePrompt=_scrPause.children[1],_pauseMenu=_scrPause.children[2],_pauseCtrls=_scrPause.children[3];
   var _btnStyle='font-size:6px;padding:3px 8px;cursor:pointer;border:1px solid;border-radius:2px;user-select:none;';
   var _btnDebug=document.createElement('div');
-  _btnDebug.style.cssText=_btnStyle+'color:#0ae;border-color:#0ae;';
+  _btnDebug.style.cssText=_btnStyle+'color:#b5894f;border-color:#b5894f;';
   _btnDebug.textContent='DEBUG';
-  _btnDebug.addEventListener('mousedown',function(e){e.stopPropagation();e.preventDefault();debugMode=!debugMode;_btnDebug.style.background=debugMode?'rgba(0,170,238,0.3)':'';});
+  _btnDebug.addEventListener('mousedown',function(e){e.stopPropagation();e.preventDefault();debugMode=!debugMode;_btnDebug.style.background=debugMode?'rgba(181,137,79,0.3)':'';});
   var _btnReset=document.createElement('div');
   _btnReset.style.cssText=_btnStyle+'color:#f44;border-color:#f44;';
   _btnReset.textContent='RESET';
@@ -96,7 +96,7 @@
   _btnAI.textContent='AI TEST';
   _btnAI.addEventListener('mousedown',function(e){e.stopPropagation();e.preventDefault();
     aiMode=!aiMode;
-    if(aiMode){aiInit();debugMode=true;_btnDebug.style.background='rgba(0,170,238,0.3)';}
+    if(aiMode){aiInit();debugMode=true;_btnDebug.style.background='rgba(181,137,79,0.3)';}
     else{keys.w=keys.a=keys.s=keys.d=keys.sp=false;mouseDown=false;}
     _btnAI.style.background=aiMode?'rgba(0,255,136,0.3)':'';
   });
@@ -107,13 +107,13 @@
     if(!isMobileFps&&!aiMode)canvas.requestPointerLock();
   });
   var _scrWin=_mkScr();_scrWin.style.background='rgba(0,10,20,0.8)';
-  _scrWin.innerHTML='<div style="font-size:16px;color:#00e5ff;text-shadow:0 0 10px #00e5ff,0 0 20px #00e5ff60">YOU WIN!</div><div class="fps-stats"></div><div class="fps-blink" style="font-size:7px;color:#fff;margin-top:16px"></div>';
+  _scrWin.innerHTML='<div style="font-size:16px;color:#c89b5a;text-shadow:0 0 10px #c89b5a,0 0 20px #c89b5a60">YOU WIN!</div><div class="fps-stats"></div><div class="fps-blink" style="font-size:7px;color:#fff;margin-top:16px"></div>';
   var _winStats=_scrWin.children[1],_winPrompt=_scrWin.children[2];
   var _scrDead=_mkScr();_scrDead.style.background='rgba(20,0,0,0.8)';
   _scrDead.innerHTML='<div style="font-size:14px;color:#ff3c3c;text-shadow:0 0 10px #ff3c3c80">GAME OVER</div><div class="fps-stats"></div><div class="fps-blink" style="font-size:7px;color:#fff;margin-top:16px"></div>';
   var _deadStats=_scrDead.children[1],_deadPrompt=_scrDead.children[2];
   var _hudHint=document.createElement('div');_hudHint.className='fps-hud-hint';
-  _hudHint.innerHTML='<span class="fps-key" style="font-size:4px;padding:1px 3px">ESC</span><span style="color:#c8d8e8">PAUSE</span>';
+  _hudHint.innerHTML='<span class="fps-key" style="font-size:4px;padding:1px 3px">ESC</span><span style="color:#e8dcc4">PAUSE</span>';
   _ov.appendChild(_hudHint);
   var _ovActive='';
   function updateOverlay(){
@@ -133,7 +133,7 @@
     _scrWin.className='fps-scr'+(scr==='win'?' on':'');
     _scrDead.className='fps-scr'+(scr==='dead'?' on':'');
     if(scr==='title'){_titlePrompt.textContent=isMobileFps?'TAP TO START':'CLICK TO START';_titleCtrls.innerHTML=isMobileFps?_mobControls():_pcControls();}
-    if(scr==='pause'){_pausePrompt.textContent='CLICK TO RESUME';_pauseCtrls.innerHTML=_pcControls();_btnDebug.style.background=debugMode?'rgba(0,170,238,0.3)':'';_btnAI.style.background=aiMode?'rgba(0,255,136,0.3)':'';}
+    if(scr==='pause'){_pausePrompt.textContent='CLICK TO RESUME';_pauseCtrls.innerHTML=_pcControls();_btnDebug.style.background=debugMode?'rgba(181,137,79,0.3)':'';_btnAI.style.background=aiMode?'rgba(0,255,136,0.3)':'';}
     if(scr==='win'){_winPrompt.textContent='';_winPrompt.style.display='none';}
     if(scr==='dead'){_deadPrompt.textContent='';_deadPrompt.style.display='none';}
   }
@@ -145,21 +145,21 @@
   // ===== CONSTANTS =====
   var PI=Math.PI,TAU=PI*2,DEG=PI/180;
   var FOV_BASE=70*DEG;
-  var NEAR=0.1,FAR=120,FOG_START=28,FOG_END=68;
+  var NEAR=0.1,FAR=160,FOG_START=38,FOG_END=95;
   var GRAVITY=18,PLAYER_EYE=0.7,PLAYER_R=0.22,PLAYER_H=0.85;
   var WALK_SPD=4.5,AIR_CTRL=8,FRICTION=10;
-  var JUMP_VEL=6.5,JET_ACC=26,JET_MAX=1.2,JET_VZMAX=5.0;
+  var JUMP_VEL=9.0,JET_ACC=26,JET_MAX=1.8,JET_VZMAX=5.8;
   var DASH_SPD=15,DASH_T=0.15,DASH_CD=1.2;
-  var GRAP_SPD=18,GRAP_RNG=16;
+  var GRAP_SPD=18,GRAP_RNG=18;
   var MOM_MAX=1.4,MOM_GAIN=0.3,MOM_DECAY=2;
   var COYOTE_T=0.12;
-  var VOID_Z=-7;
-  // Dusk palette
-  var SKY_TOP=[0.10,0.06,0.26],SKY_HOR=[0.98,0.45,0.28],SKY_BOT=[0.30,0.10,0.30];
-  var FOG_C=[0.45,0.22,0.42];
-  var SUN_DIR=norm3([0.55,-0.35,0.42]); // low dusk sun, from east-south
-  var SUN_COL=[1.45,0.92,0.55];
-  var AMB_UP=[0.62,0.52,0.85],AMB_DN=[0.34,0.22,0.44]; // hemisphere ambient
+  var VOID_Z=-10;
+  // Clear-sky daylight palette
+  var SKY_TOP=[0.22,0.48,0.85],SKY_HOR=[0.80,0.90,0.98],SKY_BOT=[0.72,0.84,0.93];
+  var FOG_C=[0.78,0.86,0.95];
+  var SUN_DIR=norm3([0.35,-0.25,0.9]); // high midday sun
+  var SUN_COL=[1.25,1.18,1.02];
+  var AMB_UP=[0.55,0.68,0.85],AMB_DN=[0.42,0.40,0.32]; // hemisphere ambient (sky blue / warm ground)
   var _time=0;
 
   // ===== MATH =====
@@ -277,14 +277,8 @@
     '  if(h>0.0){col=mix(hor,top,pow(clamp(h*1.6,0.0,1.0),0.7));}\n'+
     '  else{col=mix(hor,bot,clamp(-h*3.0,0.0,1.0));}\n'+
     '  float sd=max(dot(dir,uSunDir),0.0);\n'+
-    '  col+=vec3(1.0,0.55,0.25)*pow(sd,180.0)*1.6;\n'+ // sun disc
-    '  col+=vec3(1.0,0.45,0.30)*pow(sd,8.0)*0.35;\n'+  // glow
-    '  if(h>0.12){\n'+ // stars fade in near zenith
-    '    vec2 sp=dir.xy/(0.001+dir.z)*14.0;\n'+
-    '    float st=step(0.9975,hash(floor(sp)));\n'+
-    '    float tw=0.6+0.4*sin(uTime*2.0+hash(floor(sp)+7.0)*40.0);\n'+
-    '    col+=vec3(st)*tw*clamp((h-0.12)*2.2,0.0,0.8);\n'+
-    '  }\n'+
+    '  col+=vec3(1.0,0.97,0.90)*pow(sd,320.0)*1.5;\n'+ // sun disc (small, white)
+    '  col+=vec3(0.85,0.92,1.0)*pow(sd,10.0)*0.18;\n'+ // soft glow
     '  gl_FragColor=vec4(col,1.0);\n'+
     '}';
 
@@ -426,174 +420,315 @@
     else pushQuad(staticMesh,[cx-hw,cy-e,cz-hh],[cx+hw,cy-e,cz-hh],[cx+hw,cy-e,cz+hh],[cx-hw,cy-e,cz+hh],[0,-1,0],r,g,b,em);
   }
 
-  // ===== PALETTE =====
-  var C_DECK=[0.30,0.28,0.46];      // platform top — dark asphalt violet
-  var C_DECK2=[0.35,0.31,0.52];
-  var C_ROCK=[0.24,0.19,0.34];      // island underside
-  var C_BLDG=[0.28,0.24,0.44];      // building body
-  var C_BLDG2=[0.24,0.21,0.40];
-  var C_TRIM_C=[0.0,0.9,1.0];       // cyan neon
-  var C_TRIM_M=[1.0,0.0,0.38];      // magenta neon
-  var C_TRIM_A=[1.0,0.62,0.15];     // amber window
-  var C_RAIL=[0.36,0.33,0.52];
+  // ===== PALETTE ===== (medieval sky-town: stone / timber / grass / thatch)
+  var C_DECK=[0.42,0.55,0.30];      // island top — grass
+  var C_DECK2=[0.60,0.56,0.48];     // island top — stone plaza
+  var C_ROCK=[0.45,0.37,0.30];      // island underside — brown cliff rock
+  var C_BLDG=[0.82,0.74,0.60];      // plaster wall (cream)
+  var C_BLDG2=[0.55,0.40,0.28];     // timber wall (brown)
+  var C_TRIM_C=[0.70,0.68,0.62];    // stone trim (was cyan)
+  var C_TRIM_M=[0.40,0.28,0.18];    // dark wood trim (was magenta)
+  var C_TRIM_A=[0.85,0.62,0.32];    // warm lit window / awning (was amber)
+  var C_RAIL=[0.45,0.32,0.20];      // wood rail
+  var C_ROOF=[0.70,0.35,0.25];      // terracotta roof
+  var C_ROOF2=[0.42,0.44,0.50];     // slate roof
+  var C_WATER=[0.40,0.62,0.78];     // water (for later phases)
+  var C_TORCH=[1.0,0.72,0.34];      // torch/lantern flame
 
-  // Neon edge trim around a platform top (decor, emissive)
+  // Stone/wood edge trim around a platform top (decor, non-emissive)
   function edgeTrim(cx,cy,top,w,d,col){
     var t=0.12,zt=top+0.02;
-    D(cx,cy-d/2+t/2,top-0.05,w,t,0.09,col,col,1);
-    D(cx,cy+d/2-t/2,top-0.05,w,t,0.09,col,col,1);
-    D(cx-w/2+t/2,cy,top-0.05,t,d,0.09,col,col,1);
-    D(cx+w/2-t/2,cy,top-0.05,t,d,0.09,col,col,1);
+    D(cx,cy-d/2+t/2,top-0.05,w,t,0.09,col,col,0);
+    D(cx,cy+d/2-t/2,top-0.05,w,t,0.09,col,col,0);
+    D(cx-w/2+t/2,cy,top-0.05,t,d,0.09,col,col,0);
+    D(cx+w/2-t/2,cy,top-0.05,t,d,0.09,col,col,0);
   }
-  // Floating island: deck (solid) + tapered rock underside (decor) + trim
+  // Floating island: grassy/stone deck (solid) + tapered rock cliff underside (decor) + stone rim
   function island(cx,cy,top,w,d,trimCol){
     S(cx,cy,top-0.6,w,d,0.6,C_ROCK,(rng()<0.5?C_DECK:C_DECK2));
     D(cx,cy,top-1.5,w*0.72,d*0.72,0.95,C_ROCK,C_ROCK);
-    D(cx,cy,top-2.2,w*0.42,d*0.42,0.8,[0.18,0.14,0.28],C_ROCK);
+    D(cx,cy,top-2.2,w*0.42,d*0.42,0.8,[0.30,0.24,0.20],C_ROCK);
     edgeTrim(cx,cy,top,w,d,trimCol||C_TRIM_C);
+  }
+  // Pitched (hip) roof: four sloped quads meeting at a ridge point. Decor only.
+  function roof(cx,cy,zBase,w,d,h,col){
+    var x0=cx-w/2,x1=cx+w/2,y0=cy-d/2,y1=cy+d/2,zp=zBase+h;
+    var dk=[col[0]*0.82,col[1]*0.82,col[2]*0.82];
+    pushQuad(staticMesh,[x0,y0,zBase],[x1,y0,zBase],[cx,cy,zp],[cx,cy,zp],[0,-0.7,0.7],col[0],col[1],col[2],0);
+    pushQuad(staticMesh,[x1,y1,zBase],[x0,y1,zBase],[cx,cy,zp],[cx,cy,zp],[0,0.7,0.7],col[0],col[1],col[2],0);
+    pushQuad(staticMesh,[x1,y0,zBase],[x1,y1,zBase],[cx,cy,zp],[cx,cy,zp],[0.7,0,0.7],dk[0],dk[1],dk[2],0);
+    pushQuad(staticMesh,[x0,y1,zBase],[x0,y0,zBase],[cx,cy,zp],[cx,cy,zp],[-0.7,0,0.7],dk[0],dk[1],dk[2],0);
   }
   // Bridge between two points (axis-aligned), solid walkway + decor rails
   function bridge(x0,y0,x1,y1,top,wd){
     var cx=(x0+x1)/2,cy=(y0+y1)/2;
     var w=Math.abs(x1-x0)||wd,d=Math.abs(y1-y0)||wd;
     if(Math.abs(x1-x0)<0.01)w=wd; if(Math.abs(y1-y0)<0.01)d=wd;
-    S(cx,cy,top-0.18,w,d,0.18,[0.14,0.12,0.24],C_DECK2);
+    S(cx,cy,top-0.18,w,d,0.18,[0.34,0.24,0.16],C_RAIL);
     // rails (decor only — solid rails caused edge-stuck bugs in v1)
     var t=0.07;
     if(d===wd){ // east-west bridge
-      D(cx,cy-wd/2+t,top,w,t,0.32,C_RAIL,C_TRIM_C,0.6);
-      D(cx,cy+wd/2-t,top,w,t,0.32,C_RAIL,C_TRIM_C,0.6);
+      D(cx,cy-wd/2+t,top,w,t,0.32,C_RAIL,C_RAIL,0);
+      D(cx,cy+wd/2-t,top,w,t,0.32,C_RAIL,C_RAIL,0);
     }else{
-      D(cx-wd/2+t,cy,top,t,d,0.32,C_RAIL,C_TRIM_C,0.6);
-      D(cx+wd/2-t,cy,top,t,d,0.32,C_RAIL,C_TRIM_C,0.6);
+      D(cx-wd/2+t,cy,top,t,d,0.32,C_RAIL,C_RAIL,0);
+      D(cx+wd/2-t,cy,top,t,d,0.32,C_RAIL,C_RAIL,0);
     }
   }
   // Building with window grid + roof trim + optional sign
   function building(cx,cy,z0,w,d,h,signCol){
     var body=rng()<0.5?C_BLDG:C_BLDG2;
-    S(cx,cy,z0,w,d,h,body,[0.34,0.30,0.50]);
-    edgeTrim(cx,cy,z0+h,w,d,signCol||C_TRIM_M);
-    // window rows on all 4 faces
+    S(cx,cy,z0,w,d,h,body,[0.62,0.50,0.38]);
+    edgeTrim(cx,cy,z0+h,w,d,C_TRIM_M); // dark-wood eaves
+    roof(cx,cy,z0+h,w*1.06,d*1.06,Math.max(0.6,Math.min(w,d)*0.45),rng()<0.5?C_ROOF:C_ROOF2);
+    // window rows on all 4 faces (warm, dim — daytime glass)
     var rows=Math.max(1,Math.floor(h/0.9)),colsX=Math.max(1,Math.floor(w/0.8)),colsY=Math.max(1,Math.floor(d/0.8));
     for(var r=0;r<rows;r++){
       var wz=z0+0.55+r*(h-0.7)/rows;
       for(var c=0;c<colsY;c++){
         var wy=cy-d/2+(c+0.5)*d/colsY;
-        if(rng()<0.62){var wc=rng()<0.7?C_TRIM_A:C_TRIM_C;
-          W2(cx+w/2,wy,wz,0.32,0.4,0,wc[0],wc[1],wc[2],0.9);}
-        if(rng()<0.62){var wc2=rng()<0.7?C_TRIM_A:C_TRIM_C;
-          W2(cx-w/2,wy,wz,0.32,0.4,1,wc2[0],wc2[1],wc2[2],0.9);}
+        if(rng()<0.5)W2(cx+w/2,wy,wz,0.28,0.4,0,C_TRIM_A[0],C_TRIM_A[1],C_TRIM_A[2],0.3);
+        if(rng()<0.5)W2(cx-w/2,wy,wz,0.28,0.4,1,C_TRIM_A[0],C_TRIM_A[1],C_TRIM_A[2],0.3);
       }
       for(var c2=0;c2<colsX;c2++){
         var wx=cx-w/2+(c2+0.5)*w/colsX;
-        if(rng()<0.62){var wc3=rng()<0.7?C_TRIM_A:C_TRIM_C;
-          W2(wx,cy+d/2,wz,0.32,0.4,2,wc3[0],wc3[1],wc3[2],0.9);}
-        if(rng()<0.62){var wc4=rng()<0.7?C_TRIM_A:C_TRIM_C;
-          W2(wx,cy-d/2,wz,0.32,0.4,3,wc4[0],wc4[1],wc4[2],0.9);}
+        if(rng()<0.5)W2(wx,cy+d/2,wz,0.28,0.4,2,C_TRIM_A[0],C_TRIM_A[1],C_TRIM_A[2],0.3);
+        if(rng()<0.5)W2(wx,cy-d/2,wz,0.28,0.4,3,C_TRIM_A[0],C_TRIM_A[1],C_TRIM_A[2],0.3);
       }
     }
   }
-  // Street lamp (decor pole + emissive head, small light feel)
+  // Lantern post (wood pole + small warm flame head)
   function lamp(cx,cy,z0,col){
-    D(cx,cy,z0,0.08,0.08,1.5,[0.2,0.2,0.3],[0.2,0.2,0.3]);
-    D(cx,cy,z0+1.5,0.22,0.22,0.18,col,col,1);
+    D(cx,cy,z0,0.09,0.09,1.5,[0.34,0.24,0.16],[0.40,0.30,0.20]);
+    D(cx,cy,z0+1.5,0.2,0.2,0.22,C_TORCH,C_TORCH,0.7);
   }
-  // Crate (solid, jumpable cover)
+  // Crate / barrel (solid, jumpable cover) — wood
   function crate(cx,cy,z0,s){
-    S(cx,cy,z0,s,s,s,[0.24,0.18,0.30],[0.30,0.24,0.38]);
+    S(cx,cy,z0,s,s,s,[0.46,0.32,0.20],[0.56,0.42,0.28]);
   }
-  // Distant skyline mega-tower (decor only, fog silhouettes + windows)
+  // Distant mountain / floating-isle silhouette (decor only, fog backdrop)
   function skyTower(cx,cy,h,w){
     var z0=-14;
-    pushBoxGeo(staticMesh,cx,cy,z0,w,w,h,[0.17,0.14,0.30],[0.21,0.18,0.36],0);
-    var rows=Math.floor(h/2.2),cols=Math.max(2,Math.floor(w/1.4));
-    // only faces roughly toward center (origin) get windows — cheap
-    for(var r2=0;r2<rows;r2++){
-      var wz=z0+2+r2*2.2;
-      for(var c=0;c<cols;c++){
-        if(rng()>0.5)continue;
-        var off=-w/2+(c+0.5)*w/cols;
-        var wc=rng()<0.6?C_TRIM_A:(rng()<0.5?C_TRIM_C:C_TRIM_M);
-        if(cx>1)W2(cx-w/2,cy+off,wz,0.5,0.8,1,wc[0],wc[1],wc[2],0.85);
-        else if(cx<-1)W2(cx+w/2,cy+off,wz,0.5,0.8,0,wc[0],wc[1],wc[2],0.85);
-        if(cy>1)W2(cx+off,cy-w/2,wz,0.5,0.8,3,wc[0],wc[1],wc[2],0.85);
-        else if(cy<-1)W2(cx+off,cy+w/2,wz,0.5,0.8,2,wc[0],wc[1],wc[2],0.85);
-      }
+    var rockLo=[0.40,0.34,0.30],rockHi=[0.50,0.44,0.38],grass=[0.40,0.52,0.32],snow=[0.86,0.90,0.95];
+    // stacked tapered tiers = a peak rising from the haze
+    pushBoxGeo(staticMesh,cx,cy,z0,w*1.15,w*1.15,h*0.5,rockLo,rockHi,0);
+    pushBoxGeo(staticMesh,cx,cy,z0+h*0.5,w*0.74,w*0.74,h*0.32,rockHi,(h>30?snow:grass),0);
+    pushBoxGeo(staticMesh,cx,cy,z0+h*0.82,w*0.4,w*0.4,h*0.18,rockHi,(h>30?snow:grass),0);
+    // pointed cap via roof()
+    roof(cx,cy,z0+h,w*0.4,w*0.4,w*0.5,(h>30?snow:grass));
+  }
+
+  // ===== MEDIEVAL LANDMARKS (decor only — no collision, gameplay unchanged) =====
+  var windmills=[],flags=[],waterfalls=[],rivers=[];
+  var C_LEAF=[0.30,0.50,0.24],C_LEAF2=[0.38,0.58,0.30],C_TRUNK=[0.40,0.28,0.18];
+  var C_BANNER=[0.74,0.20,0.22],C_BANNER2=[0.22,0.40,0.66],C_STONEW=[0.74,0.71,0.64];
+  var C_SAIL=[0.88,0.85,0.74];
+  // Tree: trunk + layered foliage
+  function tree(cx,cy,z,scale){
+    var s=scale||1;
+    D(cx,cy,z,0.24*s,0.24*s,1.1*s,C_TRUNK,C_TRUNK,0);
+    D(cx,cy,z+1.0*s,1.3*s,1.3*s,0.9*s,C_LEAF,C_LEAF2,0);
+    D(cx,cy,z+1.7*s,1.0*s,1.0*s,0.8*s,C_LEAF2,C_LEAF,0);
+    D(cx,cy,z+2.3*s,0.6*s,0.6*s,0.6*s,C_LEAF,C_LEAF2,0);
+  }
+  // Well: stone ring + water + two posts + little roof
+  function well(cx,cy,z){
+    D(cx,cy,z,1.2,1.2,0.55,C_STONEW,[0.66,0.62,0.55],0);
+    D(cx,cy,z+0.05,0.78,0.78,0.45,[0.12,0.18,0.22],C_WATER,0.14);
+    D(cx-0.5,cy,z+0.55,0.12,0.12,1.1,C_TRUNK,C_TRUNK,0);
+    D(cx+0.5,cy,z+0.55,0.12,0.12,1.1,C_TRUNK,C_TRUNK,0);
+    roof(cx,cy,z+1.65,1.5,1.0,0.5,C_ROOF);
+  }
+  // Windmill: stone tower + cap; blades spin (drawn in buildDynScene)
+  function windmill(cx,cy,z){
+    D(cx,cy,z,1.6,1.6,3.2,C_BLDG,[0.66,0.60,0.50],0);
+    D(cx,cy,z+3.2,1.8,1.8,0.4,C_TRUNK,C_TRUNK,0);
+    roof(cx,cy,z+3.6,1.9,1.9,1.0,C_ROOF2);
+    windmills.push({x:cx,y:cy-1.05,z:z+2.6,r:1.7,spd:1.4});
+  }
+  // Banner: pole + waving cloth (cloth drawn in buildDynScene)
+  function banner(cx,cy,zBase,h,col){
+    D(cx,cy,zBase,0.1,0.1,h,C_TRUNK,C_TRUNK,0);
+    flags.push({x:cx,y:cy,z:zBase+h-0.1,len:1.4,hgt:0.85,col:col,spd:3.0,dir:(cx<0?-1:1)});
+  }
+  // Castle: central keep + 4 corner towers w/ conical roofs + banners (open courtyard)
+  function castle(cx,cy,z){
+    D(cx,cy,z,3.2,3.2,4.5,C_STONEW,[0.66,0.62,0.55],0);
+    roof(cx,cy,z+4.5,3.6,3.6,2.2,C_ROOF);
+    banner(cx,cy,z+6.7,1.2,C_BANNER);
+    var off=4.2;
+    for(var i=0;i<4;i++){
+      var tx=cx+((i&1)?off:-off),ty=cy+((i&2)?off:-off);
+      D(tx,ty,z,1.4,1.4,5.2,C_STONEW,[0.66,0.62,0.55],0);
+      roof(tx,ty,z+5.2,1.6,1.6,1.6,C_ROOF2);
+      banner(tx,ty,z+6.8,0.9,(i&1)?C_BANNER:C_BANNER2);
     }
-    // rooftop beacon
-    D(cx,cy,z0+h,0.4,0.4,0.5,C_TRIM_M,C_TRIM_M,1);
+  }
+  // River patch: flat water quad on an island top (subtle shimmer via low emissive)
+  function riverPatch(cx,cy,z,w,d){
+    D(cx,cy,z-0.02,w,d,0.06,C_WATER,C_WATER,0.18);
+  }
+  // Waterfall emitter: drawn as downward-scrolling billboards in the blend pass
+  function waterfall(cx,cy,zTop,len,w){
+    waterfalls.push({x:cx,y:cy,z:zTop,len:len,w:w});
+  }
+  // Mountain: stacked tapered rock tiers + snow cap (river source). Decor.
+  function mountain(cx,cy,z,bw,h){
+    var rk=[0.46,0.40,0.34],rk2=[0.54,0.47,0.40],grass=[0.34,0.48,0.26],snow=[0.90,0.93,0.97];
+    D(cx,cy,z,bw,bw,h*0.45,rk,grass,0);
+    D(cx,cy,z+h*0.45,bw*0.66,bw*0.66,h*0.32,rk,rk2,0);
+    D(cx,cy,z+h*0.77,bw*0.36,bw*0.36,h*0.16,rk2,snow,0);
+    roof(cx,cy,z+h*0.93,bw*0.4,bw*0.4,h*0.26,snow);
+  }
+  // River: water channel following waypoints across an island; flow foam drawn in blend pass.
+  // pts = [[x,y],...] on the island top; water sheet sits just above deck z.
+  function river(z,w,pts){
+    var zz=z+0.03;
+    for(var i=0;i<pts.length-1;i++){
+      var ax=pts[i][0],ay=pts[i][1],bx=pts[i+1][0],by=pts[i+1][1];
+      var dx=bx-ax,dy=by-ay,ln=Math.sqrt(dx*dx+dy*dy)||1,px=-dy/ln*w/2,py=dx/ln*w/2;
+      pushQuad(staticMesh,[ax+px,ay+py,zz],[bx+px,by+py,zz],[bx-px,by-py,zz],[ax-px,ay-py,zz],[0,0,1],C_WATER[0],C_WATER[1],C_WATER[2],0.16);
+      // stony banks: small rocks on each side at the segment midpoint
+      var mx=(ax+bx)/2,my=(ay+by)/2,bk=w*0.62;
+      D(mx+px/ (w/2)*bk,my+py/(w/2)*bk,z,0.5,0.5,0.28,[0.42,0.36,0.30],[0.50,0.44,0.36],0);
+      D(mx-px/(w/2)*bk,my-py/(w/2)*bk,z,0.5,0.5,0.28,[0.42,0.36,0.30],[0.50,0.44,0.36],0);
+    }
+    rivers.push({z:zz,w:w,pts:pts});
   }
 
   // ===== WORLD BUILD =====
+  // v3: three vertical layers (LOWER ~0 / MID ~7 / UPPER ~14) + N-S expansion.
+  // Layer hubs offset by 2-4m horizontally so you can drop down through openings
+  // (landing snaps to highest overlapping top — never stack hubs directly).
   function buildWorld(){
-    // --- Central dock (spawn) ---
-    island(0,0,0,18,18,C_TRIM_C);
-    building(-5.5,5.0,0,3.2,2.6,2.4,C_TRIM_C);
-    building(5.5,4.6,0,2.8,3.0,3.2,C_TRIM_M);
+    // ===== A. CENTRAL SPINE (spawn -> mid -> upper) =====
+    // Lower hub (spawn at origin)
+    island(0,0,0,20,20,C_TRIM_C);
+    building(-6.0,5.5,0,3.2,2.6,2.4,C_TRIM_C);
+    building(6.0,5.0,0,2.8,3.0,3.2,C_TRIM_M);
     crate(-2.2,-3.0,0,0.9);crate(-1.2,-3.2,0,0.7);crate(-1.8,-3.1,0.9,0.6);
     crate(3.0,-1.5,0,0.8);
-    lamp(-8.2,-8.2,0,C_TRIM_C);lamp(8.2,-8.2,0,C_TRIM_C);
-    lamp(-8.2,8.2,0,C_TRIM_C);lamp(8.2,8.2,0,C_TRIM_C);
-    // low cover walls
-    S(0,-5.5,0,4.5,0.5,0.9,C_BLDG,[0.36,0.32,0.54]);
-    S(-4.5,1.0,0,0.5,4.0,0.9,C_BLDG,[0.36,0.32,0.54]);
-    // --- Twin towers + catwalk (vertical play) ---
-    S(-7,-6.5,0,2.2,2.2,7,C_BLDG2,[0.34,0.30,0.50]);
-    S(7,-6.5,0,2.2,2.2,7,C_BLDG2,[0.34,0.30,0.50]);
-    edgeTrim(-7,-6.5,7,2.2,2.2,C_TRIM_M);edgeTrim(7,-6.5,7,2.2,2.2,C_TRIM_M);
-    bridge(-5.9,-6.5,5.9,-6.5,7,1.3); // catwalk
-    D(-7,-6.5,7,0.1,0.1,1.6,[0.2,0.2,0.3],C_TRIM_C,0.4); // antennas
-    D(7,-6.5,7,0.1,0.1,1.6,[0.2,0.2,0.3],C_TRIM_C,0.4);
-    // --- Bridges to ring (N, E, W, S) ---
-    bridge(0,9,0,18.2,0,2.4);            // north
-    bridge(9,0,17.9,0,0,2.4);            // east
-    bridge(-17.9,0,-9,0,0,2.4);          // west
-    bridge(0,-17.6,0,-9,0,2.4);          // south (to boss arena)
-    // --- North market island ---
-    island(0,24,0,14,12,C_TRIM_M);
-    building(-3.6,26.5,0,3.0,2.6,2.8,C_TRIM_C);
-    building(3.8,26.0,0,2.6,2.4,2.0,C_TRIM_A);
-    crate(0.5,23.0,0,0.8);crate(1.5,23.2,0,0.7);
-    lamp(-6,20,0,C_TRIM_M);lamp(6,20,0,C_TRIM_M);
-    // --- East market island (low) ---
-    island(24,3,-0.8,12,10,C_TRIM_C);
-    building(26.5,5.0,-0.8,2.8,2.6,2.6,C_TRIM_M);
-    crate(22.5,1.0,-0.8,0.9);
-    lamp(20,6.5,-0.8,C_TRIM_C);
-    // --- West market island (high) ---
-    island(-24,3,1.4,12,10,C_TRIM_A);
-    building(-26.5,5.5,1.4,2.6,2.6,3.0,C_TRIM_C);
-    crate(-22,0.5,1.4,0.8);crate(-25.5,-0.5,1.4,0.9);
-    lamp(-20,6.5,1.4,C_TRIM_A);
-    // east bridge ramp: low island needs a hop platform
-    S(15.2,-2.2,-0.5,2.2,2.2,0.4,C_ROCK,C_DECK2);
-    // --- South boss arena ---
-    island(0,-26,0.8,16,14,C_TRIM_M);
-    // 4 cover pillars (cross layout)
-    S(-4,-26,0.8,1.4,1.4,3.4,C_BLDG,[0.36,0.32,0.54]);
-    S(4,-26,0.8,1.4,1.4,3.4,C_BLDG,[0.36,0.32,0.54]);
-    S(0,-22.5,0.8,1.4,1.4,3.4,C_BLDG,[0.36,0.32,0.54]);
-    S(0,-29.5,0.8,1.4,1.4,3.4,C_BLDG,[0.36,0.32,0.54]);
-    edgeTrim(-4,-26,4.2,1.4,1.4,C_TRIM_M);edgeTrim(4,-26,4.2,1.4,1.4,C_TRIM_M);
-    edgeTrim(0,-22.5,4.2,1.4,1.4,C_TRIM_M);edgeTrim(0,-29.5,4.2,1.4,1.4,C_TRIM_M);
-    // --- Diagonal hop islands (grapple/jet routes) ---
-    island(16,16,2.2,5,5,C_TRIM_C);
-    island(-16,16,2.8,5,5,C_TRIM_M);
-    island(16.5,-15,3.2,4.5,4.5,C_TRIM_A);
-    island(-16.5,-15,2.4,4.5,4.5,C_TRIM_C);
-    // --- Floating grapple stones (small, high) ---
-    var stones=[[8,12,3.6],[ -9,11,4.2],[12,-8,4.6],[-12,-9,3.8],[0,15.5,4.8],[20,-6,4.0],[-20,-5,4.4]];
+    lamp(-9,-9,0,C_TRIM_C);lamp(9,-9,0,C_TRIM_C);
+    lamp(-9,9,0,C_TRIM_C);lamp(9,9,0,C_TRIM_C);
+    S(0,-6.0,0,4.5,0.5,0.9,C_BLDG,[0.36,0.32,0.54]); // low cover
+    // jet step-ups: lower -> mid (XY offset to avoid direct stacking)
+    S(7,7,1.6,3,3,0.4,C_ROCK,C_DECK2);   edgeTrim(7,7,2.0,3,3,C_TRIM_C);
+    S(-7,-7,3.4,3,3,0.4,C_ROCK,C_DECK2); edgeTrim(-7,-7,3.8,3,3,C_TRIM_C);
+    // Mid hub (center shifted +2,+2)
+    island(2,2,7,16,16,C_TRIM_M);
+    building(-4,6,7,3,2.6,3,C_TRIM_C);   // cover + step toward upper
+    crate(4,-1,7,0.9);crate(5,-1.5,7,0.7);
+    lamp(-5,-4,7,C_TRIM_M);lamp(9,8,7,C_TRIM_M);
+    S(0,-2,7,4.5,0.5,0.9,C_BLDG,[0.36,0.32,0.54]); // low cover
+    S(7,-3,9.5,2.6,2.6,0.4,C_ROCK,C_DECK2); edgeTrim(7,-3,9.9,2.6,2.6,C_TRIM_A); // mid->upper step
+    // Upper hub (center shifted to 0,-2 — narrow sky fortress)
+    island(0,-2,14,11,11,C_TRIM_A);
+    crate(-2,-4,14,0.8);crate(3,1,14,0.8);
+    lamp(-4,2,14,C_TRIM_A);lamp(4,-5,14,C_TRIM_A);
+
+    // ===== B. LOWER RING (wide roaming floor, N-S expanded) =====
+    island(0,28,0,16,14,C_TRIM_M);       // north
+    building(-3.6,30.5,0,3.0,2.6,2.8,C_TRIM_C);
+    building(3.8,30.0,0,2.6,2.4,2.0,C_TRIM_A);
+    crate(0.5,26.5,0,0.8);crate(1.5,26.7,0,0.7);
+    lamp(-6,24,0,C_TRIM_M);lamp(6,24,0,C_TRIM_M);
+    island(0,-34,0,18,16,C_TRIM_M);      // south (expanded)
+    building(-4.5,-37,0,3.0,2.6,2.8,C_TRIM_C);
+    crate(2,-31,0,0.9);crate(3,-31.3,0,0.7);
+    lamp(-7,-30,0,C_TRIM_M);lamp(7,-30,0,C_TRIM_M);
+    island(26,6,-1.5,14,12,C_TRIM_C);    // east (low)
+    building(28.5,8.0,-1.5,2.8,2.6,2.6,C_TRIM_M);
+    crate(24.5,4.0,-1.5,0.9);
+    lamp(22,9.5,-1.5,C_TRIM_C);
+    island(-26,6,0.5,14,12,C_TRIM_A);    // west (high)
+    building(-28.5,8.5,0.5,2.6,2.6,3.0,C_TRIM_C);
+    crate(-24,3.5,0.5,0.8);crate(-27.5,2.5,0.5,0.9);
+    lamp(-22,9.5,0.5,C_TRIM_A);
+    // lower-ring bridges (axis-aligned; step diffs absorbed by jump)
+    bridge(0,10,0,21,0,2.6);             // hub -> north
+    bridge(0,-10,0,-25,0,2.6);           // hub -> south
+    bridge(11,6,19,6,-0.7,2.4);          // hub -> east (mid top)
+    bridge(-11,6,-19,6,0.2,2.4);         // hub -> west (mid top)
+
+    // ===== C. MID RING (main aerial arena) + twin towers =====
+    island(18,18,7,8,8,C_TRIM_C);
+    island(-18,18,7.5,8,8,C_TRIM_M);
+    island(20,-16,8,8,8,C_TRIM_A);
+    island(-20,-16,6.5,8,8,C_TRIM_C);
+    crate(18,18,7,0.8);crate(-20,-16,6.5,0.8);
+    // twin towers from lower floor to mid + catwalk (vertical play)
+    S(-6,-8,0,2.4,2.4,7,C_BLDG2,[0.34,0.30,0.50]);
+    S(6,-8,0,2.4,2.4,7,C_BLDG2,[0.34,0.30,0.50]);
+    edgeTrim(-6,-8,7,2.4,2.4,C_TRIM_M);edgeTrim(6,-8,7,2.4,2.4,C_TRIM_M);
+    bridge(-4.8,-8,4.8,-8,7,1.4);        // catwalk (mid height)
+    D(-6,-8,7,0.1,0.1,1.6,[0.2,0.2,0.3],C_TRIM_C,0.4); // antennas
+    D(6,-8,7,0.1,0.1,1.6,[0.2,0.2,0.3],C_TRIM_C,0.4);
+
+    // ===== D. UPPER (boss / final-wave sky fort, top ~13-15) =====
+    island(12,8,15,6,6,C_TRIM_M);
+    island(-12,8,15.5,6,6,C_TRIM_C);
+    island(0,-20,13,9,9,C_TRIM_M);       // upper-south boss perch
+    // cross cover pillars on upper hub (0,-2,14)
+    S(-4,-2,14,1.4,1.4,3.2,C_BLDG,[0.36,0.32,0.54]);
+    S(4,-2,14,1.4,1.4,3.2,C_BLDG,[0.36,0.32,0.54]);
+    S(0,1.5,14,1.4,1.4,3.2,C_BLDG,[0.36,0.32,0.54]);
+    S(0,-5.5,14,1.4,1.4,3.2,C_BLDG,[0.36,0.32,0.54]);
+    edgeTrim(-4,-2,17.2,1.4,1.4,C_TRIM_M);edgeTrim(4,-2,17.2,1.4,1.4,C_TRIM_M);
+    edgeTrim(0,1.5,17.2,1.4,1.4,C_TRIM_M);edgeTrim(0,-5.5,17.2,1.4,1.4,C_TRIM_M);
+
+    // ===== E. VERTICAL ROUTE STONES (jet pads + grapple anchors) =====
+    // edges kept < grapple range; spiral up lower->mid->upper.
+    var stones=[
+      [10,4,3.5],[12,0,5.0],[-10,4,3.8],[-12,0,5.2],[4,14,4.0],[-4,-16,4.4], // lower->mid
+      [6,6,10.0],[-6,6,11.0],[0,-10,11.5],[9,-4,10.5],[-9,-4,12.0]           // mid->upper
+    ];
     for(var i=0;i<stones.length;i++){
       var st=stones[i];
       S(st[0],st[1],st[2],2.0,2.0,0.45,C_ROCK,C_DECK2);
       D(st[0],st[1],st[2]-0.5,1.2,1.2,0.55,[0.18,0.14,0.28],C_ROCK);
       edgeTrim(st[0],st[1],st[2]+0.45,2.0,2.0,(i%2?C_TRIM_M:C_TRIM_C));
     }
-    // --- Distant skyline (pure decor, silhouettes in fog) ---
-    var towers=[[46,18,26,6],[52,-8,34,7],[38,38,22,5],[-48,14,30,6],[-40,-30,26,6],
-                [-52,-4,38,8],[14,52,28,6],[-16,50,24,5],[28,-48,30,6],[-26,-50,22,5],
-                [54,34,20,5],[-56,30,24,6],[58,-30,26,5],[44,-44,18,4],[-44,44,20,5]];
+
+    // ===== F. DISTANT SKYLINE (decor silhouettes, pushed outward, count trimmed) =====
+    var towers=[[64,24,30,7],[72,-12,36,8],[54,52,26,6],[-66,20,32,7],[-58,-44,28,6],
+                [-74,-6,40,8],[20,72,30,6],[-24,70,26,5],[40,-66,32,6],[-38,-70,24,5]];
     for(var t2=0;t2<towers.length;t2++)skyTower(towers[t2][0],towers[t2][1],towers[t2][2],towers[t2][3]);
+
+    // ===== G. LANDMARKS (decor: trees / wells / windmills / banners / castle / water) =====
+    // Lower hub plaza (spawn at origin — keep center clear)
+    well(6,6,0);
+    tree(8,-8,0);tree(-8,-7,0);tree(7.5,8.5,0,1.1);
+    // hero water feature: mountain spring -> river across the isle -> waterfall off the SE edge
+    mountain(-7.5,7.5,0,4.5,6.5);
+    river(0,1.6,[[-6,5.2],[-3,2.5],[1,0.3],[5,-2.5],[9.4,-5]]);
+    waterfall(9.9,-5,0.02,11,1.2);
+    banner(0,-6.0,0.9,1.6,C_BANNER); // on the cover wall
+    // North island — windmill + grove
+    windmill(-4,30,0);
+    tree(5,30,0);tree(6,26,0);tree(-6,25,0);
+    banner(4,24,0,2.0,C_BANNER2);
+    river(0,1.4,[[-3,29.5],[-1,31.5],[0.5,34.2]]);
+    waterfall(0.5,34.6,0.02,10,1.0);
+    // South island — well + grove
+    well(-5,-36,0);
+    tree(6,-37,0,1.2);tree(7,-31,0);tree(-7,-31,0);tree(1,-39,0);
+    // East island — windmill
+    windmill(28,8,-1.5);
+    tree(23,3,-1.5);tree(29,2.5,-1.5);
+    // West island — grove + banner
+    tree(-23,9,0.5);tree(-29,4,0.5,1.2);tree(-24,3,0.5);
+    banner(-22,9,0.5,2.0,C_BANNER);
+    // Mid hub — small grove + well + banner
+    well(6,6,7);
+    tree(-3,8,7);tree(8,-2,7);
+    banner(0,8,7,2.4,C_BANNER);
+    // Upper hub — the CASTLE (open courtyard for combat) + dramatic edge waterfall
+    castle(0,-2,14);
+    waterfall(0,3.4,13.6,16,1.4);
+    // Upper/mid satellite isles — banners + a tree
+    banner(12,8,15,1.6,C_BANNER2);tree(12,9.5,15,0.8);
+    banner(-12,8,15.5,1.6,C_BANNER);
+    tree(19.5,19.5,7,0.9);tree(-21.3,-17.4,6.5,0.9);
   }
   buildWorld();
 
@@ -921,6 +1056,7 @@
       }
     }
     if(!keys.sp)jetCutoff=false;
+    else if(jetCutoff&&!player.grounded&&player.vz<=0)jetCutoff=false; // 押しっぱなし: ジャンプ頂点でジェット自動起動
 
     // --- jetpack: hold space while airborne after jump apex-ish ---
     var jetting=false;
@@ -959,6 +1095,7 @@
     for(var i=0;i<solids.length;i++){
       var s=solids[i];
       if(feet>=s.top-0.01||head<=s.z0)continue;
+      if(player.vz<=0&&prevZ>=s.top-0.2)continue; // 降下中にこの天面へ着地する最中: 壁ではなく床。高速落下時の横弾き→床抜けを防ぐ
       var dx2=player.x-s.x,dy2=player.y-s.y;
       var ox2=s.w/2+PLAYER_R-Math.abs(dx2),oy2=s.d/2+PLAYER_R-Math.abs(dy2);
       if(ox2>0&&oy2>0){
@@ -1414,7 +1551,11 @@
     [[0,2],[1,2],[2,1],[3,2]],
     [[4,1],[0,2],[1,2]]
   ];
-  var SPAWN_PTS=[[0,24,0],[24,3,-0.8],[-24,3,1.4],[0,-26,0.8],[16,16,2.2],[-16,16,2.8],[16.5,-15,3.2],[-16.5,-15,2.4]];
+  var SPAWN_PTS=[
+    [0,28,0],[0,-34,0],[26,6,-1.5],[-26,6,0.5],        // lower ring
+    [18,18,7],[-18,18,7.5],[20,-16,8],[-20,-16,6.5],    // mid ring
+    [12,8,15],[-12,8,15.5],[0,-20,13],[0,-2,14]         // upper
+  ];
   function pickSpawn(any){
     var best=null,bestD=-1;
     for(var t=0;t<10;t++){
@@ -1564,10 +1705,10 @@
   // ===== CLOUDS (drifting blended billboards) =====
   var clouds=[];
   (function(){
-    for(var i=0;i<16;i++){
+    for(var i=0;i<28;i++){
       clouds.push({
-        x:(rng()-0.5)*110,y:(rng()-0.5)*110,z:7+rng()*9,
-        size:4+rng()*7,spd:0.3+rng()*0.5,a:0.05+rng()*0.07
+        x:(rng()-0.5)*140,y:(rng()-0.5)*140,z:8+rng()*15,
+        size:3+rng()*6,spd:0.15+rng()*0.3,a:0.10+rng()*0.08
       });
     }
   })();
@@ -1607,6 +1748,23 @@
     for(var k2=0;k2<enemyBullets.length;k2++){
       var eb=enemyBullets[k2];
       dynBoxRot(eb.x,eb.y,eb.z,0.09,0.09,0.09,_time*5,0.4,0,eb.col,1);
+    }
+    // windmill blades: two crossed bars spinning in the X-Z plane (roll about Y)
+    for(var wi=0;wi<windmills.length;wi++){
+      var wm=windmills[wi],ang=_time*wm.spd;
+      dynBoxRot(wm.x,wm.y,wm.z,wm.r,0.14,0.14,0,0,ang,C_SAIL,0);
+      dynBoxRot(wm.x,wm.y,wm.z,0.14,0.14,wm.r,0,0,ang,C_SAIL,0);
+    }
+    // banners/flags: horizontal pennant waving sideways in the wind
+    for(var fi=0;fi<flags.length;fi++){
+      var fg=flags[fi],segs=5;
+      for(var s2=0;s2<segs;s2++){
+        var fx0=fg.x+(s2/segs)*fg.len*fg.dir, fx1=fg.x+((s2+1)/segs)*fg.len*fg.dir;
+        var w0=Math.sin(_time*fg.spd+s2*0.9)*0.18*(s2/segs);
+        var w1=Math.sin(_time*fg.spd+(s2+1)*0.9)*0.18*((s2+1)/segs);
+        var zt=fg.z, zb=fg.z-fg.hgt;
+        dynQuad([fx0,fg.y+w0,zt],[fx1,fg.y+w1,zt],[fx1,fg.y+w1,zb],[fx0,fg.y+w0,zb],[0,1,0],fg.col[0],fg.col[1],fg.col[2],0);
+      }
     }
   }
   function bindWorldAttribs(){
@@ -1711,7 +1869,27 @@
     }
     for(var c3=0;c3<clouds.length;c3++){
       var cl=clouds[c3];
-      blBillboard(cl.x,cl.y,cl.z,cl.size,0.85,0.6,0.85,cl.a);
+      blBillboard(cl.x,cl.y,cl.z,cl.size,1.0,1.0,1.0,cl.a);
+    }
+    // waterfalls: downward-scrolling soft billboards + mist (flows off island edges)
+    var wScroll=_time*0.55-Math.floor(_time*0.55);
+    for(var wf=0;wf<waterfalls.length;wf++){
+      var w5=waterfalls[wf],puffs=Math.max(4,Math.floor(w5.len*1.3));
+      for(var pp=0;pp<puffs;pp++){
+        var frac=(pp/puffs+wScroll);frac=frac-Math.floor(frac);
+        blBillboard(w5.x+Math.sin(_time*3+pp)*0.06,w5.y,w5.z-frac*w5.len,w5.w,0.86,0.93,1.0,0.26*(1-frac*0.55));
+      }
+      blBillboard(w5.x,w5.y,w5.z-w5.len,w5.w*1.5,0.96,0.98,1.0,0.15);
+    }
+    // river flow: foam flecks drifting downstream along each river's waypoints
+    for(var ri=0;ri<rivers.length;ri++){
+      var rv=rivers[ri],np=rv.pts.length,foam=12;
+      for(var ff=0;ff<foam;ff++){
+        var rt=_time*0.28+ff/foam;rt=rt-Math.floor(rt);
+        var seg=Math.min(np-2,Math.floor(rt*(np-1))),lt=rt*(np-1)-seg;
+        var ra=rv.pts[seg],rb=rv.pts[seg+1];
+        blBillboard(ra[0]+(rb[0]-ra[0])*lt,ra[1]+(rb[1]-ra[1])*lt,rv.z+0.05,rv.w*0.34,0.92,0.96,1.0,0.22);
+      }
     }
     if(blLen>0){
       gl.bindBuffer(gl.ARRAY_BUFFER,blBuf);
@@ -1859,7 +2037,7 @@
       hud.font='5px monospace';hud.fillStyle='rgba(40,255,150,'+pl+')';
       hud.fillText('GRAPPLE [E]',cxp,cyp+br+7);
     }else{
-      hud.strokeStyle='rgba(0,229,255,0.9)';
+      hud.strokeStyle='rgba(200,155,90,0.9)';
     }
     hud.beginPath();
     hud.moveTo(cxp-gap-4,cyp);hud.lineTo(cxp-gap,cyp);
@@ -1867,7 +2045,7 @@
     hud.moveTo(cxp,cyp-gap-4);hud.lineTo(cxp,cyp-gap);
     hud.moveTo(cxp,cyp+gap);hud.lineTo(cxp,cyp+gap+4);
     hud.stroke();
-    hud.fillStyle='rgba(0,229,255,0.9)';
+    hud.fillStyle='rgba(200,155,90,0.9)';
     hud.fillRect(cxp-0.5,cyp-0.5,1,1);
     // hit / kill markers
     if(hitMarker>0){
@@ -1885,9 +2063,9 @@
     // --- top-left: HP + fuel ---
     drawBar(10,10,72,6,player.hp/player.maxHp,'#3dde6e','#ffd23c','#ff3c3c',''+Math.ceil(player.hp));
     var fc=player.jetFuel/JET_MAX;
-    drawBar(10,20,52,3,fc,'#00e5ff','#ff9a3c','#ff3c3c','JET');
+    drawBar(10,20,52,3,fc,'#c89b5a','#ff9a3c','#ff3c3c','JET');
     // dash pip
-    hud.fillStyle=player.dashCD<=0?'#00e5ff':'rgba(120,120,140,0.6)';
+    hud.fillStyle=player.dashCD<=0?'#c89b5a':'rgba(120,120,140,0.6)';
     hud.font='6px monospace';hud.textAlign='left';
     hud.fillText(player.dashCD<=0?'DASH RDY':'DASH '+player.dashCD.toFixed(1),10,32);
     // score
@@ -1903,7 +2081,7 @@
     }
     // --- top-right: wave + enemies ---
     hud.textAlign='right';
-    hud.fillStyle='#00e5ff';hud.font='bold 8px monospace';
+    hud.fillStyle='#c89b5a';hud.font='bold 8px monospace';
     hud.fillText('WAVE '+currentWave+'/'+totalWaves,W-10,12);
     var alive=0;for(var e5=0;e5<enemies.length;e5++)if(!enemies[e5].dead)alive++;
     hud.fillStyle='#ff5577';hud.font='7px monospace';
@@ -1935,7 +2113,7 @@
     // weapon slots
     hud.font='6px monospace';
     for(var ws=0;ws<3;ws++){
-      hud.fillStyle=ws===weaponIdx?'#00e5ff':'rgba(160,160,180,0.5)';
+      hud.fillStyle=ws===weaponIdx?'#c89b5a':'rgba(160,160,180,0.5)';
       hud.fillText(''+(ws+1),W-44+ws*10,H-26);
     }
     renderViewmodel();
@@ -2017,7 +2195,7 @@
   ];
   function renderMobileHUD(){
     if(!isMobileFps)return;
-    hud.strokeStyle='rgba(0,229,255,0.2)';hud.lineWidth=1;
+    hud.strokeStyle='rgba(200,155,90,0.2)';hud.lineWidth=1;
     hud.beginPath();hud.arc(W*0.15,H*0.7,26,0,TAU);hud.stroke();
     for(var i=0;i<mobBtns.length;i++){
       var b=mobBtns[i];
