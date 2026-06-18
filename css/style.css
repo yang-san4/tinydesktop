@@ -538,7 +538,13 @@ body {
   display: none;
   position: absolute;
   left: 100%;
-  top: -1px;
+  /* Menu is anchored to the screen bottom, so submenus open upward
+     (aligned to the parent's bottom edge) to avoid overflowing below
+     the taskbar. max-height + scroll is a safety net for long lists. */
+  bottom: -1px;
+  top: auto;
+  max-height: 280px;
+  overflow-y: auto;
   background: var(--bar-bg);
   border: 1px solid var(--accent);
   box-shadow: 2px 2px 0 rgba(0, 0, 0, 0.4);
@@ -1352,7 +1358,7 @@ body {
   font-size: 5px;
   color: #a0a0a0;
   line-height: 2;
-  transition: opacity 0.5s ease-out;
+  transition: opacity 0.3s ease-out;
 }
 
 #boot-screen.boot-fade {
@@ -1376,7 +1382,7 @@ body {
   height: 100%;
   width: 0%;
   background: #a0a0a0;
-  transition: width 0.08s linear;
+  transition: width 0.05s linear;
 }
 
 /* ===== Piano Icon ===== */
@@ -1463,7 +1469,8 @@ body {
 }
 
 /* ===== Context Menu ===== */
-#context-menu {
+#context-menu,
+#folder-context-menu {
   position: absolute;
   z-index: 9600;
   background: var(--bar-bg);
@@ -1472,7 +1479,8 @@ body {
   min-width: 90px;
 }
 
-#context-menu.hidden {
+#context-menu.hidden,
+#folder-context-menu.hidden {
   display: none;
 }
 
@@ -1901,8 +1909,8 @@ body {
 
 /* ===== KAGE Icon ===== */
 .di-kage {
-  background: #141028;
-  border-color: #d04050;
+  background: var(--surface2);
+  border-color: var(--accent);
 }
 
 .di-kage::after {
@@ -1912,19 +1920,19 @@ body {
   left: 50%;
   transform: translate(-50%, -50%);
   font-size: 9px;
-  color: #d04050;
+  color: var(--accent);
   line-height: 1;
 }
 
 .tb-kage {
-  background: #141028;
-  border-color: #d04050;
+  background: var(--surface2);
+  border-color: var(--accent);
 }
 
 /* ===== KAGE II Icon ===== */
 .di-kage2 {
-  background: #0c0a20;
-  border-color: #e8d2a0;
+  background: var(--surface2);
+  border-color: var(--accent2);
 }
 
 .di-kage2::after {
@@ -1935,13 +1943,13 @@ body {
   transform: translate(-50%, -50%);
   font-size: 7px;
   letter-spacing: 1px;
-  color: #e8d2a0;
+  color: var(--accent2);
   line-height: 1;
 }
 
 .tb-kage2 {
-  background: #0c0a20;
-  border-color: #e8d2a0;
+  background: var(--surface2);
+  border-color: var(--accent2);
 }
 
 /* ===== GEKKO Classic Icon ===== */

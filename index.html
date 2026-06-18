@@ -12,7 +12,7 @@
 <body>
   <div id="monitor">
     <div id="monitor-bezel">
-      <div id="screen" class="theme-mac">
+      <div id="screen" class="theme-osx">
         <!-- Boot Screen -->
         <div id="boot-screen">
           <div class="boot-output"></div>
@@ -59,15 +59,15 @@
             <!-- Column 2: Games -->
             <div class="desktop-icon" data-target="window-fps">
               <div class="di-img di-fps"></div>
-              <div class="di-label">GEKKO</div>
+              <div class="di-label">SKYHOLM</div>
             </div>
             <div class="desktop-icon" data-target="window-fpsv1">
               <div class="di-img di-fpsv1"></div>
-              <div class="di-label">GEKKO V1</div>
+              <div class="di-label">GEKKO v.1</div>
             </div>
             <div class="desktop-icon" data-target="window-fpsc">
               <div class="di-img di-fpsc"></div>
-              <div class="di-label">Classic</div>
+              <div class="di-label">GEKKO Prototype</div>
             </div>
             <div class="desktop-icon" data-target="window-kage">
               <div class="di-img di-kage"></div>
@@ -216,7 +216,7 @@
           <!-- FPS Arena Window (starts closed) -->
           <div class="window closed" id="window-fps" style="left: 44px; top: 10px; width: 352px;">
             <div class="title-bar" data-window="window-fps">
-              <span class="title-bar-text">GEKKO</span>
+              <span class="title-bar-text">SKYHOLM</span>
               <div class="title-bar-controls">
                 <button class="btn-minimize" data-window="window-fps">_</button>
                 <button class="btn-close" data-window="window-fps">&times;</button>
@@ -230,7 +230,7 @@
           <!-- FPS V1 Window (starts closed) — preserved Canvas 2D build -->
           <div class="window closed" id="window-fpsv1" style="left: 60px; top: 24px; width: 352px;">
             <div class="title-bar" data-window="window-fpsv1">
-              <span class="title-bar-text">GEKKO V1</span>
+              <span class="title-bar-text">GEKKO v.1</span>
               <div class="title-bar-controls">
                 <button class="btn-minimize" data-window="window-fpsv1">_</button>
                 <button class="btn-close" data-window="window-fpsv1">&times;</button>
@@ -272,7 +272,7 @@
           <!-- FPS Classic Window (starts closed) -->
           <div class="window closed" id="window-fpsc" style="left: 44px; top: 10px; width: 352px;">
             <div class="title-bar" data-window="window-fpsc">
-              <span class="title-bar-text">GEKKO Classic</span>
+              <span class="title-bar-text">GEKKO Prototype</span>
               <div class="title-bar-controls">
                 <button class="btn-minimize" data-window="window-fpsc">_</button>
                 <button class="btn-close" data-window="window-fpsc">&times;</button>
@@ -385,21 +385,31 @@
           <button class="start-menu-item" data-open="window-clock"><span class="tb-icon tb-clock"></span>Clock</button>
           <button class="start-menu-item" data-open="window-calendar"><span class="tb-icon tb-calendar"></span>Calendar</button>
           <button class="start-menu-item" data-open="window-terminal"><span class="tb-icon tb-terminal"></span>Terminal</button>
-          <button class="start-menu-item" data-open="window-aquarium"><span class="tb-icon tb-aquarium"></span>Aquarium</button>
-          <button class="start-menu-item" data-open="widget-hourglass"><span class="tb-icon tb-hourglass"></span>Timer</button>
-          <button class="start-menu-item" data-open="widget-david"><span class="tb-icon tb-david"></span>David</button>
-          <button class="start-menu-item" data-open="window-minesweeper"><span class="tb-icon tb-minesweeper"></span>Mines</button>
-          <button class="start-menu-item" data-open="window-maze"><span class="tb-icon tb-maze"></span>3D Maze</button>
-          <button class="start-menu-item" data-open="window-piano"><span class="tb-icon tb-piano"></span>Piano</button>
-          <button class="start-menu-item" data-open="window-browser"><span class="tb-icon tb-browser"></span>TinyWeb</button>
-          <button class="start-menu-item" data-open="window-fps"><span class="tb-icon tb-fps"></span>GEKKO</button>
-          <button class="start-menu-item" data-open="window-fpsv1"><span class="tb-icon tb-fpsv1"></span>GEKKO V1</button>
-          <button class="start-menu-item" data-open="window-fpsc"><span class="tb-icon tb-fpsc"></span>GEKKO Classic</button>
-          <button class="start-menu-item" data-open="window-kage"><span class="tb-icon tb-kage"></span>KAGE</button>
-          <button class="start-menu-item" data-open="window-kage2"><span class="tb-icon tb-kage2"></span>KAGE II</button>
-          <button class="start-menu-item" data-open="window-tetris"><span class="tb-icon tb-tetris"></span>Tetris</button>
-          <button class="start-menu-item" data-open="window-solitaire"><span class="tb-icon tb-solitaire"></span>Solitaire</button>
-          <button class="start-menu-item" data-open="window-pinball"><span class="tb-icon tb-pinball"></span>Pinball</button>
+          <div class="start-menu-sub">
+            <button class="start-menu-item start-menu-parent">Tools <span class="sub-arrow">▸</span></button>
+            <div class="start-menu-submenu">
+              <button class="start-menu-item" data-open="window-aquarium"><span class="tb-icon tb-aquarium"></span>Aquarium</button>
+              <button class="start-menu-item" data-open="window-piano"><span class="tb-icon tb-piano"></span>Piano</button>
+              <button class="start-menu-item" data-open="window-browser"><span class="tb-icon tb-browser"></span>TinyWeb</button>
+              <button class="start-menu-item" data-open="widget-hourglass"><span class="tb-icon tb-hourglass"></span>Timer</button>
+              <button class="start-menu-item" data-open="widget-david"><span class="tb-icon tb-david"></span>David</button>
+            </div>
+          </div>
+          <div class="start-menu-sub">
+            <button class="start-menu-item start-menu-parent">Games <span class="sub-arrow">▸</span></button>
+            <div class="start-menu-submenu">
+              <button class="start-menu-item" data-open="window-fps"><span class="tb-icon tb-fps"></span>SKYHOLM</button>
+              <button class="start-menu-item" data-open="window-fpsv1"><span class="tb-icon tb-fpsv1"></span>GEKKO v.1</button>
+              <button class="start-menu-item" data-open="window-fpsc"><span class="tb-icon tb-fpsc"></span>GEKKO Prototype</button>
+              <button class="start-menu-item" data-open="window-kage"><span class="tb-icon tb-kage"></span>KAGE</button>
+              <button class="start-menu-item" data-open="window-kage2"><span class="tb-icon tb-kage2"></span>KAGE II</button>
+              <button class="start-menu-item" data-open="window-tetris"><span class="tb-icon tb-tetris"></span>Tetris</button>
+              <button class="start-menu-item" data-open="window-solitaire"><span class="tb-icon tb-solitaire"></span>Solitaire</button>
+              <button class="start-menu-item" data-open="window-pinball"><span class="tb-icon tb-pinball"></span>Pinball</button>
+              <button class="start-menu-item" data-open="window-minesweeper"><span class="tb-icon tb-minesweeper"></span>Mines</button>
+              <button class="start-menu-item" data-open="window-maze"><span class="tb-icon tb-maze"></span>3D Maze</button>
+            </div>
+          </div>
           <div class="start-menu-sep"></div>
           <div class="start-menu-sub">
             <button class="start-menu-item start-menu-parent">Theme <span class="sub-arrow">▸</span></button>
@@ -407,8 +417,8 @@
               <button class="start-menu-item" data-theme="">Vapor</button>
               <button class="start-menu-item" data-theme="japanese">Wafuu</button>
               <button class="start-menu-item" data-theme="wood">Mokume</button>
-              <button class="start-menu-item active" data-theme="mac">Classic</button>
-              <button class="start-menu-item" data-theme="osx">Aqua</button>
+              <button class="start-menu-item" data-theme="mac">Classic</button>
+              <button class="start-menu-item active" data-theme="osx">Aqua</button>
             </div>
           </div>
           <div class="start-menu-sep"></div>
@@ -444,6 +454,16 @@
           </div>
           <div class="ctx-sep"></div>
           <button class="ctx-item" data-action="about">About PC</button>
+        </div>
+
+        <!-- Folder Context Menu -->
+        <div id="folder-context-menu" class="hidden">
+          <button class="ctx-item" data-faction="open">Open</button>
+          <button class="ctx-item" data-faction="rename">Rename</button>
+          <div class="ctx-sep"></div>
+          <button class="ctx-item" data-faction="arrange">Clean Up</button>
+          <div class="ctx-sep"></div>
+          <button class="ctx-item" data-faction="delete">Delete Folder</button>
         </div>
 
         <!-- Notification Container -->
