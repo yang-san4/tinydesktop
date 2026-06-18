@@ -4,6 +4,7 @@
   var menu = document.getElementById('context-menu');
   if (!menu) return;
 
+  var folderMenu = document.getElementById('folder-context-menu');
   var desktop = document.getElementById('desktop');
   var screen = document.getElementById('screen');
 
@@ -11,31 +12,47 @@
   var ctxClickX = 0;
   var ctxClickY = 0;
 
-  // Show context menu on right-click on desktop
-  desktop.addEventListener('contextmenu', function (e) {
-    // Only on empty desktop area
-    if (e.target.closest('.window') || e.target.closest('.widget') || e.target.closest('.desktop-icon')) {
-      return;
-    }
-    e.preventDefault();
+  // Remember which folder was right-clicked for folder menu actions
+  var ctxFolderId = null;
 
-    var desktopRect = desktop.getBoundingClientRect();
-    ctxClickX = e.clientX - desktopRect.left;
-    ctxClickY = e.clientY - desktopRect.top;
-
-    var x = ctxClickX;
-    var y = ctxClickY;
-
-    // Keep menu within bounds
+  // Position a menu at the given desktop coords, keeping it within bounds
+  function showMenuAt(menuEl, px, py) {
+    var x = px;
+    var y = py;
     var mw = 100, mh = 120;
     var dw = desktop.offsetWidth;
     var dh = desktop.offsetHeight;
     if (x + mw > dw) x = dw - mw;
     if (y + mh > dh) y = dh - mh;
+    menuEl.style.left = x + 'px';
+    menuEl.style.top = y + 'px';
+    menuEl.classList.remove('hidden');
+  }
 
-    menu.style.left = x + 'px';
-    menu.style.top = y + 'px';
-    menu.classList.remove('hidden');
+  // Show context menu on right-click on desktop
+  desktop.addEventListener('contextmenu', function (e) {
+    var desktopRect = desktop.getBoundingClientRect();
+    ctxClickX = e.clientX - desktopRect.left;
+    ctxClickY = e.clientY - desktopRect.top;
+
+    // Right-click on a folder icon → folder-specific menu
+    var folderEl = e.target.closest('.desktop-folder');
+    if (folderEl && folderMenu) {
+      e.preventDefault();
+      ctxFolderId = folderEl.dataset.folderId;
+      menu.classList.add('hidden');
+      showMenuAt(folderMenu, ctxClickX, ctxClickY);
+      return;
+    }
+
+    // Only on empty desktop area for the default menu
+    if (e.target.closest('.window') || e.target.closest('.widget') || e.target.closest('.desktop-icon')) {
+      return;
+    }
+    e.preventDefault();
+
+    if (folderMenu) folderMenu.classList.add('hidden');
+    showMenuAt(menu, ctxClickX, ctxClickY);
   });
 
   // Hide on click elsewhere
@@ -43,11 +60,17 @@
     if (!menu.contains(e.target)) {
       menu.classList.add('hidden');
     }
+    if (folderMenu && !folderMenu.contains(e.target)) {
+      folderMenu.classList.add('hidden');
+    }
   });
 
   // Hide on Escape
   document.addEventListener('keydown', function (e) {
-    if (e.key === 'Escape') menu.classList.add('hidden');
+    if (e.key === 'Escape') {
+      menu.classList.add('hidden');
+      if (folderMenu) folderMenu.classList.add('hidden');
+    }
   });
 
   // ----- Menu actions -----
@@ -98,6 +121,39 @@
     }
     menu.classList.add('hidden');
   });
+
+  // ----- Folder menu actions -----
+  if (folderMenu) {
+    // Open
+    folderMenu.querySelector('[data-faction="open"]').addEventListener('click', function () {
+      if (ctxFolderId && window._tinyFolder) window._tinyFolder.openFolder(ctxFolderId);
+      folderMenu.classList.add('hidden');
+    });
+
+    // Rename
+    folderMenu.querySelector('[data-faction="rename"]').addEventListener('click', function () {
+      if (ctxFolderId && window._tinyFolder) {
+        var current = '';
+        var folders = window._tinyFolder.getFolders();
+        if (folders[ctxFolderId]) current = folders[ctxFolderId].name;
+        var name = window.prompt('Folder name:', current);
+        if (name) window._tinyFolder.renameFolder(ctxFolderId, name.trim());
+      }
+      folderMenu.classList.add('hidden');
+    });
+
+    // Clean Up (arrange icons)
+    folderMenu.querySelector('[data-faction="arrange"]').addEventListener('click', function () {
+      if (window._tinyDesktopArrange) window._tinyDesktopArrange();
+      folderMenu.classList.add('hidden');
+    });
+
+    // Delete Folder
+    folderMenu.querySelector('[data-faction="delete"]').addEventListener('click', function () {
+      if (ctxFolderId && window._tinyFolder) window._tinyFolder.deleteFolder(ctxFolderId);
+      folderMenu.classList.add('hidden');
+    });
+  }
 
   // Theme items in context menu
   menu.querySelectorAll('[data-ctx-theme]').forEach(function (btn) {

@@ -314,6 +314,23 @@
     document.dispatchEvent(new Event('tinydesktop-update'));
   }
 
+  // ----- Rename folder -----
+  function renameFolder(id, newName) {
+    var data = folders[id];
+    if (!data || !newName) return;
+    data.name = newName;
+    // デスクトップアイコンのラベル更新
+    var label = desktopIcons.querySelector('[data-folder-id="' + id + '"] .di-label');
+    if (label) label.textContent = newName;
+    // 開いているフォルダーウィンドウのタイトル更新
+    var win = document.getElementById('folder-window-' + id);
+    if (win) {
+      var t = win.querySelector('.title-bar-text');
+      if (t) t.textContent = newName;
+    }
+    document.dispatchEvent(new Event('tinydesktop-update'));
+  }
+
   // ----- Find folder ID from an open folder window element -----
   function folderIdFromWindow(winEl) {
     if (!winEl) return null;
@@ -328,18 +345,21 @@
     addToFolder: addToFolder,
     removeFromFolder: removeFromFolder,
     deleteFolder: deleteFolder,
+    renameFolder: renameFolder,
     getFolders: function () { return folders; },
     folderIdFromWindow: folderIdFromWindow
   };
 
-  // ----- Create a Game folder on startup with game icons -----
-  var gameTargets = [
-    'window-fps', 'window-fpsc', 'window-tetris',
-    'window-solitaire', 'window-pinball', 'window-minesweeper', 'window-maze'
-  ];
-  var gameFolderId = createFolder(0, 0, 'Game');
-  gameTargets.forEach(function (targetId) {
-    var iconEl = desktopIcons.querySelector('[data-target="' + targetId + '"]');
-    if (iconEl) addToFolder(gameFolderId, iconEl);
-  });
+  // ----- Default startup Game folder (disabled) -----
+  // デフォルトではゲームをフォルダーに入れず、デスクトップに直接並べる。
+  // 復活させたい場合は以下のコメントを解除する。
+  // var gameTargets = [
+  //   'window-fps', 'window-fpsc', 'window-tetris',
+  //   'window-solitaire', 'window-pinball', 'window-minesweeper', 'window-maze'
+  // ];
+  // var gameFolderId = createFolder(0, 0, 'Game');
+  // gameTargets.forEach(function (targetId) {
+  //   var iconEl = desktopIcons.querySelector('[data-target="' + targetId + '"]');
+  //   if (iconEl) addToFolder(gameFolderId, iconEl);
+  // });
 })();
