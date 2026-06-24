@@ -411,6 +411,12 @@
   function D(cx,cy,z0,w,d,h,side,top,em){
     pushBoxGeo(staticMesh,cx,cy,z0,w,d,h,side,top,em||0);
   }
+  // Collision-only AABB: invisible solid, paired with decor geometry whose
+  // visible footprint differs from its blocking footprint (e.g. a tree whose
+  // thin trunk should feel as solid as the canopy above it).
+  function COL(cx,cy,z0,w,d,h){
+    solids.push({x:cx,y:cy,z0:z0,top:z0+h,w:w,d:d});
+  }
   // Single emissive quad stuck on a wall face (windows, signs). dir: 0=+x,1=-x,2=+y,3=-y
   function W2(cx,cy,cz,w,h,dir,r,g,b,em){
     var hw=w/2,hh=h/2,e=0.02;
@@ -518,7 +524,7 @@
     roof(cx,cy,z0+h,w*0.4,w*0.4,w*0.5,(h>30?snow:grass));
   }
 
-  // ===== MEDIEVAL LANDMARKS (decor only — no collision, gameplay unchanged) =====
+  // ===== MEDIEVAL LANDMARKS (solid bodies block the player; foliage/roofs/water stay decor) =====
   var windmills=[],flags=[],waterfalls=[],rivers=[];
   var C_LEAF=[0.30,0.50,0.24],C_LEAF2=[0.38,0.58,0.30],C_TRUNK=[0.40,0.28,0.18];
   var C_BANNER=[0.74,0.20,0.22],C_BANNER2=[0.22,0.40,0.66],C_STONEW=[0.74,0.71,0.64];
@@ -526,6 +532,8 @@
   // Tree: trunk + layered foliage
   function tree(cx,cy,z,scale){
     var s=scale||1;
+    // block at a trunk-girth that reads solid under the canopy (visual trunk is thinner)
+    COL(cx,cy,z,0.55*s,0.55*s,1.0*s);
     D(cx,cy,z,0.24*s,0.24*s,1.1*s,C_TRUNK,C_TRUNK,0);
     D(cx,cy,z+1.0*s,1.3*s,1.3*s,0.9*s,C_LEAF,C_LEAF2,0);
     D(cx,cy,z+1.7*s,1.0*s,1.0*s,0.8*s,C_LEAF2,C_LEAF,0);
@@ -533,7 +541,7 @@
   }
   // Well: stone ring + water + two posts + little roof
   function well(cx,cy,z){
-    D(cx,cy,z,1.2,1.2,0.55,C_STONEW,[0.66,0.62,0.55],0);
+    S(cx,cy,z,1.2,1.2,0.55,C_STONEW,[0.66,0.62,0.55],0);
     D(cx,cy,z+0.05,0.78,0.78,0.45,[0.12,0.18,0.22],C_WATER,0.14);
     D(cx-0.5,cy,z+0.55,0.12,0.12,1.1,C_TRUNK,C_TRUNK,0);
     D(cx+0.5,cy,z+0.55,0.12,0.12,1.1,C_TRUNK,C_TRUNK,0);
@@ -541,7 +549,7 @@
   }
   // Windmill: stone tower + cap; blades spin (drawn in buildDynScene)
   function windmill(cx,cy,z){
-    D(cx,cy,z,1.6,1.6,3.2,C_BLDG,[0.66,0.60,0.50],0);
+    S(cx,cy,z,1.6,1.6,3.2,C_BLDG,[0.66,0.60,0.50],0);
     D(cx,cy,z+3.2,1.8,1.8,0.4,C_TRUNK,C_TRUNK,0);
     roof(cx,cy,z+3.6,1.9,1.9,1.0,C_ROOF2);
     windmills.push({x:cx,y:cy-1.05,z:z+2.6,r:1.7,spd:1.4});
@@ -553,13 +561,13 @@
   }
   // Castle: central keep + 4 corner towers w/ conical roofs + banners (open courtyard)
   function castle(cx,cy,z){
-    D(cx,cy,z,3.2,3.2,4.5,C_STONEW,[0.66,0.62,0.55],0);
+    S(cx,cy,z,3.2,3.2,4.5,C_STONEW,[0.66,0.62,0.55],0);
     roof(cx,cy,z+4.5,3.6,3.6,2.2,C_ROOF);
     banner(cx,cy,z+6.7,1.2,C_BANNER);
     var off=4.2;
     for(var i=0;i<4;i++){
       var tx=cx+((i&1)?off:-off),ty=cy+((i&2)?off:-off);
-      D(tx,ty,z,1.4,1.4,5.2,C_STONEW,[0.66,0.62,0.55],0);
+      S(tx,ty,z,1.4,1.4,5.2,C_STONEW,[0.66,0.62,0.55],0);
       roof(tx,ty,z+5.2,1.6,1.6,1.6,C_ROOF2);
       banner(tx,ty,z+6.8,0.9,(i&1)?C_BANNER:C_BANNER2);
     }
@@ -575,8 +583,8 @@
   // Mountain: stacked tapered rock tiers + snow cap (river source). Decor.
   function mountain(cx,cy,z,bw,h){
     var rk=[0.46,0.40,0.34],rk2=[0.54,0.47,0.40],grass=[0.34,0.48,0.26],snow=[0.90,0.93,0.97];
-    D(cx,cy,z,bw,bw,h*0.45,rk,grass,0);
-    D(cx,cy,z+h*0.45,bw*0.66,bw*0.66,h*0.32,rk,rk2,0);
+    S(cx,cy,z,bw,bw,h*0.45,rk,grass,0);
+    S(cx,cy,z+h*0.45,bw*0.66,bw*0.66,h*0.32,rk,rk2,0);
     D(cx,cy,z+h*0.77,bw*0.36,bw*0.36,h*0.16,rk2,snow,0);
     roof(cx,cy,z+h*0.93,bw*0.4,bw*0.4,h*0.26,snow);
   }
