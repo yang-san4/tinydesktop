@@ -2163,3 +2163,197 @@ body {
 }
 
 /* ===== Mobile Responsive ===== */
+
+/* ========================================
+   3D PC (js/pc3d.js)
+   The room, machine, keyboard and mouse are rendered in WebGL behind the
+   DOM screen; these rules only apply once pc3d.js adds body.pc3d, so the
+   flat monitor above stays as the fallback.
+   ======================================== */
+#pc3d-canvas,
+#pc3d-dust,
+#pc3d-hint,
+#crt-fx,
+#crt-power {
+  display: none;
+}
+
+body.pc3d {
+  display: block;
+  background: #000;
+}
+
+body.pc3d #pc3d-canvas {
+  display: block;
+  position: fixed;
+  left: 0;
+  top: 0;
+  width: 100vw;
+  height: 100vh;
+  z-index: 0;
+  opacity: 0;
+  transition: opacity 1.4s ease;
+  cursor: grab;
+  touch-action: none;
+}
+
+body.pc3d.pc3d-live #pc3d-canvas {
+  opacity: 1;
+}
+
+body.pc3d.pc3d-dragging #pc3d-canvas {
+  cursor: grabbing;
+}
+
+body.pc3d #pc3d-dust {
+  display: block;
+  position: fixed;
+  left: 0;
+  top: 0;
+  width: 100vw;
+  height: 100vh;
+  z-index: 1;
+  pointer-events: none;
+}
+
+body.pc3d #monitor {
+  display: block;
+  position: fixed;
+  left: 0;
+  top: 0;
+  z-index: 2;
+  transform-origin: 0 0;
+}
+
+body.pc3d #monitor-bezel {
+  background: none;
+  padding: 0;
+  border-radius: 0;
+  box-shadow: none;
+}
+
+body.pc3d #monitor-stand {
+  display: none;
+}
+
+body.pc3d.pc3d-off #monitor {
+  visibility: hidden;
+}
+
+body.pc3d.pc3d-away #monitor {
+  pointer-events: none;
+}
+
+/* the tube: rounded image corners, no flat-monitor frame */
+body.pc3d #screen {
+  border-radius: 11px;
+  border-color: #070908;
+  box-shadow: none;
+}
+
+body.pc3d #scanlines {
+  background: repeating-linear-gradient(
+    0deg,
+    transparent,
+    transparent 1px,
+    rgba(0, 0, 0, 0.11) 1px,
+    rgba(0, 0, 0, 0.11) 2px
+  );
+}
+
+/* glass: edge falloff of a curved tube, sheen, faint reflection */
+body.pc3d #crt-fx {
+  display: block;
+  position: absolute;
+  inset: 0;
+  z-index: 10001;
+  pointer-events: none;
+  border-radius: 8px;
+  background:
+    radial-gradient(ellipse 38% 26% at 20% 12%, rgba(255, 238, 214, 0.06), transparent 70%),
+    linear-gradient(166deg, rgba(255, 255, 255, 0.055) 0%, rgba(255, 255, 255, 0.012) 28%, transparent 46%),
+    radial-gradient(ellipse 78% 72% at 50% 46%, transparent 60%, rgba(0, 0, 0, 0.2) 86%, rgba(0, 0, 0, 0.48) 100%);
+  box-shadow:
+    inset 0 0 22px 3px rgba(0, 0, 0, 0.5),
+    inset 0 0 3px 1px rgba(0, 0, 0, 0.7);
+}
+
+/* aperture grille */
+body.pc3d #crt-fx::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: repeating-linear-gradient(
+    90deg,
+    transparent 0,
+    transparent 2px,
+    rgba(0, 0, 0, 0.06) 2px,
+    rgba(0, 0, 0, 0.06) 3px
+  );
+}
+
+/* slow refresh band rolling down the tube */
+body.pc3d #crt-fx::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 0;
+  height: 90px;
+  background: linear-gradient(180deg, transparent, rgba(255, 255, 255, 0.025) 50%, transparent);
+  animation: crt-roll 9s linear infinite;
+}
+
+@keyframes crt-roll {
+  from { transform: translateY(-90px); }
+  to { transform: translateY(330px); }
+}
+
+/* power-on: bright line, then the picture opens vertically */
+body.pc3d #screen.crt-poweron {
+  animation: crt-on 0.75s ease-out;
+}
+
+body.pc3d #screen.crt-poweron #crt-power {
+  display: block;
+  position: absolute;
+  inset: 0;
+  z-index: 10002;
+  pointer-events: none;
+  background: radial-gradient(ellipse at center, #ffffff, #d4e6ff 55%, #8fb0e0);
+  animation: crt-flash 0.75s ease-out forwards;
+}
+
+@keyframes crt-on {
+  0% { transform: scale(0.03, 0.004); }
+  14% { transform: scale(1, 0.006); }
+  42% { transform: scale(1, 1); }
+  100% { transform: scale(1, 1); }
+}
+
+@keyframes crt-flash {
+  0%, 22% { opacity: 1; }
+  60% { opacity: 0.3; }
+  100% { opacity: 0; }
+}
+
+body.pc3d #pc3d-hint {
+  display: block;
+  position: fixed;
+  left: 50%;
+  bottom: 12px;
+  transform: translateX(-50%);
+  z-index: 3;
+  pointer-events: none;
+  font-size: 7px;
+  letter-spacing: 1px;
+  white-space: nowrap;
+  color: rgba(232, 226, 210, 0.6);
+  text-shadow: 0 1px 2px #000;
+  opacity: 0;
+  transition: opacity 0.6s ease;
+}
+
+body.pc3d #pc3d-hint.show {
+  opacity: 1;
+}

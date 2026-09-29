@@ -10,6 +10,8 @@
   <link rel="stylesheet" href="css/style.css">
 </head>
 <body>
+  <canvas id="pc3d-canvas"></canvas>
+  <canvas id="pc3d-dust"></canvas>
   <div id="monitor">
     <div id="monitor-bezel">
       <div id="screen" class="theme-osx">
@@ -471,10 +473,16 @@
 
         <!-- Scanlines overlay -->
         <div id="scanlines"></div>
+        <!-- CRT glass: curvature shading, sheen, aperture grille, power-on flash -->
+        <div id="crt-fx"></div>
+        <div id="crt-power"></div>
       </div>
     </div>
     <div id="monitor-stand"></div>
   </div>
+  <div id="pc3d-hint"></div>
+
+  <script src="js/pc3d.js"></script>
 
   <script src="js/boot.js"></script>
   <script src="js/folder.js"></script>

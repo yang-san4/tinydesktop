@@ -106,6 +106,10 @@
     }, 120);
   }
 
-  // Start boot sequence after a brief delay
-  setTimeout(processLine, 200);
+  // Start boot sequence after a brief delay (after the 3D tube powers on, if present)
+  if (window._pc3dPowerOn) {
+    window._pc3dPowerOn(function () { setTimeout(processLine, 200); });
+  } else {
+    setTimeout(processLine, 200);
+  }
 })();
