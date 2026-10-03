@@ -101,6 +101,10 @@ body {
   border: 3px solid #111;
   border-radius: 3px;
   overflow: hidden;
+  /* clip, not hidden: desktop + taskbar are 6px taller than the box inside
+     the border, and a hidden box still scrolls to show a focused button
+     (Tab to the taskbar), dragging the scanlines and CRT glass with it */
+  overflow: clip;
   box-shadow:
     inset 0 0 30px var(--glow1),
     inset 0 0 60px var(--glow2),
@@ -132,6 +136,7 @@ body {
   background: var(--desktop-bg);
   position: relative;
   overflow: hidden;
+  overflow: clip;
 }
 
 /* ===== Desktop Icons ===== */
