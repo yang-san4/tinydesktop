@@ -8,6 +8,21 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="css/style.css">
+  <!-- three.js for the 3D PC (js/pc3d.js); without it the flat monitor is used -->
+  <script type="importmap">
+  {
+    "imports": {
+      "three": "https://cdn.jsdelivr.net/npm/three@0.186.1/build/three.module.js",
+      "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.186.1/examples/jsm/"
+    },
+    "integrity": {
+      "https://cdn.jsdelivr.net/npm/three@0.186.1/build/three.module.js": "sha384-m8JoFX52V6NGv2usipnlLJKnJfL7IE8dbniPDDCSGSQv3Hm4n6PjfV6syVwfuoRc",
+      "https://cdn.jsdelivr.net/npm/three@0.186.1/build/three.core.js": "sha384-mdKeCwPEcbDvzaxwhm+MVuLoMou+E7jQqrs4tmu/n8HBYPGI1kZt0MkJxlMR4zFM",
+      "https://cdn.jsdelivr.net/npm/three@0.186.1/examples/jsm/lights/RectAreaLightUniformsLib.js": "sha384-wrZOPsQGB+gcZrjnfR6LpxaCX3jfEt6pVQtZM16hETBMcJGIudLy0vYbuqogztzM",
+      "https://cdn.jsdelivr.net/npm/three@0.186.1/examples/jsm/lights/RectAreaLightTexturesLib.js": "sha384-oQJvQLSnYhmAimeL8vXcNV47WTQ2LVYW5s1mTiM6D3vOsVGcUmE2dE0rcWNy/RJM"
+    }
+  }
+  </script>
 </head>
 <body>
   <canvas id="pc3d-canvas"></canvas>
@@ -482,6 +497,7 @@
   </div>
   <div id="pc3d-hint"></div>
 
+  <script src="js/pc3d-scene.js"></script>
   <script src="js/pc3d.js"></script>
 
   <script src="js/boot.js"></script>
